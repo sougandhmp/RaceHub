@@ -67,18 +67,23 @@ final class SignUpViewModel: ObservableObject {
         state.errorMessage = nil
 
         Task {
-            let result = signUpUseCase.execute(
-                name: state.name,
-                email: state.email,
-                password: state.password,
-                confirmPassword: state.confirmPassword
-            )
-            state.isLoading = false
+            do {
+                let result = try await signUpUseCase.execute(
+                    name: state.name,
+                    email: state.email,
+                    password: state.password,
+                    confirmPassword: state.confirmPassword
+                )
+                state.isLoading = false
 
-            if result.isSuccess {
-                effectSubject.send(.navigateToHome)
-            } else {
-                state.errorMessage = result.error
+                if result.isSuccess {
+                    effectSubject.send(.navigateToHome)
+                } else {
+                    state.errorMessage = result.error
+                }
+            } catch {
+                state.isLoading = false
+                state.errorMessage = error.localizedDescription
             }
         }
     }

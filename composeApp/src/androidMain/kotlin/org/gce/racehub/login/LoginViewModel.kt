@@ -9,23 +9,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.gce.racehub.auth.data.repository.AuthRepositoryImpl
 import org.gce.racehub.auth.domain.usecase.LoginUseCase
 
-/**
- * ViewModel for the Login screen following the MVI pattern.
- *
- * - Exposes [state] as an immutable [StateFlow] the View observes.
- * - Accepts user actions via [onIntent] and processes them into state mutations.
- * - Emits one-time navigation/side-effect events through [effect].
- *
- * The ViewModel is the single source of truth; the View is passive and never
- * holds any business logic.
- */
-class LoginViewModel : ViewModel() {
-
-    /** Use case that validates credentials and delegates to the repository. */
-    private val loginUseCase = LoginUseCase(AuthRepositoryImpl())
+class LoginViewModel(private val loginUseCase: LoginUseCase) : ViewModel() {
 
     private val _state = MutableStateFlow(LoginState())
 

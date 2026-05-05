@@ -28,4 +28,7 @@ sealed class SignUpIntent {
 
     /** Submits the form to the sign-up use case. */
     data object SignUp : SignUpIntent()
+
+    /** Clears the active error message without changing any other state. */
+    data object DismissError : SignUpIntent()
 }

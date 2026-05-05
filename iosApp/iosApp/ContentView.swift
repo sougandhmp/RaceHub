@@ -1,9 +1,14 @@
 import SwiftUI
 
+/// Top-level navigation destinations.
 private enum Screen {
     case login, signUp, home
 }
 
+/// Root view. Owns navigation state and routes to the correct screen.
+///
+/// Navigation is kept intentionally simple (enum + switch) here.
+/// Replace with `NavigationStack` + a router when the app grows.
 struct ContentView: View {
 
     @State private var screen: Screen = .login
@@ -12,27 +17,16 @@ struct ContentView: View {
         switch screen {
         case .login:
             LoginView(
-                onLoginSuccess: { screen = .home },
+                onLoginSuccess:    { screen = .home   },
                 onNavigateToSignUp: { screen = .signUp }
             )
         case .signUp:
             SignUpView(
-                onSignUpSuccess: { screen = .home },
-                onNavigateToLogin: { screen = .login }
+                onSignUpSuccess:    { screen = .home  },
+                onNavigateToLogin: { screen = .login  }
             )
         case .home:
             HomeView()
-        }
-    }
-}
-
-struct HomeView: View {
-    var body: some View {
-        ZStack {
-            Color(hex: "0A0A0A").ignoresSafeArea()
-            Text("Welcome to RaceHub!")
-                .font(.title2.bold())
-                .foregroundColor(Color(hex: "E63946"))
         }
     }
 }

@@ -21,7 +21,7 @@ interface AuthRepository {
      * @return [AuthResult.success] with the user profile, or
      *         [AuthResult.failure] with an error message.
      */
-    fun login(email: String, password: String): AuthResult
+    suspend fun login(email: String, password: String): AuthResult
 
     /**
      * Creates a new user account.
@@ -32,5 +32,5 @@ interface AuthRepository {
      * @return [AuthResult.success] with the new user profile, or
      *         [AuthResult.failure] with an error message.
      */
-    fun signUp(name: String, email: String, password: String): AuthResult
+    suspend fun signUp(name: String, email: String, password: String): AuthResult
 }

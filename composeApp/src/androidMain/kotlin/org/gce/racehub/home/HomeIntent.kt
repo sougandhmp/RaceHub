@@ -16,4 +16,7 @@ sealed class HomeIntent {
 
     /** User triggered a pull-to-refresh or tapped a retry button. */
     data object Refresh : HomeIntent()
+
+    /** Clears the active error message without changing any other state. */
+    data object DismissError : HomeIntent()
 }

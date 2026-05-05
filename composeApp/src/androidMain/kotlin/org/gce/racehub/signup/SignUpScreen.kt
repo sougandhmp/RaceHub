@@ -41,7 +41,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import org.koin.androidx.compose.koinViewModel
 
 private val RacingRed = Color(0xFFE63946)
 private val DarkBg = Color(0xFF0A0A0A)
@@ -52,7 +52,7 @@ private val DimBorder = Color(0xFF444444)
 
 @Composable
 fun SignUpScreen(
-    viewModel: SignUpViewModel = viewModel(),
+    viewModel: SignUpViewModel = koinViewModel(),
     onSignUpSuccess: () -> Unit,
     onNavigateToLogin: () -> Unit
 ) {

@@ -29,7 +29,9 @@ final class LoginViewModel: ObservableObject {
     private let loginUseCase: LoginUseCase
 
     init() {
-        loginUseCase = LoginUseCase(authRepository: AuthRepositoryImpl())
+        // Use dependency injection to get the network repository
+        // Koin is already initialized in iOSApp.swift with the correct base URL
+        loginUseCase = AuthDependencyProvider.companion.shared.createLoginUseCase()
     }
 
     /// Entry point for all View interactions.
@@ -61,13 +63,18 @@ final class LoginViewModel: ObservableObject {
         state.errorMessage = nil
 
         Task {
-            let result = loginUseCase.execute(email: state.email, password: state.password)
-            state.isLoading = false
+            do {
+                let result = try await loginUseCase.execute(email: state.email, password: state.password)
+                state.isLoading = false
 
-            if result.isSuccess {
-                effectSubject.send(.navigateToHome)
-            } else {
-                state.errorMessage = result.error
+                if result.isSuccess {
+                    effectSubject.send(.navigateToHome)
+                } else {
+                    state.errorMessage = result.error
+                }
+            } catch {
+                state.isLoading = false
+                state.errorMessage = error.localizedDescription
             }
         }
     }

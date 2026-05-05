@@ -39,7 +39,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import org.koin.androidx.compose.koinViewModel
 
 private val RacingRed = Color(0xFFE63946)
 private val DarkBg = Color(0xFF0A0A0A)
@@ -50,7 +50,7 @@ private val DimBorder = Color(0xFF444444)
 
 @Composable
 fun LoginScreen(
-    viewModel: LoginViewModel = viewModel(),
+    viewModel: LoginViewModel = koinViewModel(),
     onLoginSuccess: () -> Unit,
     onNavigateToSignUp: () -> Unit
 ) {
@@ -194,16 +194,6 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            TextButton(onClick = {}) {
-                Text(
-                    text = "Forgot Password?",
-                    color = MutedGray,
-                    fontSize = 14.sp
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = "Don't have an account?",
@@ -220,13 +210,6 @@ fun LoginScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Text(
-                text = "Use driver@racehub.com / race123",
-                color = MutedGray.copy(alpha = 0.5f),
-                style = MaterialTheme.typography.labelSmall
-            )
         }
     }
 }

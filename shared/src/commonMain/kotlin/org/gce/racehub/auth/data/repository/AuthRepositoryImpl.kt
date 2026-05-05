@@ -20,7 +20,7 @@ class AuthRepositoryImpl : AuthRepository {
      * Accepts a single hard-coded credential pair; rejects everything else.
      * In production this would make an authenticated HTTP request.
      */
-    override fun login(email: String, password: String): AuthResult {
+    override suspend fun login(email: String, password: String): AuthResult {
         return if (email == "driver@racehub.com" && password == "race123") {
             AuthResult.success(User(id = "1", email = email, name = "Race Driver"))
         } else {
@@ -32,7 +32,7 @@ class AuthRepositoryImpl : AuthRepository {
      * Always succeeds for any validated input.
      * In production this would POST to a registration endpoint.
      */
-    override fun signUp(name: String, email: String, password: String): AuthResult {
+    override suspend fun signUp(name: String, email: String, password: String): AuthResult {
         return AuthResult.success(User(id = "2", email = email, name = name))
     }
 }

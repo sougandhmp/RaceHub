@@ -22,7 +22,7 @@ class LoginUseCase(private val authRepository: AuthRepository) {
      * @return [AuthResult] with the authenticated [User] on success, or a
      *         human-readable error message on failure.
      */
-    fun execute(email: String, password: String): AuthResult {
+    suspend fun execute(email: String, password: String): AuthResult {
         if (email.isBlank() || password.isBlank()) {
             return AuthResult.failure("Email and password cannot be empty")
         }
