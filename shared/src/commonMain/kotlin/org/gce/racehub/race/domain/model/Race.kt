@@ -29,6 +29,9 @@ data class Race(
     /** Position in the season calendar (1-indexed). */
     val round: Int,
 
+    /** Days remaining until the race starts. Null for completed races. */
+    val daysRemaining: Int? = null,
+
     /** True once the race has been run; false for future events. */
     val isCompleted: Boolean
 )

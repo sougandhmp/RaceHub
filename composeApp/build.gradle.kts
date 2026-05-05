@@ -19,7 +19,10 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.koin.android)
+            implementation(libs.koin.compose)
             implementation(libs.koin.androidx.compose)
+            implementation(libs.koinViewmodelCompose)
+            implementation(libs.koinViewmodelCore)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -30,6 +33,7 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation(libs.compose.material.icons.extended)
             implementation(projects.shared)
         }
         commonTest.dependencies {

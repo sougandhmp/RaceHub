@@ -23,6 +23,7 @@ actual object KoinInitializer {
             modules(
                 createProductionAuthModule(baseUrl),
                 raceModule,
+                platformModule,
                 *additionalModules
             )
         }
@@ -38,6 +39,7 @@ actual object KoinInitializer {
             modules(
                 org.gce.racehub.auth.di.fakeAuthModule,
                 raceModule,
+                platformModule,
                 *additionalModules
             )
         }

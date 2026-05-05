@@ -66,15 +66,21 @@ final class HomeViewModel: ObservableObject {
             }
 
             // Build Swift [DriverStanding] array the same way.
-            var standings: [DriverStanding] = []
-            let standingCount = Int(repository.getStandingCount())
-            for i in 0..<standingCount {
-                standings.append(repository.getStanding(index: Int32(i)))
+            var driverStandings: [DriverStanding] = []
+            let driverCount = Int(repository.getStandingCount())
+            for i in 0..<driverCount {
+                driverStandings.append(repository.getStanding(index: Int32(i)))
             }
+
+            // Fetch additional data
+            let constructorStandings = try await repository.getConstructorStandings()
+            let trendingThreads = try await repository.getTrendingThreads()
 
             state.isLoading = false
             state.raceSchedule = races
-            state.driverStandings = standings
+            state.driverStandings = driverStandings
+            state.constructorStandings = constructorStandings
+            state.trendingThreads = trendingThreads
         }
     }
 }

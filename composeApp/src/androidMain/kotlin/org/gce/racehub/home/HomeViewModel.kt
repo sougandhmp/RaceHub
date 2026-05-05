@@ -9,12 +9,16 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.gce.racehub.race.domain.usecase.GetConstructorStandingsUseCase
 import org.gce.racehub.race.domain.usecase.GetDriverStandingsUseCase
 import org.gce.racehub.race.domain.usecase.GetRaceScheduleUseCase
+import org.gce.racehub.race.domain.usecase.GetTrendingThreadsUseCase
 
 class HomeViewModel(
     private val getRaceScheduleUseCase: GetRaceScheduleUseCase,
-    private val getDriverStandingsUseCase: GetDriverStandingsUseCase
+    private val getDriverStandingsUseCase: GetDriverStandingsUseCase,
+    private val getConstructorStandingsUseCase: GetConstructorStandingsUseCase,
+    private val getTrendingThreadsUseCase: GetTrendingThreadsUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeState())
@@ -46,11 +50,15 @@ class HomeViewModel(
             try {
                 val schedule = getRaceScheduleUseCase.execute()
                 val standings = getDriverStandingsUseCase.execute()
+                val constructors = getConstructorStandingsUseCase.execute()
+                val threads = getTrendingThreadsUseCase.execute()
                 _state.update {
                     it.copy(
                         isLoading = false,
                         raceSchedule = schedule,
-                        driverStandings = standings
+                        driverStandings = standings,
+                        constructorStandings = constructors,
+                        trendingThreads = threads
                     )
                 }
             } catch (e: Exception) {

@@ -17,5 +17,5 @@ class GetRaceScheduleUseCase(private val repository: HomeRepository) {
      * @return The ordered list of [Race] events for the current season,
      *         completed events first, then upcoming in chronological order.
      */
-    fun execute(): List<Race> = repository.getRaceSchedule()
+    suspend fun execute(): List<Race> = repository.getRaceSchedule()
 }

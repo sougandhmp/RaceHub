@@ -1,0 +1,76 @@
+CREATE TABLE RaceEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    circuit TEXT NOT NULL,
+    country TEXT NOT NULL,
+    countryFlag TEXT NOT NULL,
+    date TEXT NOT NULL,
+    round INTEGER NOT NULL,
+    isCompleted INTEGER NOT NULL DEFAULT 0,
+    daysRemaining INTEGER
+);
+
+CREATE TABLE DriverStandingEntity (
+    position INTEGER NOT NULL PRIMARY KEY,
+    driverName TEXT NOT NULL,
+    team TEXT NOT NULL,
+    points INTEGER NOT NULL,
+    wins INTEGER NOT NULL
+);
+
+CREATE TABLE ConstructorStandingEntity (
+    position INTEGER NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    points INTEGER NOT NULL,
+    wins INTEGER NOT NULL
+);
+
+CREATE TABLE TrendingThreadEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    title TEXT NOT NULL,
+    likes INTEGER NOT NULL
+);
+
+-- Race Queries
+insertRace:
+INSERT OR REPLACE INTO RaceEntity(id, name, circuit, country, countryFlag, date, round, isCompleted, daysRemaining)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+getAllRaces:
+SELECT * FROM RaceEntity;
+
+deleteAllRaces:
+DELETE FROM RaceEntity;
+
+-- Driver Standing Queries
+insertDriverStanding:
+INSERT OR REPLACE INTO DriverStandingEntity(position, driverName, team, points, wins)
+VALUES (?, ?, ?, ?, ?);
+
+getAllDriverStandings:
+SELECT * FROM DriverStandingEntity ORDER BY position ASC;
+
+deleteAllDriverStandings:
+DELETE FROM DriverStandingEntity;
+
+-- Constructor Standing Queries
+insertConstructorStanding:
+INSERT OR REPLACE INTO ConstructorStandingEntity(position, name, points, wins)
+VALUES (?, ?, ?, ?);
+
+getAllConstructorStandings:
+SELECT * FROM ConstructorStandingEntity ORDER BY position ASC;
+
+deleteAllConstructorStandings:
+DELETE FROM ConstructorStandingEntity;
+
+-- Trending Thread Queries
+insertTrendingThread:
+INSERT OR REPLACE INTO TrendingThreadEntity(id, title, likes)
+VALUES (?, ?, ?);
+
+getAllTrendingThreads:
+SELECT * FROM TrendingThreadEntity;
+
+deleteAllTrendingThreads:
+DELETE FROM TrendingThreadEntity;

@@ -73,28 +73,3 @@ fun createTestAuthModule(baseUrl: String = "https://test.example.com"): Module =
  */
 val fakeAuthModule = createTestAuthModule()
 
-/**
- * Example of how to create a module with custom configuration.
- * Uncomment and modify as needed:
- */
-/*
-// Custom auth module with specific configuration
-val customAuthModule = module {
-    // Custom HTTP client configuration
-    single(named("custom")) {
-        HttpClientFactory.create("https://custom-api.example.com").apply {
-            // Add custom configuration here
-        }
-    }
-
-    // Custom auth service
-    single(named("custom")) {
-        AuthService(get(named("custom")), "https://custom-api.example.com")
-    }
-
-    // Custom repository
-    single<AuthRepository>(named("custom")) {
-        AuthRepositoryNetworkImpl(get(named("custom")))
-    }
-}
-*/

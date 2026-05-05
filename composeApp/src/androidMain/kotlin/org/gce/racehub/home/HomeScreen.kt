@@ -6,376 +6,760 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.koin.androidx.compose.koinViewModel
+import org.gce.racehub.auth.di.createProductionAuthModule
+import org.gce.racehub.di.appModule
+import org.gce.racehub.race.di.raceModule
+import org.gce.racehub.race.domain.model.ConstructorStanding
 import org.gce.racehub.race.domain.model.DriverStanding
 import org.gce.racehub.race.domain.model.Race
+import org.gce.racehub.race.domain.model.TrendingThread
+import org.koin.compose.KoinApplication
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.dsl.koinConfiguration
 
 // ── Palette ─────────────────────────────────────────────────────────────────
 
-private val RacingRed  = Color(0xFFE63946)
-private val DarkBg     = Color(0xFF0A0A0A)
-private val DarkBlue   = Color(0xFF1A1A2E)
-private val CardBg     = Color(0xFF161625)
-private val CardBorder = Color(0xFF2A2A3E)
-private val MutedGray  = Color(0xFF8D99AE)
-private val Gold       = Color(0xFFFFD700)
-private val Silver     = Color(0xFFC0C0C0)
-private val Bronze     = Color(0xFFCD7F32)
-private val GreenDone  = Color(0xFF2ECC71)
+private val RacingRed = Color(0xFFE63946)
+private val DarkBg = Color(0xFF0A0A0A)
+private val CardBg = Color(0xFF161616)
+private val CardBorder = Color(0xFF262626)
+private val MutedGray = Color(0xFF8E8E93)
+private val TeamGreen = Color(0xFF00D2BE)
+private val TeamOrange = Color(0xFFFF8700)
+private val TeamBlue = Color(0xFF0600EF)
 
 // ── Entry point ──────────────────────────────────────────────────────────────
 
-/**
- * Root composable for the Home screen.
- * Observes [HomeViewModel.state] and delegates rendering to tab-specific
- * sub-composables based on [HomeState.selectedTab].
- */
 @Composable
-fun HomeScreen(viewModel: HomeViewModel = koinViewModel()) {
+fun HomeScreen(
+    viewModel: HomeViewModel = koinViewModel(),
+    onViewAllSchedule: () -> Unit,
+    onViewAllStandings: () -> Unit
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(DarkBg, DarkBlue, Color(0xFF16213E))
-                )
+    Scaffold(
+        topBar = { HomeHeader() },
+        bottomBar = {
+            HomeBottomNavigation(
+                selectedTab = state.selectedTab,
+                onTabSelected = { viewModel.onIntent(HomeIntent.TabSelected(it)) }
             )
-    ) {
-        HomeHeader()
+        },
+        containerColor = DarkBg
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            if (state.isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = RacingRed
+                )
+            } else {
+                when (state.selectedTab) {
+                    HomeTab.Race -> RaceTabContent(
+                        state = state,
+                        onViewAllSchedule = onViewAllSchedule,
+                        onViewAllStandings = onViewAllStandings
+                    )
 
-        TabSwitcher(
-            selectedTab = state.selectedTab,
-            onTabSelected = { viewModel.onIntent(HomeIntent.TabSelected(it)) }
-        )
-
-        if (state.isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = RacingRed, strokeWidth = 3.dp)
-            }
-        } else {
-            when (state.selectedTab) {
-                HomeTab.Schedule  -> RaceScheduleTab(races = state.raceSchedule)
-                HomeTab.Standings -> DriverStandingsTab(standings = state.driverStandings)
+                    HomeTab.Forum -> PlaceholderScreen("Forum")
+                    HomeTab.Profile -> PlaceholderScreen("Profile")
+                }
             }
         }
     }
 }
-
-// ── Header ───────────────────────────────────────────────────────────────────
 
 @Composable
 private fun HomeHeader() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(DarkBg)
             .statusBarsPadding()
-            .padding(horizontal = 20.dp, vertical = 16.dp),
+            .padding(horizontal = 24.dp, vertical = 20.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = "🏎️", fontSize = 28.sp)
-        Spacer(modifier = Modifier.width(10.dp))
-        Column {
-            Text(
-                text = "RaceHub",
-                color = RacingRed,
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 20.sp
-            )
-            Text(
-                text = "2025 Season",
-                color = MutedGray,
-                fontSize = 11.sp
+        Text(
+            text = "Race Hub",
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            fontSize = 32.sp
+        )
+        IconButton(onClick = { }) {
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .background(Color.White, CircleShape)
             )
         }
     }
 }
 
-// ── Tab switcher ─────────────────────────────────────────────────────────────
-
 @Composable
-private fun TabSwitcher(selectedTab: HomeTab, onTabSelected: (HomeTab) -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(DarkBg)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+private fun HomeBottomNavigation(
+    selectedTab: HomeTab,
+    onTabSelected: (HomeTab) -> Unit
+) {
+    NavigationBar(
+        containerColor = Color(0xFF121212),
+        tonalElevation = 0.dp,
+        windowInsets = WindowInsets.navigationBars
     ) {
         HomeTab.entries.forEach { tab ->
             val isSelected = tab == selectedTab
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(if (isSelected) RacingRed else CardBg)
-                    .border(
-                        width = 1.dp,
-                        color = if (isSelected) RacingRed else CardBorder,
-                        shape = RoundedCornerShape(8.dp)
+
+            NavigationBarItem(
+                selected = isSelected,
+                onClick = { onTabSelected(tab) },
+                icon = {
+                    Box(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .background(if (isSelected) Color.White else MutedGray, CircleShape)
                     )
-                    .clickable { onTabSelected(tab) }
-                    .padding(vertical = 10.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = tab.name,
-                    color = if (isSelected) Color.White else MutedGray,
-                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                    fontSize = 14.sp
+                },
+                label = {
+                    Text(
+                        text = tab.name,
+                        fontSize = 12.sp,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                    )
+                },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = Color.White,
+                    selectedTextColor = Color.White,
+                    indicatorColor = Color(0xFF2C2C2C),
+                    unselectedIconColor = MutedGray,
+                    unselectedTextColor = MutedGray
                 )
-            }
+            )
         }
     }
 }
 
-// ── Schedule tab ─────────────────────────────────────────────────────────────
-
-/** Renders the full race calendar as a scrollable list of [RaceCard]s. */
 @Composable
-private fun RaceScheduleTab(races: List<Race>) {
-    // The first non-completed race is highlighted as "NEXT RACE".
-    val nextRaceId = races.firstOrNull { !it.isCompleted }?.id
-
+private fun RaceTabContent(
+    state: HomeState,
+    onViewAllSchedule: () -> Unit,
+    onViewAllStandings: () -> Unit
+) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+            .padding(horizontal = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        item { Spacer(modifier = Modifier.height(4.dp)) }
-        items(races, key = { it.id }) { race ->
-            RaceCard(race = race, isNextRace = race.id == nextRaceId)
+        item {
+            NextRaceSection(
+                race = state.raceSchedule.firstOrNull { !it.isCompleted },
+                onViewAll = onViewAllSchedule
+            )
+        }
+        item {
+            StandingsTabSection(
+                drivers = state.driverStandings.take(5),
+                constructors = state.constructorStandings.take(5),
+                onViewAll = onViewAllStandings
+            )
+        }
+        item {
+            LatestResultsSection(
+                results = state.raceSchedule.filter { it.isCompleted }.takeLast(3).reversed()
+            )
+        }
+        item {
+            LatestThreadSection(thread = state.trendingThreads.firstOrNull())
         }
         item { Spacer(modifier = Modifier.height(16.dp)) }
     }
 }
 
-/**
- * Card representing a single race event.
- *
- * @param race       The race data to display.
- * @param isNextRace When true a red "NEXT RACE" badge is shown and the card
- *                   gets a red border to draw the user's eye.
- */
 @Composable
-private fun RaceCard(race: Race, isNextRace: Boolean) {
-    val borderColor = when {
-        isNextRace      -> RacingRed
-        race.isCompleted -> CardBorder
-        else             -> CardBorder
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(CardBg)
-            .border(width = 1.dp, color = borderColor, shape = RoundedCornerShape(12.dp))
-            .padding(16.dp)
-    ) {
-        // Top row: flag + round + status badge
+private fun NextRaceSection(race: Race?, onViewAll: () -> Unit) {
+    Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Text(
+                text = "NEXT RACE",
+                color = MutedGray,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = 0.5.sp
+            )
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = race.countryFlag, fontSize = 22.sp)
-                Spacer(modifier = Modifier.width(8.dp))
+                race?.daysRemaining?.let { days ->
+                    Text(
+                        text = "R${race.round} · $days DAYS",
+                        color = RacingRed,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(end = 12.dp)
+                    )
+                }
+                TextButton(
+                    onClick = onViewAll,
+                    contentPadding = PaddingValues(0.dp),
+                    modifier = Modifier.heightIn(min = 24.dp)
+                ) {
+                    Text(
+                        text = "VIEW ALL",
+                        color = RacingRed,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(20.dp))
+                .background(CardBg)
+                .border(1.dp, CardBorder, RoundedCornerShape(20.dp))
+                .padding(20.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "ROUND ${race.round}",
-                    color = MutedGray,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium,
-                    letterSpacing = 1.sp
+                    text = race?.name ?: "Canadian GP",
+                    color = Color.White,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.ExtraBold
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = race?.countryFlag ?: "🇨🇦", fontSize = 24.sp)
+            }
+            Text(
+                text = race?.date ?: "Sun May 24 · 8:00 PM UTC · Montreal",
+                color = MutedGray,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+            Row {
+                Text(text = "Forecast ", color = MutedGray, fontSize = 14.sp)
+                Text(text = "22° · 30% rain ", color = Color.White, fontSize = 14.sp)
+                Text(text = "Length ", color = MutedGray, fontSize = 14.sp)
+                Text(text = "4.361 km", color = Color.White, fontSize = 14.sp)
+            }
+        }
+    }
+}
+
+private enum class StandingsTab { Drivers, Teams }
+
+@Composable
+private fun StandingsTabSection(
+    drivers: List<DriverStanding>,
+    constructors: List<ConstructorStanding>,
+    onViewAll: () -> Unit
+) {
+    var selected by rememberSaveable { mutableStateOf(StandingsTab.Drivers) }
+
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = if (selected == StandingsTab.Drivers) "Driver Standings" else "Constructor Standings",
+                color = MutedGray,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            TextButton(
+                onClick = onViewAll,
+                contentPadding = PaddingValues(0.dp),
+                modifier = Modifier.heightIn(min = 24.dp)
+            ) {
+                Text(
+                    text = "VIEW ALL",
+                    color = RacingRed,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
                 )
             }
-            // Status chip
-            when {
-                isNextRace -> StatusChip(label = "NEXT RACE", background = RacingRed)
-                race.isCompleted -> StatusChip(label = "COMPLETED", background = GreenDone.copy(alpha = 0.15f), textColor = GreenDone)
-            }
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Race name
-        Text(
-            text = race.name.uppercase(),
-            color = Color.White,
-            fontWeight = FontWeight.Bold,
-            fontSize = 15.sp,
-            letterSpacing = 0.5.sp
+        StandingsSegmentedControl(
+            selected = selected,
+            onSelected = { selected = it }
         )
+        Spacer(modifier = Modifier.height(12.dp))
+        when (selected) {
+            StandingsTab.Drivers -> DriverStandingsTable(
+                drivers = drivers.ifEmpty {
+                    listOf(
+                        DriverStanding(1, "Kimi Antonelli", "Mercedes", 72, 2),
+                        DriverStanding(2, "George Russell", "Mercedes", 63, 1),
+                        DriverStanding(3, "Charles Leclerc", "Ferrari", 49, 0)
+                    )
+                }
+            )
 
-        Spacer(modifier = Modifier.height(4.dp))
-
-        // Circuit and date
-        Text(text = race.circuit, color = MutedGray, fontSize = 12.sp)
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(text = race.date, color = MutedGray.copy(alpha = 0.7f), fontSize = 11.sp)
-    }
-}
-
-// ── Standings tab ─────────────────────────────────────────────────────────────
-
-/** Renders the championship table as a scrollable list of [DriverStandingCard]s. */
-@Composable
-private fun DriverStandingsTab(standings: List<DriverStanding>) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        item { Spacer(modifier = Modifier.height(4.dp)) }
-        items(standings, key = { it.position }) { standing ->
-            DriverStandingCard(standing = standing)
+            StandingsTab.Teams -> ConstructorStandingsTable(
+                constructors = constructors.ifEmpty {
+                    listOf(
+                        ConstructorStanding(1, "Mercedes", 135, 3),
+                        ConstructorStanding(2, "Ferrari", 90, 0),
+                        ConstructorStanding(3, "McLaren", 46, 0)
+                    )
+                }
+            )
         }
-        item { Spacer(modifier = Modifier.height(16.dp)) }
     }
 }
 
-/** Card representing a single driver's championship position. */
 @Composable
-private fun DriverStandingCard(standing: DriverStanding) {
+private fun StandingsSegmentedControl(
+    selected: StandingsTab,
+    onSelected: (StandingsTab) -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(CardBg)
-            .border(width = 1.dp, color = CardBorder, shape = RoundedCornerShape(12.dp))
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .border(1.dp, CardBorder, RoundedCornerShape(12.dp))
+            .padding(4.dp)
     ) {
-        // Position badge
-        PositionBadge(position = standing.position)
-
-        Spacer(modifier = Modifier.width(14.dp))
-
-        // Driver info
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = standing.driverName.uppercase(),
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 14.sp,
-                letterSpacing = 0.5.sp
-            )
-            Spacer(modifier = Modifier.height(3.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = standing.team, color = MutedGray, fontSize = 12.sp)
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(text = standing.flag, fontSize = 12.sp)
+        StandingsTab.entries.forEach { tab ->
+            val isSelected = tab == selected
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(if (isSelected) RacingRed else Color.Transparent)
+                    .clickable { onSelected(tab) }
+                    .padding(vertical = 10.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = if (tab == StandingsTab.Drivers) "Driver Standings" else "Constructor Standings",
+                    color = if (isSelected) Color.White else MutedGray,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
+    }
+}
 
-        // Points
-        Column(horizontalAlignment = Alignment.End) {
-            Text(
-                text = "${standing.points}",
-                color = Color.White,
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 20.sp
-            )
-            Text(
-                text = "PTS",
-                color = MutedGray,
-                fontSize = 10.sp,
-                letterSpacing = 1.sp
+@Composable
+private fun DriverStandingsTable(drivers: List<DriverStanding>) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(CardBg)
+            .border(1.dp, CardBorder, RoundedCornerShape(16.dp))
+    ) {
+        StandingsTableHeader(columns = listOf("POS", "NAME", "TEAM", "POINTS", "WINS"))
+        drivers.forEachIndexed { index, standing ->
+            StandingsTableRow(
+                cells = listOf(
+                    standing.position.toString(),
+                    standing.driverName,
+                    standing.team,
+                    standing.points.toString(),
+                    standing.wins.toString()
+                ),
+                isAlternate = index % 2 == 1
             )
         }
     }
 }
 
-// ── Reusable small components ─────────────────────────────────────────────────
-
-/**
- * Circular badge showing a championship position.
- * Top-3 positions use gold, silver, and bronze fills respectively.
- */
 @Composable
-private fun PositionBadge(position: Int) {
-    val bgColor = when (position) {
-        1    -> Gold
-        2    -> Silver
-        3    -> Bronze
-        else -> CardBorder
-    }
-    val textColor = when (position) {
-        1, 2, 3 -> Color(0xFF0A0A0A)
-        else    -> MutedGray
-    }
-    Box(
+private fun ConstructorStandingsTable(constructors: List<ConstructorStanding>) {
+    Column(
         modifier = Modifier
-            .size(36.dp)
-            .clip(CircleShape)
-            .background(bgColor),
-        contentAlignment = Alignment.Center
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(CardBg)
+            .border(1.dp, CardBorder, RoundedCornerShape(16.dp))
     ) {
+        StandingsTableHeader(columns = listOf("POS", "TEAM", "POINTS", "WINS"))
+        constructors.forEachIndexed { index, standing ->
+            StandingsTableRow(
+                cells = listOf(
+                    standing.position.toString(),
+                    standing.name,
+                    standing.points.toString(),
+                    standing.wins.toString()
+                ),
+                isAlternate = index % 2 == 1
+            )
+        }
+    }
+}
+
+private val HeaderBg = Color(0xFF2A1116)
+private val RowAltBg = Color(0xFF1B0E11)
+
+@Composable
+private fun StandingsTableHeader(columns: List<String>) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(HeaderBg)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        columns.forEachIndexed { index, label ->
+            Text(
+                text = label,
+                color = MutedGray,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.5.sp,
+                modifier = Modifier.weight(columnWeight(columns.size, index))
+            )
+        }
+    }
+}
+
+@Composable
+private fun StandingsTableRow(cells: List<String>, isAlternate: Boolean) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(if (isAlternate) RowAltBg else Color.Transparent)
+            .padding(horizontal = 12.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        cells.forEachIndexed { index, value ->
+            val isPos = index == 0
+            Text(
+                text = value,
+                color = Color.White,
+                fontSize = 14.sp,
+                fontWeight = if (isPos) FontWeight.Bold else FontWeight.Medium,
+                modifier = Modifier.weight(columnWeight(cells.size, index))
+            )
+        }
+    }
+}
+
+private fun columnWeight(totalColumns: Int, index: Int): Float {
+    // POS narrow, NAME/TEAM wider, numeric columns medium.
+    return when (totalColumns) {
+        5 -> when (index) {
+            0 -> 0.6f; 1 -> 1.6f; 2 -> 1.4f; 3 -> 0.9f; else -> 0.7f
+        }
+
+        4 -> when (index) {
+            0 -> 0.6f; 1 -> 1.8f; 2 -> 0.9f; else -> 0.7f
+        }
+
+        else -> 1f
+    }
+}
+
+@Composable
+internal fun StandingItem(standing: DriverStanding, teamColor: Color) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
+            .clip(RoundedCornerShape(16.dp))
+            .background(CardBg)
+            .border(1.dp, CardBorder, RoundedCornerShape(16.dp)),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxHeight()
+                .width(4.dp)
+                .background(teamColor)
+        )
+        Row(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF262626)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = standing.position.toString(),
+                    color = MutedGray,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = standing.team,
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = standing.driverName,
+                    color = MutedGray,
+                    fontSize = 12.sp
+                )
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = standing.points.toString(),
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.ExtraBold
+                )
+                Text(
+                    text = "PTS",
+                    color = MutedGray,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+
+@Composable
+private fun LatestResultsSection(results: List<Race>) {
+    Column {
         Text(
-            text = "$position",
-            color = textColor,
-            fontWeight = FontWeight.ExtraBold,
-            fontSize = 14.sp
+            text = "Latest Results",
+            color = MutedGray,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+        if (results.isEmpty()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(CardBg)
+                    .border(1.dp, CardBorder, RoundedCornerShape(16.dp))
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = "No completed races yet this season.",
+                    color = MutedGray,
+                    fontSize = 14.sp
+                )
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                results.forEach { race -> LatestResultItem(race) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LatestResultItem(race: Race) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(CardBg)
+            .border(1.dp, CardBorder, RoundedCornerShape(16.dp))
+            .padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "ROUND ${race.round}",
+                color = MutedGray,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "FINAL",
+                color = RacingRed,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .background(RacingRed.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = race.name,
+                color = Color.White,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(text = race.countryFlag, fontSize = 18.sp)
+        }
+        Text(
+            text = race.date,
+            color = MutedGray,
+            fontSize = 14.sp,
+            modifier = Modifier.padding(top = 4.dp)
         )
     }
 }
 
-/**
- * Small pill-shaped status indicator shown on race cards.
- *
- * @param label      Text inside the chip.
- * @param background Fill color of the chip.
- * @param textColor  Text color; defaults to white.
- */
 @Composable
-private fun StatusChip(
-    label: String,
-    background: Color,
-    textColor: Color = Color.White
-) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(4.dp))
-            .background(background)
-            .padding(horizontal = 8.dp, vertical = 3.dp)
-    ) {
-        Text(
-            text = label,
-            color = textColor,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.SemiBold,
-            letterSpacing = 0.5.sp
+private fun LatestThreadSection(thread: TrendingThread?) {
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Latest Thread",
+                color = MutedGray,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = "FORUM",
+                color = RacingRed,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(20.dp))
+                .background(CardBg)
+                .border(1.dp, CardBorder, RoundedCornerShape(20.dp))
+                .padding(16.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(RacingRed),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "RH",
+                        color = Color.White,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Race Hub",
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    text = "PINNED",
+                    color = RacingRed,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .background(RacingRed.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = thread?.title ?: "No threads yet — be the first to post.",
+                color = Color.White,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = thread?.let { "❤️ ${it.likes}" } ?: "❤️ 0",
+                color = MutedGray,
+                fontSize = 12.sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun PlaceholderScreen(title: String) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text(text = title, color = Color.White, fontSize = 24.sp)
+    }
+}
+
+@Composable
+@Preview
+fun HomeScreenPreview() {
+    KoinApplication(configuration = koinConfiguration {
+        modules(
+            createProductionAuthModule("https://api.example.com"),
+            raceModule,
+            appModule
+        )
+    }) {
+        HomeScreen(
+            onViewAllSchedule = {},
+            onViewAllStandings = {}
         )
     }
 }

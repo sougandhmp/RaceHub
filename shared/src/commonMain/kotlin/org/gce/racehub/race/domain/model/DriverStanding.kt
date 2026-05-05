@@ -1,17 +1,18 @@
 package org.gce.racehub.race.domain.model
 
 /**
- * Represents a single row in the Drivers' Championship standings table.
+ * One row in the Drivers' Championship table.
  *
- * Shared between Android and iOS via the KMP `shared` module. All fields
- * are plain primitives or [String] so they bridge cleanly to Swift/Obj-C.
+ * Shape mirrors the GraphQL `DriverStanding` type: `position`, `name`, `team`,
+ * `points`, `wins`. All fields are primitives or [String] so they bridge
+ * cleanly to Swift via the KMP `shared` framework.
  */
 data class DriverStanding(
 
     /** Current championship position (1 = leader). */
     val position: Int,
 
-    /** Driver's full name, e.g. "Max Verstappen". */
+    /** Driver's display name, e.g. "Max Verstappen". */
     val driverName: String,
 
     /** Constructor/team name, e.g. "Red Bull Racing". */
@@ -20,6 +21,6 @@ data class DriverStanding(
     /** Accumulated championship points this season. */
     val points: Int,
 
-    /** Unicode flag emoji for the driver's nationality, e.g. "🇳🇱". */
-    val flag: String
+    /** Race wins this season. */
+    val wins: Int
 )

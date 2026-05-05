@@ -1,18 +1,18 @@
 package org.gce.racehub.home
 
+import org.gce.racehub.race.domain.model.ConstructorStanding
 import org.gce.racehub.race.domain.model.DriverStanding
 import org.gce.racehub.race.domain.model.Race
+import org.gce.racehub.race.domain.model.TrendingThread
 
 /**
  * Identifies which content tab is active on the Home screen.
  * Stored inside [HomeState] and toggled via [HomeIntent.TabSelected].
  */
 enum class HomeTab {
-    /** The race calendar for the current season. */
-    Schedule,
-
-    /** The Drivers' Championship standings table. */
-    Standings
+    Race,
+    Forum,
+    Profile
 }
 
 /**
@@ -29,8 +29,14 @@ data class HomeState(
     /** Championship standings sorted by position. Empty until loaded. */
     val driverStandings: List<DriverStanding> = emptyList(),
 
+    /** Constructor standings sorted by position. Empty until loaded. */
+    val constructorStandings: List<ConstructorStanding> = emptyList(),
+
+    /** Trending forum threads. Empty until loaded. */
+    val trendingThreads: List<TrendingThread> = emptyList(),
+
     /** Which tab the user is currently viewing. */
-    val selectedTab: HomeTab = HomeTab.Schedule,
+    val selectedTab: HomeTab = HomeTab.Race,
 
     /** True while data is being fetched; drives the loading indicator. */
     val isLoading: Boolean = false,

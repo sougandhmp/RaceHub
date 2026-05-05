@@ -1,7 +1,9 @@
 package org.gce.racehub.race.domain.repository
 
+import org.gce.racehub.race.domain.model.ConstructorStanding
 import org.gce.racehub.race.domain.model.DriverStanding
 import org.gce.racehub.race.domain.model.Race
+import org.gce.racehub.race.domain.model.TrendingThread
 
 /**
  * Contract for fetching race and standings data.
@@ -16,10 +18,16 @@ import org.gce.racehub.race.domain.model.Race
 interface HomeRepository {
 
     /** Returns the full race calendar for the current season. */
-    fun getRaceSchedule(): List<Race>
+    suspend fun getRaceSchedule(): List<Race>
 
     /** Returns the current Drivers' Championship standings table. */
-    fun getDriverStandings(): List<DriverStanding>
+    suspend fun getDriverStandings(): List<DriverStanding>
+
+    /** Returns the current Constructors' Championship standings table. */
+    suspend fun getConstructorStandings(): List<ConstructorStanding>
+
+    /** Returns the trending threads from the forum. */
+    suspend fun getTrendingThreads(): List<TrendingThread>
 
     // ── Swift-friendly index-based accessors ─────────────────────────────────
 

@@ -4,11 +4,9 @@ import Shared
 /// Identifies which content tab is active on the Home screen.
 /// Toggled via `HomeIntent.tabSelected`.
 enum HomeTab {
-    /// The race calendar for the current season.
-    case schedule
-
-    /// The Drivers' Championship standings table.
-    case standings
+    case race
+    case forum
+    case profile
 }
 
 /// Immutable snapshot of everything the Home screen needs to render itself.
@@ -23,8 +21,14 @@ struct HomeState {
     /// Championship standings sorted by position. Empty until loaded.
     var driverStandings: [DriverStanding] = []
 
+    /// Constructor standings sorted by position.
+    var constructorStandings: [ConstructorStanding] = []
+
+    /// Trending forum threads.
+    var trendingThreads: [TrendingThread] = []
+
     /// Which tab the user is currently viewing.
-    var selectedTab: HomeTab = .schedule
+    var selectedTab: HomeTab = .race
 
     /// `true` while data is being fetched; drives the loading indicator.
     var isLoading: Bool = false
