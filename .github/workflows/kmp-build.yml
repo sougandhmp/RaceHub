@@ -5,11 +5,12 @@ on:
     branches:
       - develop
     types:
-      - closed
+      - opened
+      - synchronize
+      - reopened
 
 jobs:
   android-build:
-    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
@@ -47,7 +48,6 @@ jobs:
           file: composeApp/build/outputs/apk/debug/composeApp-debug.apk
 
   ios-build:
-    if: github.event.pull_request.merged == true
     runs-on: macos-latest
 
     steps:
