@@ -70,7 +70,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build shared KMP framework
-        run: ./gradlew :shared:assembleXCFramework
+        run: ./gradlew :shared:assembleSharedXCFramework
 
       - name: Install CocoaPods dependencies
         run: |
