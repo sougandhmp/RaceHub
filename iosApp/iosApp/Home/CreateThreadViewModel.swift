@@ -62,7 +62,7 @@ final class CreateThreadViewModel: ObservableObject {
 
         Task {
             do {
-                _ = try await createThreadUseCase.execute(
+                _ = try await createThreadUseCase.invoke(
                     userId: userId,
                     title: titleSnapshot,
                     category: categorySnapshot,

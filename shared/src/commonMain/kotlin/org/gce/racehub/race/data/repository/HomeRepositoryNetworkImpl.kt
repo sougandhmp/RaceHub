@@ -41,7 +41,7 @@ class HomeRepositoryNetworkImpl(
     // GraphQL query to fetch full forum threads with author and comments
     private val threadsQuery = $$"""
         query GetThreads($sort: String, $category: String, $userId: ID) {
-            threads(sort: $sort, category: $category, userId: $userId) {
+            threads(sort: $sort, category: $category) {
                 id
                 title
                 category
@@ -90,6 +90,7 @@ class HomeRepositoryNetworkImpl(
                     id
                     title
                     likes
+                    createdAt
                 }
             }
         }
@@ -106,7 +107,11 @@ class HomeRepositoryNetworkImpl(
                 setBody(GraphQLRequest(dashboardQuery))
             }.body()
 
-            val dashboard = response.data.dashboard
+            val dashboard = response.data?.dashboard
+            if (dashboard == null) {
+                println("Failed to sync dashboard: ${response.errors?.joinToString { it.message } ?: "no data"}")
+                return
+            }
             saveDashboardData(dashboard)
         } catch (e: Exception) {
             println("Failed to sync dashboard: ${e.message}")
@@ -269,7 +274,10 @@ class HomeRepositoryNetworkImpl(
                 )
             }.body()
 
-            response.data.threads.map { dto ->
+            val data = response.data
+                ?: error(response.errors?.joinToString { it.message } ?: "Empty GraphQL response")
+
+            data.threads.map { dto ->
                 Thread(
                     id = dto.id,
                     title = dto.title,
@@ -313,7 +321,8 @@ class HomeRepositoryNetworkImpl(
             )
         }.body()
 
-        val created = response.data.createThread
+        val created = response.data?.createThread
+            ?: error(response.errors?.joinToString { it.message } ?: "Failed to create thread")
         return Thread(
             id = created.id,
             title = created.title,

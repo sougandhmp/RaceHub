@@ -69,7 +69,7 @@ final class LoginViewModel: ObservableObject {
 
         Task {
             do {
-                let result = try await loginUseCase(email: state.email, password: state.password)
+                let result = try await loginUseCase.invoke(email: state.email, password: state.password)
                 state.isLoading = false
 
                 if result.isSuccess {

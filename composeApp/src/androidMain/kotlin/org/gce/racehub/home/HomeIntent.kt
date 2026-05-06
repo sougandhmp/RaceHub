@@ -1,22 +1,11 @@
 package org.gce.racehub.home
 
 /**
- * Every user interaction on the Home screen expressed as an explicit event.
- *
- * The View dispatches intents; [HomeViewModel] is the sole handler.
- * This one-way data flow makes state changes auditable and testable.
+ * Every user interaction on the Home shell expressed as an explicit event.
+ * Tab content interactions are dispatched to the per-tab feature ViewModels.
  */
 sealed class HomeIntent {
 
-    /**
-     * User tapped the Schedule or Standings tab.
-     * @param tab The tab that was selected.
-     */
+    /** User tapped the Race, Forum or Profile tab. */
     data class TabSelected(val tab: HomeTab) : HomeIntent()
-
-    /** User triggered a pull-to-refresh or tapped a retry button. */
-    data object Refresh : HomeIntent()
-
-    /** Clears the active error message without changing any other state. */
-    data object DismissError : HomeIntent()
 }

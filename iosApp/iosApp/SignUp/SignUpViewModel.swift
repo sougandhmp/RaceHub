@@ -68,7 +68,7 @@ final class SignUpViewModel: ObservableObject {
 
         Task {
             do {
-                let result = try await signUpUseCase.execute(
+                let result = try await signUpUseCase.invoke(
                     name: state.name,
                     email: state.email,
                     password: state.password,
