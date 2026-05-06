@@ -38,12 +38,15 @@ jobs:
           name: android-apk
           path: composeApp/build/outputs/apk/debug/*.apk
 
+      - name: Decode Firebase Service Account
+        run: echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" | base64 --decode > ${{ github.workspace }}/firebase-service-account.json
+
       - name: Upload to Firebase App Distribution
         if: success()
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
           appId: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
-          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          serviceCredentialsFile: ${{ github.workspace }}/firebase-service-account.json
           groups: testers
           file: composeApp/build/outputs/apk/debug/composeApp-debug.apk
 
