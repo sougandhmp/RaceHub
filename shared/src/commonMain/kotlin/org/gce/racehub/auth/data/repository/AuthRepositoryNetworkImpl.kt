@@ -62,5 +62,13 @@ class AuthRepositoryNetworkImpl(private val authService: AuthService) : AuthRepo
         // TODO: Implement sign-up API call once endpoint is available
         return AuthResult.failure("Sign-up is not yet implemented")
     }
+
+    override suspend fun logout(token: String): Boolean {
+        return try {
+            authService.logout(token).success
+        } catch (e: Exception) {
+            false
+        }
+    }
 }
 

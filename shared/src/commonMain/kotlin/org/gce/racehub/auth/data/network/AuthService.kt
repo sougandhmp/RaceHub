@@ -2,12 +2,15 @@ package org.gce.racehub.auth.data.network
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import org.gce.racehub.auth.data.dto.LoginRequestDto
 import org.gce.racehub.auth.data.dto.LoginResponseDto
+import org.gce.racehub.auth.data.dto.LogoutResponseDto
 
 /**
  * Network service for authentication API calls.
@@ -32,6 +35,12 @@ class AuthService(private val httpClient: HttpClient, private val baseUrl: Strin
         return httpClient.post("$baseUrl/api/v1/auth/login") {
             contentType(ContentType.Application.Json)
             setBody(request)
+        }.body()
+    }
+
+    suspend fun logout(token: String): LogoutResponseDto {
+        return httpClient.post("$baseUrl/api/v1/auth/logout") {
+            header(HttpHeaders.Authorization, "Bearer $token")
         }.body()
     }
 }

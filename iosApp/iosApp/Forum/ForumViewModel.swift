@@ -28,19 +28,25 @@ final class ForumViewModel: ObservableObject {
         }
     }
 
-    private func loadThreads() {
+    func loadThreads() {
+        Task { await performLoad() }
+    }
+
+    func refresh() async {
+        await performLoad()
+    }
+
+    private func performLoad() async {
         state.isLoading = true
         state.errorMessage = nil
 
-        Task {
-            do {
-                let threads = try await repository.getThreads(sort: "latest", category: nil, userId: nil)
-                state.isLoading = false
-                state.threads = threads
-            } catch {
-                state.isLoading = false
-                state.errorMessage = error.localizedDescription
-            }
+        do {
+            let threads = try await repository.getThreads(sort: "latest", category: nil, userId: nil)
+            state.isLoading = false
+            state.threads = threads
+        } catch {
+            state.isLoading = false
+            state.errorMessage = error.localizedDescription
         }
     }
 }

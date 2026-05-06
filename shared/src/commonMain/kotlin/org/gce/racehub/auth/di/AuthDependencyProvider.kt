@@ -2,6 +2,7 @@ package org.gce.racehub.auth.di
 
 import org.gce.racehub.auth.domain.repository.AuthRepository
 import org.gce.racehub.auth.domain.usecase.LoginUseCase
+import org.gce.racehub.auth.domain.usecase.LogoutUseCase
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -13,25 +14,12 @@ import org.koin.core.component.inject
  */
 class AuthDependencyProvider : KoinComponent {
 
-    /**
-     * Gets the injected AuthRepository instance.
-     * This will be either the network or fake implementation based on Koin configuration.
-     */
     val authRepository: AuthRepository by inject()
+    val logoutUseCase: LogoutUseCase by inject()
 
-    /**
-     * Creates a LoginUseCase with the injected AuthRepository.
-     * This is a convenience method for Swift code that needs a LoginUseCase instance.
-     */
-    fun createLoginUseCase(): LoginUseCase {
-        return LoginUseCase(authRepository)
-    }
+    fun createLoginUseCase(): LoginUseCase = LoginUseCase(authRepository)
 
     companion object {
-        /**
-         * Shared instance for easy access from Swift.
-         * Note: In a real app, you might want to use proper singleton pattern or injection.
-         */
         val shared = AuthDependencyProvider()
     }
 }

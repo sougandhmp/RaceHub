@@ -3,9 +3,11 @@ package org.gce.racehub.race.di
 import org.gce.racehub.db.LocalDataSource
 import org.gce.racehub.race.data.repository.HomeRepositoryNetworkImpl
 import org.gce.racehub.race.domain.repository.HomeRepository
+import org.gce.racehub.race.domain.usecase.AddCommentUseCase
 import org.gce.racehub.race.domain.usecase.CreateThreadUseCase
 import org.gce.racehub.race.domain.usecase.GetConstructorStandingsUseCase
 import org.gce.racehub.race.domain.usecase.GetDriverStandingsUseCase
+import org.gce.racehub.race.domain.usecase.GetMyProfileUseCase
 import org.gce.racehub.race.domain.usecase.GetRaceScheduleUseCase
 import org.gce.racehub.race.domain.usecase.GetThreadsUseCase
 import org.gce.racehub.race.domain.usecase.GetTrendingThreadsUseCase
@@ -22,6 +24,8 @@ val raceModule = module {
     factory { GetTrendingThreadsUseCase(get()) }
     factory { GetThreadsUseCase(get()) }
     factory { CreateThreadUseCase(get()) }
+    factory { AddCommentUseCase(get()) }
+    factory { GetMyProfileUseCase(get()) }
 }
 
 

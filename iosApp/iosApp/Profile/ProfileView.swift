@@ -13,9 +13,19 @@ struct ProfileView: View {
             if let user = viewModel.state.user {
                 ScrollView {
                     VStack(spacing: 24) {
-                        ProfileHeaderView(user: user)
-                        ProfileStatsView(user: user)
+                        ProfileHeaderView(user: user, state: viewModel.state)
+                        ProfileStatsView(user: user, state: viewModel.state)
                         ProfileDetailsView(user: user)
+                        if !viewModel.state.recentThreadTitles.isEmpty {
+                            ThreadTitleSection(heading: "RECENT POSTS", titles: viewModel.state.recentThreadTitles)
+                        }
+                        if !viewModel.state.savedThreadTitles.isEmpty {
+                            ThreadTitleSection(heading: "SAVED", titles: viewModel.state.savedThreadTitles)
+                        }
+                        if viewModel.state.isLoadingProfile {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: Color(hex: "E63946")))
+                        }
                         if let message = viewModel.state.errorMessage {
                             Text(message)
                                 .font(.system(size: 13))
@@ -29,6 +39,9 @@ struct ProfileView: View {
                     .padding(.horizontal, 24)
                     .padding(.top, 24)
                     .padding(.bottom, 120)
+                }
+                .refreshable {
+                    await viewModel.refresh()
                 }
             } else {
                 Text("Not signed in.")
@@ -47,22 +60,35 @@ struct ProfileView: View {
 
 private struct ProfileHeaderView: View {
     let user: User
+    let state: ProfileState
 
     var body: some View {
-        VStack(spacing: 12) {
+        let initials: String = {
+            if !state.recentThreadTitles.isEmpty || state.savedCount > 0,
+               let av = user.avatar, !av.isEmpty {
+                return String(av.prefix(2)).uppercased()
+            }
+            return avatarInitials(for: user)
+        }()
+        let displayName = state.recentThreadTitles.isEmpty
+            ? user.name
+            : (user.username ?? user.name)
+        let handle = user.username?.isEmpty == false ? user.username : nil
+
+        return VStack(spacing: 12) {
             ZStack {
                 Circle().fill(Color(hex: "E63946"))
-                Text(avatarInitials(for: user))
+                Text(initials)
                     .font(.system(size: 32, weight: .bold))
                     .foregroundColor(.white)
             }
             .frame(width: 96, height: 96)
 
-            Text(user.name)
+            Text(displayName)
                 .font(.system(size: 24, weight: .bold))
                 .foregroundColor(.white)
 
-            if let handle = user.username, !handle.isEmpty {
+            if let handle = handle {
                 Text("@\(handle)")
                     .font(.system(size: 14))
                     .foregroundColor(Color(hex: "8E8E93"))
@@ -84,12 +110,13 @@ private struct ProfileHeaderView: View {
 
 private struct ProfileStatsView: View {
     let user: User
+    let state: ProfileState
 
     var body: some View {
         HStack {
-            StatCell(label: "POSTS", value: "\(user.postsCount)")
+            StatCell(label: "POSTS", value: "\(state.postsCount > 0 ? state.postsCount : Int(user.postsCount))")
             Spacer()
-            StatCell(label: "JOINED", value: formatJoined(user.joinedAt))
+            StatCell(label: "SAVED", value: state.isLoadingProfile ? "…" : "\(state.savedCount)")
             Spacer()
             StatCell(label: "COUNTRY", value: user.country?.uppercased() ?? "—")
         }
@@ -123,6 +150,34 @@ private struct StatCell: View {
     }
 }
 
+private struct ThreadTitleSection: View {
+    let heading: String
+    let titles: [String]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(heading)
+                .font(.system(size: 10, weight: .bold))
+                .kerning(1)
+                .foregroundColor(Color(hex: "8E8E93"))
+            ForEach(titles, id: \.self) { title in
+                Text(title)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white)
+                    .lineLimit(2)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(hex: "161616"))
+        .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color(hex: "262626"), lineWidth: 1)
+        )
+    }
+}
+
 private struct ProfileDetailsView: View {
     let user: User
 
@@ -131,6 +186,9 @@ private struct ProfileDetailsView: View {
             DetailRow(label: "Email", value: user.email)
             if let username = user.username, !username.isEmpty {
                 DetailRow(label: "Username", value: username)
+            }
+            if let joined = user.joinedAt, !joined.isEmpty {
+                DetailRow(label: "Joined", value: formatJoined(joined))
             }
         }
         .padding(16)

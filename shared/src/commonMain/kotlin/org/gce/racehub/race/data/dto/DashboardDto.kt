@@ -158,3 +158,60 @@ data class CreatedThreadDto(
     val title: String,
     val createdAt: String
 )
+
+@Serializable
+data class GraphQLAddCommentRequest(
+    val query: String,
+    val variables: AddCommentVariables
+)
+
+@Serializable
+data class AddCommentVariables(
+    val userId: String,
+    val threadId: String,
+    val content: String
+)
+
+@Serializable
+data class AddCommentData(
+    val addComment: AddedCommentDto
+)
+
+@Serializable
+data class AddedCommentDto(
+    val id: String,
+    val content: String,
+    val createdAt: String
+)
+
+@Serializable
+data class GraphQLProfileRequest(
+    val query: String,
+    val variables: ProfileVariables
+)
+
+@Serializable
+data class ProfileVariables(
+    val userId: String
+)
+
+@Serializable
+data class ProfileData(
+    val me: ProfileDto
+)
+
+@Serializable
+data class ProfileDto(
+    val username: String,
+    val email: String,
+    val avatar: String,
+    val postsCount: Int,
+    val savedCount: Int,
+    val recentThreads: List<ProfileThreadDto>,
+    val savedThreads: List<ProfileThreadDto>
+)
+
+@Serializable
+data class ProfileThreadDto(
+    val title: String
+)

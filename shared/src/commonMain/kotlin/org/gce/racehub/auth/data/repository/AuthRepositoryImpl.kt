@@ -40,4 +40,6 @@ class AuthRepositoryImpl : AuthRepository {
     override suspend fun signUp(name: String, email: String, password: String): AuthResult {
         return AuthResult.success(User(id = "2", email = email, name = name))
     }
+
+    override suspend fun logout(token: String): Boolean = true
 }

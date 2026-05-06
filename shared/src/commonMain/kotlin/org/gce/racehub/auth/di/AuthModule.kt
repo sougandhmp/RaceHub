@@ -7,6 +7,7 @@ import org.gce.racehub.auth.data.repository.AuthRepositoryNetworkImpl
 import org.gce.racehub.auth.domain.repository.AuthRepository
 import org.gce.racehub.auth.domain.session.UserSession
 import org.gce.racehub.auth.domain.usecase.LoginUseCase
+import org.gce.racehub.auth.domain.usecase.LogoutUseCase
 import org.gce.racehub.auth.domain.usecase.SignUpUseCase
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -46,11 +47,12 @@ fun createAuthModule(baseUrl: String, useFakeRepository: Boolean = false): Modul
         }
     }
 
-    // Process-wide holder for the currently authenticated user
-    single { UserSession() }
+    // Process-wide holder for the currently authenticated user (backed by SessionStorage)
+    single { UserSession(get()) }
 
     factory { LoginUseCase(get()) }
     factory { SignUpUseCase(get()) }
+    factory { LogoutUseCase(get(), get()) }
 }
 
 /**

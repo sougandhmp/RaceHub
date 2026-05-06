@@ -11,14 +11,13 @@ struct RaceView: View {
     let onViewAllStandings: () -> Void
 
     var body: some View {
-        if viewModel.state.isLoading {
-            ScrollView {
+        ScrollView {
+            if viewModel.state.isLoading && viewModel.state.raceSchedule.isEmpty {
                 ProgressView()
                     .progressViewStyle(CircularProgressViewStyle(tint: Color(hex: "E63946")))
+                    .frame(maxWidth: .infinity)
                     .padding(.top, 40)
-            }
-        } else {
-            ScrollView {
+            } else {
                 VStack(spacing: 24) {
                     NextRaceSection(
                         race: viewModel.state.raceSchedule.first { !$0.isCompleted },
@@ -38,6 +37,9 @@ struct RaceView: View {
                 .padding(.top, 20)
                 .padding(.bottom, 100)
             }
+        }
+        .refreshable {
+            await viewModel.refresh()
         }
     }
 }

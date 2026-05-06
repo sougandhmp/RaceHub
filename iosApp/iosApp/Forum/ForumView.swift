@@ -7,37 +7,43 @@ struct ForumView: View {
 
     @ObservedObject var viewModel: ForumViewModel
     let onCreateThread: () -> Void
+    let onThreadTap: (Shared.Thread) -> Void
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
-            if viewModel.state.isLoading {
-                ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle(tint: Color(hex: "E63946")))
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if viewModel.state.threads.isEmpty {
-                VStack(spacing: 12) {
-                    Spacer()
-                    Text("No threads yet")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
-                    Text("Tap + to start the first conversation.")
-                        .font(.system(size: 14))
-                        .foregroundColor(Color(hex: "8E8E93"))
-                    Spacer()
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(.horizontal, 24)
-            } else {
-                ScrollView {
+            ScrollView {
+                if viewModel.state.isLoading && viewModel.state.threads.isEmpty {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: Color(hex: "E63946")))
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 40)
+                } else if viewModel.state.threads.isEmpty {
+                    VStack(spacing: 12) {
+                        Text("No threads yet")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.white)
+                        Text("Tap + to start the first conversation.")
+                            .font(.system(size: 14))
+                            .foregroundColor(Color(hex: "8E8E93"))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 24)
+                    .padding(.top, 100)
+                } else {
                     VStack(spacing: 12) {
                         ForEach(viewModel.state.threads, id: \.id) { thread in
                             ThreadCard(thread: thread)
+                                .contentShape(Rectangle())
+                                .onTapGesture { onThreadTap(thread) }
                         }
                     }
                     .padding(.horizontal, 24)
                     .padding(.vertical, 16)
                     .padding(.bottom, 100)
                 }
+            }
+            .refreshable {
+                await viewModel.refresh()
             }
 
             Button(action: onCreateThread) {

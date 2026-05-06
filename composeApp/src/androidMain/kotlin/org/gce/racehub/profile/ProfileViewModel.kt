@@ -10,9 +10,13 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.gce.racehub.auth.domain.session.UserSession
+import org.gce.racehub.auth.domain.usecase.LogoutUseCase
+import org.gce.racehub.race.domain.usecase.GetMyProfileUseCase
 
 class ProfileViewModel(
-    private val userSession: UserSession
+    private val userSession: UserSession,
+    private val logoutUseCase: LogoutUseCase,
+    private val getMyProfileUseCase: GetMyProfileUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ProfileState())
@@ -25,26 +29,48 @@ class ProfileViewModel(
         viewModelScope.launch {
             userSession.currentUser.collect { user ->
                 _state.update { it.copy(user = user) }
+                if (user != null) fetchProfile(user.id, user.token)
             }
         }
     }
 
     fun onIntent(intent: ProfileIntent) {
         when (intent) {
-            is ProfileIntent.SignOut ->
-                signOut()
-
+            is ProfileIntent.SignOut -> signOut()
+            is ProfileIntent.RefreshProfile -> {
+                val user = _state.value.user ?: return
+                fetchProfile(user.id, user.token)
+            }
             is ProfileIntent.DismissError ->
                 _state.update { it.copy(errorMessage = null) }
+        }
+    }
+
+    private fun fetchProfile(userId: String, token: String?) {
+        if (token.isNullOrBlank()) return
+        viewModelScope.launch {
+            _state.update { it.copy(isLoadingProfile = true) }
+            try {
+                val profile = getMyProfileUseCase(userId = userId, token = token)
+                _state.update { it.copy(isLoadingProfile = false, profile = profile) }
+            } catch (e: Exception) {
+                _state.update {
+                    it.copy(isLoadingProfile = false, errorMessage = e.message ?: "Failed to load profile.")
+                }
+            }
         }
     }
 
     private fun signOut() {
         viewModelScope.launch {
             _state.update { it.copy(isSigningOut = true, errorMessage = null) }
-            userSession.clear()
-            _state.update { it.copy(isSigningOut = false) }
-            _effect.send(ProfileEffect.SignedOut)
+            val success = logoutUseCase()
+            if (success) {
+                _state.update { it.copy(isSigningOut = false) }
+                _effect.send(ProfileEffect.SignedOut)
+            } else {
+                _state.update { it.copy(isSigningOut = false, errorMessage = "Sign out failed. Please try again.") }
+            }
         }
     }
 }

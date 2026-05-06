@@ -2,6 +2,7 @@ package org.gce.racehub
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -9,9 +10,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
 import org.gce.racehub.auth.di.createProductionAuthModule
+import org.gce.racehub.auth.domain.session.UserSession
 import org.gce.racehub.di.appModule
 import org.gce.racehub.forum.ForumIntent
 import org.gce.racehub.forum.ForumViewModel
+import org.gce.racehub.forum.ThreadDetailScreen
 import org.gce.racehub.home.CreateThreadScreen
 import org.gce.racehub.home.HomeScreen
 import org.gce.racehub.home.ScheduleScreen
@@ -20,13 +23,15 @@ import org.gce.racehub.login.LoginScreen
 import org.gce.racehub.race.RaceIntent
 import org.gce.racehub.race.RaceViewModel
 import org.gce.racehub.race.di.raceModule
+import org.gce.racehub.race.domain.model.Thread
 import org.gce.racehub.signup.SignUpScreen
 import org.koin.compose.KoinApplication
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.dsl.koinConfiguration
 
 /** Top-level navigation destinations for the app. */
-private enum class Screen { Login, SignUp, Home, Schedule, Standings, CreateThread }
+private enum class Screen { Login, SignUp, Home, Schedule, Standings, CreateThread, ThreadDetail }
 
 /**
  * Root composable. Owns the top-level navigation state and routes each
@@ -39,11 +44,20 @@ private enum class Screen { Login, SignUp, Home, Schedule, Standings, CreateThre
 @Composable
 fun App() {
     MaterialTheme {
-        var screen by remember { mutableStateOf(Screen.Login) }
+        val userSession: UserSession = koinInject()
+        var screen by remember { mutableStateOf(if (userSession.currentUser.value != null) Screen.Home else Screen.Login) }
+        var selectedThread by remember { mutableStateOf<Thread?>(null) }
 
         val raceViewModel: RaceViewModel = koinViewModel()
         val forumViewModel: ForumViewModel = koinViewModel()
         val raceState by raceViewModel.state.collectAsState()
+
+        LaunchedEffect(Unit) {
+            if (userSession.currentUser.value != null) {
+                raceViewModel.onIntent(RaceIntent.Refresh)
+                forumViewModel.onIntent(ForumIntent.Refresh)
+            }
+        }
 
         when (screen) {
             Screen.Login -> LoginScreen(
@@ -68,6 +82,10 @@ fun App() {
                 onViewAllSchedule = { screen = Screen.Schedule },
                 onViewAllStandings = { screen = Screen.Standings },
                 onCreateThread = { screen = Screen.CreateThread },
+                onThreadClick = { thread ->
+                    selectedThread = thread
+                    screen = Screen.ThreadDetail
+                },
                 onSignedOut = { screen = Screen.Login }
             )
 
@@ -90,6 +108,18 @@ fun App() {
                     screen = Screen.Home
                 }
             )
+
+            Screen.ThreadDetail -> {
+                val thread = selectedThread
+                if (thread == null) {
+                    screen = Screen.Home
+                } else {
+                    ThreadDetailScreen(
+                        thread = thread,
+                        onBack = { screen = Screen.Home }
+                    )
+                }
+            }
         }
     }
 }

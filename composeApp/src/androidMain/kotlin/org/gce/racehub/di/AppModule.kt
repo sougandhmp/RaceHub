@@ -1,6 +1,7 @@
 package org.gce.racehub.di
 
 import org.gce.racehub.forum.ForumViewModel
+import org.gce.racehub.forum.ThreadDetailViewModel
 import org.gce.racehub.home.CreateThreadViewModel
 import org.gce.racehub.home.HomeViewModel
 import org.gce.racehub.login.LoginViewModel
@@ -16,6 +17,7 @@ val appModule = module {
     viewModelOf(::HomeViewModel)
     viewModelOf(::RaceViewModel)
     viewModelOf(::ForumViewModel)
+    viewModelOf(::ThreadDetailViewModel)
     viewModelOf(::ProfileViewModel)
     viewModelOf(::CreateThreadViewModel)
 }

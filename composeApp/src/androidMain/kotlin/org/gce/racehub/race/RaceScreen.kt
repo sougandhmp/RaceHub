@@ -20,11 +20,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -49,6 +53,7 @@ private val MutedGray = Color(0xFF8E8E93)
 private val HeaderBg = Color(0xFF2A1116)
 private val RowAltBg = Color(0xFF1B0E11)
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RaceScreen(
     viewModel: RaceViewModel = koinViewModel(),
@@ -56,13 +61,27 @@ fun RaceScreen(
     onViewAllStandings: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    var isRefreshing by remember { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxSize().background(DarkBg)) {
-        if (state.isLoading) {
-            CircularProgressIndicator(
-                modifier = Modifier.align(Alignment.Center),
-                color = RacingRed
-            )
+    LaunchedEffect(state.isLoading) {
+        if (!state.isLoading) isRefreshing = false
+    }
+
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = {
+            isRefreshing = true
+            viewModel.onIntent(RaceIntent.Refresh)
+        },
+        modifier = Modifier.fillMaxSize().background(DarkBg)
+    ) {
+        if (state.isLoading && state.raceSchedule.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = RacingRed
+                )
+            }
         } else {
             RaceTabContent(
                 state = state,

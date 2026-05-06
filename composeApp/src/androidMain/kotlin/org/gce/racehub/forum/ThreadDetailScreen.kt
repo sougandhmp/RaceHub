@@ -30,13 +30,16 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.gce.racehub.race.domain.model.Thread
 import org.gce.racehub.race.domain.model.ThreadComment
+import org.koin.compose.viewmodel.koinViewModel
 
 private val DetailRed = Color(0xFFE63946)
 private val DetailDarkBg = Color(0xFF0A0A0A)
@@ -58,17 +62,34 @@ private val DetailMuted = Color(0xFF8E8E93)
 @Composable
 fun ThreadDetailScreen(
     thread: Thread,
-    currentUsername: String?,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    viewModel: ThreadDetailViewModel = koinViewModel()
 ) {
-    var commentInput by remember { mutableStateOf("") }
-    var localComments by remember { mutableStateOf(emptyList<ThreadComment>()) }
+    val state by viewModel.state.collectAsState()
     val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    val allComments = thread.comments + localComments
-    val canSubmit = commentInput.isNotBlank()
+    val allComments = thread.comments + state.postedComments
+
+    LaunchedEffect(state.errorMessage) {
+        val msg = state.errorMessage
+        if (msg != null) {
+            snackbarHostState.showSnackbar(msg)
+            viewModel.onIntent(ThreadDetailIntent.DismissError)
+        }
+    }
 
     Scaffold(
+        snackbarHost = {
+            SnackbarHost(snackbarHostState) { data ->
+                Snackbar(
+                    snackbarData = data,
+                    containerColor = DetailCardBg,
+                    contentColor = Color.White,
+                    actionColor = DetailRed
+                )
+            }
+        },
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -112,17 +133,11 @@ fun ThreadDetailScreen(
         },
         bottomBar = {
             CommentInputBar(
-                value = commentInput,
-                onValueChange = { commentInput = it },
-                canSubmit = canSubmit,
-                onSubmit = {
-                    val author = currentUsername?.takeIf { it.isNotBlank() } ?: "you"
-                    localComments = localComments + ThreadComment(
-                        content = commentInput.trim(),
-                        authorUsername = author
-                    )
-                    commentInput = ""
-                }
+                value = state.commentInput,
+                onValueChange = { viewModel.onIntent(ThreadDetailIntent.CommentInputChanged(it)) },
+                canSubmit = state.canSubmit,
+                isSubmitting = state.isSubmitting,
+                onSubmit = { viewModel.onIntent(ThreadDetailIntent.SubmitComment(thread.id)) }
             )
         },
         containerColor = DetailDarkBg
@@ -267,6 +282,7 @@ private fun CommentInputBar(
     value: String,
     onValueChange: (String) -> Unit,
     canSubmit: Boolean,
+    isSubmitting: Boolean,
     onSubmit: () -> Unit
 ) {
     Row(
@@ -280,6 +296,7 @@ private fun CommentInputBar(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier.weight(1f),
+            enabled = !isSubmitting,
             placeholder = { Text("Add a comment…", color = DetailMuted) },
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = Color.White,

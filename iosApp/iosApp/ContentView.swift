@@ -1,4 +1,5 @@
 import SwiftUI
+import Shared
 
 /// Top-level navigation destinations.
 private enum Screen {
@@ -6,12 +7,14 @@ private enum Screen {
 }
 
 /// Root view. Owns navigation state and routes to the correct screen.
-///
-/// Navigation is kept intentionally simple (enum + switch) here.
-/// Replace with `NavigationStack` + a router when the app grows.
 struct ContentView: View {
 
-    @State private var screen: Screen = .login
+    @State private var screen: Screen
+
+    init() {
+        let hasSession = RaceDependencyProvider.companion.shared.userSession.currentUser.value is User
+        _screen = State(initialValue: hasSession ? .home : .login)
+    }
 
     var body: some View {
         switch screen {

@@ -3,6 +3,7 @@ import Shared
 
 struct ScheduleView: View {
     let schedule: [Race]
+    let latestThread: TrendingThread?
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
@@ -12,7 +13,6 @@ struct ScheduleView: View {
             Color(hex: "0A0A0A").ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Header
                 HStack {
                     Button(action: { dismiss() }) {
                         Image(systemName: "arrow.left")
@@ -33,6 +33,12 @@ struct ScheduleView: View {
 
                 ScrollView {
                     VStack(spacing: 16) {
+                        if let thread = latestThread {
+                            ScheduleLatestThreadCard(thread: thread)
+                            Divider()
+                                .background(Color(hex: "2A2A2A"))
+                                .padding(.vertical, 8)
+                        }
                         ForEach(schedule, id: \.id) { race in
                             RaceRow(race: race, isNextRace: race.id == nextRace?.id)
                         }
@@ -43,6 +49,62 @@ struct ScheduleView: View {
             }
         }
         .navigationBarHidden(true)
+    }
+}
+
+private struct ScheduleLatestThreadCard: View {
+    let thread: TrendingThread
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("LATEST DISCUSSION")
+                    .font(.system(size: 11, weight: .heavy))
+                    .kerning(1)
+                    .foregroundColor(Color(hex: "E10600"))
+                Spacer()
+                Text("TRENDING")
+                    .font(.system(size: 9, weight: .black))
+                    .foregroundColor(Color(hex: "E10600"))
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color(hex: "E10600").opacity(0.1))
+                    .cornerRadius(4)
+            }
+
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(Color(hex: "E10600"))
+                        .frame(width: 28, height: 28)
+                    Text("💬")
+                        .font(.system(size: 14))
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(thread.title)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.white)
+                        .lineLimit(2)
+                    HStack(spacing: 4) {
+                        Text("❤️")
+                            .font(.system(size: 12))
+                        Text("\(Int(thread.likes)) likes")
+                            .font(.system(size: 11))
+                            .foregroundColor(Color(hex: "888888"))
+                    }
+                }
+                Spacer()
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(hex: "1A1A1A"))
+        .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color(hex: "2A2A2A"), lineWidth: 1)
+        )
     }
 }
 

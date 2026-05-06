@@ -27,6 +27,32 @@ class HomeRepositoryNetworkImpl(
     private val localDataSource: LocalDataSource
 ) : HomeRepository {
 
+    // GraphQL query to fetch the signed-in user's profile
+    private val profileQuery = $$"""
+        query GetMyProfile($userId: String) {
+            me(userId: $userId) {
+                username
+                email
+                avatar
+                postsCount
+                savedCount
+                recentThreads { title }
+                savedThreads { title }
+            }
+        }
+    """.trimIndent()
+
+    // GraphQL mutation to add a comment to a forum thread
+    private val addCommentMutation = $$"""
+        mutation AddComment($userId: ID!, $threadId: ID!, $content: String!) {
+            addComment(userId: $userId, threadId: $threadId, content: $content) {
+                id
+                content
+                createdAt
+            }
+        }
+    """.trimIndent()
+
     // GraphQL mutation to create a new forum thread
     private val createThreadMutation = $$"""
         mutation CreateThread($userId: ID!, $input: CreateThreadInput!) {
@@ -335,6 +361,58 @@ class HomeRepositoryNetworkImpl(
             bookmarked = false,
             comments = emptyList()
         )
+    }
+
+    /**
+     * Fetches the signed-in user's profile via GraphQL query.
+     * Sends the auth token as an `Authorization: Bearer` header.
+     */
+    override suspend fun getMyProfile(userId: String, token: String): UserProfile {
+        val response: GraphQLResponse<ProfileData> = httpClient.post("$baseUrl/graphql") {
+            contentType(ContentType.Application.Json)
+            header("Authorization", "Bearer $token")
+            setBody(
+                GraphQLProfileRequest(
+                    query = profileQuery,
+                    variables = ProfileVariables(userId = userId)
+                )
+            )
+        }.body()
+
+        val me = response.data?.me
+            ?: error(response.errors?.joinToString { it.message } ?: "Failed to load profile")
+        return UserProfile(
+            username = me.username,
+            email = me.email,
+            avatar = me.avatar,
+            postsCount = me.postsCount,
+            savedCount = me.savedCount,
+            recentThreadTitles = me.recentThreads.map { it.title },
+            savedThreadTitles = me.savedThreads.map { it.title }
+        )
+    }
+
+    /**
+     * Posts a comment via GraphQL mutation.
+     */
+    override suspend fun addComment(userId: String, threadId: String, content: String): ThreadComment {
+        val response: GraphQLResponse<AddCommentData> = httpClient.post("$baseUrl/graphql") {
+            contentType(ContentType.Application.Json)
+            setBody(
+                GraphQLAddCommentRequest(
+                    query = addCommentMutation,
+                    variables = AddCommentVariables(
+                        userId = userId,
+                        threadId = threadId,
+                        content = content
+                    )
+                )
+            )
+        }.body()
+
+        val added = response.data?.addComment
+            ?: error(response.errors?.joinToString { it.message } ?: "Failed to add comment")
+        return ThreadComment(content = added.content, authorUsername = userId)
     }
 
     /**

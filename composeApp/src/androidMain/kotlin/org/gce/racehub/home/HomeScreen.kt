@@ -38,6 +38,7 @@ import org.gce.racehub.forum.ForumScreen
 import org.gce.racehub.profile.ProfileScreen
 import org.gce.racehub.race.RaceScreen
 import org.gce.racehub.race.di.raceModule
+import org.gce.racehub.race.domain.model.Thread
 import org.koin.compose.KoinApplication
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.dsl.koinConfiguration
@@ -58,6 +59,7 @@ fun HomeScreen(
     onViewAllSchedule: () -> Unit,
     onViewAllStandings: () -> Unit,
     onCreateThread: () -> Unit = {},
+    onThreadClick: (Thread) -> Unit = {},
     onSignedOut: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -83,7 +85,10 @@ fun HomeScreen(
                     onViewAllStandings = onViewAllStandings
                 )
 
-                HomeTab.Forum -> ForumScreen(onCreateThread = onCreateThread)
+                HomeTab.Forum -> ForumScreen(
+                    onCreateThread = onCreateThread,
+                    onThreadClick = onThreadClick
+                )
 
                 HomeTab.Profile -> ProfileScreen(onSignedOut = onSignedOut)
             }

@@ -22,11 +22,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,20 +50,36 @@ private val ForumCardBg = Color(0xFF161616)
 private val ForumCardBorder = Color(0xFF262626)
 private val ForumMuted = Color(0xFF8E8E93)
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ForumScreen(
     viewModel: ForumViewModel = koinViewModel(),
-    onCreateThread: () -> Unit
+    onCreateThread: () -> Unit,
+    onThreadClick: (Thread) -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    var isRefreshing by remember { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxSize().background(ForumDarkBg)) {
+    LaunchedEffect(state.isLoading) {
+        if (!state.isLoading) isRefreshing = false
+    }
+
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = {
+            isRefreshing = true
+            viewModel.onIntent(ForumIntent.Refresh)
+        },
+        modifier = Modifier.fillMaxSize().background(ForumDarkBg)
+    ) {
         when {
-            state.isLoading -> {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center),
-                    color = ForumRed
-                )
+            state.isLoading && state.threads.isEmpty() -> {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center),
+                        color = ForumRed
+                    )
+                }
             }
 
             state.threads.isEmpty() -> {
@@ -88,7 +110,7 @@ fun ForumScreen(
                     contentPadding = PaddingValues(vertical = 16.dp)
                 ) {
                     items(items = state.threads, key = { it.id }) { thread ->
-                        ThreadCard(thread = thread)
+                        ThreadCard(thread = thread, onClick = { onThreadClick(thread) })
                     }
                 }
             }
@@ -108,14 +130,14 @@ fun ForumScreen(
 }
 
 @Composable
-private fun ThreadCard(thread: Thread) {
+private fun ThreadCard(thread: Thread, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(ForumCardBg)
             .border(1.dp, ForumCardBorder, RoundedCornerShape(20.dp))
-            .clickable { /* open thread detail */ }
+            .clickable(onClick = onClick)
             .padding(16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {

@@ -20,10 +20,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.gce.racehub.auth.domain.model.User
+import org.gce.racehub.race.domain.model.UserProfile
 import org.koin.compose.viewmodel.koinViewModel
 
 private val DarkBg = Color(0xFF0A0A0A)
@@ -41,12 +47,18 @@ private val CardBorder = Color(0xFF262626)
 private val MutedGray = Color(0xFF8E8E93)
 private val RacingRed = Color(0xFFE63946)
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel = koinViewModel(),
     onSignedOut: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    var isRefreshing by remember { mutableStateOf(false) }
+
+    LaunchedEffect(state.isLoadingProfile) {
+        if (!state.isLoadingProfile) isRefreshing = false
+    }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
@@ -56,11 +68,19 @@ fun ProfileScreen(
         }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(DarkBg)
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = {
+            isRefreshing = true
+            viewModel.onIntent(ProfileIntent.RefreshProfile)
+        },
+        modifier = Modifier.fillMaxSize()
     ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(DarkBg)
+        ) {
         val user = state.user
         if (user == null) {
             Text(
@@ -77,11 +97,31 @@ fun ProfileScreen(
                     .padding(horizontal = 24.dp, vertical = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                ProfileHeader(user = user)
+                ProfileHeader(user = user, profile = state.profile)
                 Spacer(modifier = Modifier.height(24.dp))
-                ProfileStats(user = user)
+                ProfileStats(user = user, profile = state.profile)
                 Spacer(modifier = Modifier.height(24.dp))
                 ProfileDetails(user = user)
+                state.profile?.let { profile ->
+                    if (profile.recentThreadTitles.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(24.dp))
+                        ThreadTitleSection(
+                            heading = "RECENT POSTS",
+                            titles = profile.recentThreadTitles
+                        )
+                    }
+                    if (profile.savedThreadTitles.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        ThreadTitleSection(
+                            heading = "SAVED",
+                            titles = profile.savedThreadTitles
+                        )
+                    }
+                }
+                if (state.isLoadingProfile) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    CircularProgressIndicator(color = RacingRed, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
+                }
                 state.errorMessage?.let { message ->
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(text = message, color = RacingRed, fontSize = 13.sp)
@@ -94,11 +134,18 @@ fun ProfileScreen(
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
+        }
     }
 }
 
 @Composable
-private fun ProfileHeader(user: User) {
+private fun ProfileHeader(user: User, profile: UserProfile?) {
+    val initials = profile?.avatar?.takeIf { it.isNotBlank() }
+        ?.let { it.take(2).uppercase() }
+        ?: avatarInitials(user)
+    val displayName = profile?.username?.takeIf { it.isNotBlank() } ?: user.name
+    val handle = profile?.username?.takeIf { it.isNotBlank() } ?: user.username
+
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
@@ -108,7 +155,7 @@ private fun ProfileHeader(user: User) {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = avatarInitials(user),
+                text = initials,
                 color = Color.White,
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold
@@ -116,18 +163,14 @@ private fun ProfileHeader(user: User) {
         }
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = user.name,
+            text = displayName,
             color = Color.White,
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold
         )
-        user.username?.takeIf { it.isNotBlank() }?.let { handle ->
+        handle?.takeIf { it.isNotBlank() }?.let { h ->
             Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "@$handle",
-                color = MutedGray,
-                fontSize = 14.sp
-            )
+            Text(text = "@$h", color = MutedGray, fontSize = 14.sp)
         }
         user.role?.takeIf { it.isNotBlank() }?.let { role ->
             Spacer(modifier = Modifier.height(8.dp))
@@ -150,7 +193,7 @@ private fun ProfileHeader(user: User) {
 }
 
 @Composable
-private fun ProfileStats(user: User) {
+private fun ProfileStats(user: User, profile: UserProfile?) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -160,8 +203,8 @@ private fun ProfileStats(user: User) {
             .padding(vertical = 16.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        StatCell(label = "POSTS", value = user.postsCount.toString())
-        StatCell(label = "JOINED", value = formatJoined(user.joinedAt))
+        StatCell(label = "POSTS", value = (profile?.postsCount ?: user.postsCount).toString())
+        StatCell(label = "SAVED", value = profile?.savedCount?.toString() ?: "—")
         StatCell(label = "COUNTRY", value = user.country?.uppercase() ?: "—")
     }
 }
@@ -200,6 +243,41 @@ private fun ProfileDetails(user: User) {
         user.username?.takeIf { it.isNotBlank() }?.let {
             Spacer(modifier = Modifier.height(12.dp))
             DetailRow(label = "Username", value = it)
+        }
+        user.joinedAt?.takeIf { it.isNotBlank() }?.let {
+            Spacer(modifier = Modifier.height(12.dp))
+            DetailRow(label = "Joined", value = formatJoined(it))
+        }
+    }
+}
+
+@Composable
+private fun ThreadTitleSection(heading: String, titles: List<String>) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(CardBg)
+            .border(1.dp, CardBorder, RoundedCornerShape(16.dp))
+            .padding(16.dp)
+    ) {
+        Text(
+            text = heading,
+            color = MutedGray,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.sp
+        )
+        titles.forEachIndexed { index, title ->
+            if (index > 0) Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = title,
+                color = Color.White,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                lineHeight = 20.sp
+            )
         }
     }
 }

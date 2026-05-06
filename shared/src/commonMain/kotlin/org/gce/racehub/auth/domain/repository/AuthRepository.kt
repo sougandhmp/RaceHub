@@ -33,4 +33,12 @@ interface AuthRepository {
      *         [AuthResult.failure] with an error message.
      */
     suspend fun signUp(name: String, email: String, password: String): AuthResult
+
+    /**
+     * Invalidates the session on the server.
+     *
+     * @param token The bearer token issued at login.
+     * @return `true` if the server acknowledged the logout, `false` otherwise.
+     */
+    suspend fun logout(token: String): Boolean
 }

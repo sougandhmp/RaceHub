@@ -14,6 +14,7 @@ struct HomeView: View {
     @StateObject private var raceViewModel = RaceViewModel()
     @StateObject private var forumViewModel = ForumViewModel()
     @State private var path = NavigationPath()
+    @State private var selectedThread: Shared.Thread? = nil
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -33,7 +34,11 @@ struct HomeView: View {
                     case .forum:
                         ForumView(
                             viewModel: forumViewModel,
-                            onCreateThread: { path.append("createThread") }
+                            onCreateThread: { path.append("createThread") },
+                            onThreadTap: { thread in
+                                selectedThread = thread
+                                path.append("threadDetail")
+                            }
                         )
                     case .profile:
                         ProfileView(onSignedOut: onSignedOut)
@@ -46,7 +51,10 @@ struct HomeView: View {
             }
             .navigationDestination(for: String.self) { destination in
                 if destination == "schedule" {
-                    ScheduleView(schedule: raceViewModel.state.raceSchedule)
+                    ScheduleView(
+                        schedule: raceViewModel.state.raceSchedule,
+                        latestThread: raceViewModel.state.trendingThreads.first
+                    )
                 } else if destination == "standings" {
                     StandingsView(
                         drivers: raceViewModel.state.driverStandings,
@@ -56,6 +64,8 @@ struct HomeView: View {
                     CreateThreadView(onThreadCreated: {
                         forumViewModel.send(.refresh)
                     })
+                } else if destination == "threadDetail", let thread = selectedThread {
+                    ThreadDetailView(thread: thread)
                 }
             }
         }
