@@ -6,6 +6,9 @@ package org.gce.racehub.profile
  */
 sealed class ProfileIntent {
 
+    /** User tapped the Sign Out button. */
+    data object SignOut : ProfileIntent()
+
     /** Clears the active error message without changing any other state. */
     data object DismissError : ProfileIntent()
 }

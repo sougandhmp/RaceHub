@@ -67,7 +67,8 @@ fun App() {
             Screen.Home -> HomeScreen(
                 onViewAllSchedule = { screen = Screen.Schedule },
                 onViewAllStandings = { screen = Screen.Standings },
-                onCreateThread = { screen = Screen.CreateThread }
+                onCreateThread = { screen = Screen.CreateThread },
+                onSignedOut = { screen = Screen.Login }
             )
 
             Screen.Schedule -> ScheduleScreen(
