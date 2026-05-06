@@ -1,6 +1,5 @@
 package org.gce.racehub.home
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -11,7 +10,11 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.SportsScore
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -23,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -41,12 +45,20 @@ import org.koin.dsl.koinConfiguration
 private val DarkBg = Color(0xFF0A0A0A)
 private val MutedGray = Color(0xFF8E8E93)
 
+private val HomeTab.icon: ImageVector
+    get() = when (this) {
+        HomeTab.Race -> Icons.Filled.SportsScore
+        HomeTab.Forum -> Icons.AutoMirrored.Filled.Chat
+        HomeTab.Profile -> Icons.Filled.Person
+    }
+
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = koinViewModel(),
     onViewAllSchedule: () -> Unit,
     onViewAllStandings: () -> Unit,
-    onCreateThread: () -> Unit = {}
+    onCreateThread: () -> Unit = {},
+    onSignedOut: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -73,7 +85,7 @@ fun HomeScreen(
 
                 HomeTab.Forum -> ForumScreen(onCreateThread = onCreateThread)
 
-                HomeTab.Profile -> ProfileScreen()
+                HomeTab.Profile -> ProfileScreen(onSignedOut = onSignedOut)
             }
         }
     }
@@ -96,10 +108,11 @@ private fun HomeHeader() {
             fontSize = 32.sp
         )
         IconButton(onClick = { }) {
-            Box(
-                modifier = Modifier
-                    .size(24.dp)
-                    .background(Color.White, CircleShape)
+            Icon(
+                imageVector = Icons.Filled.Person,
+                contentDescription = "Profile",
+                tint = Color.White,
+                modifier = Modifier.size(24.dp)
             )
         }
     }
@@ -122,10 +135,10 @@ private fun HomeBottomNavigation(
                 selected = isSelected,
                 onClick = { onTabSelected(tab) },
                 icon = {
-                    Box(
-                        modifier = Modifier
-                            .size(24.dp)
-                            .background(if (isSelected) Color.White else MutedGray, CircleShape)
+                    Icon(
+                        imageVector = tab.icon,
+                        contentDescription = tab.name,
+                        modifier = Modifier.size(24.dp)
                     )
                 },
                 label = {

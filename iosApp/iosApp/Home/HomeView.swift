@@ -8,6 +8,8 @@ import Shared
 /// instances are shared with the Schedule/Standings/CreateThread destinations.
 struct HomeView: View {
 
+    let onSignedOut: () -> Void
+
     @StateObject private var viewModel = HomeViewModel()
     @StateObject private var raceViewModel = RaceViewModel()
     @StateObject private var forumViewModel = ForumViewModel()
@@ -34,7 +36,7 @@ struct HomeView: View {
                             onCreateThread: { path.append("createThread") }
                         )
                     case .profile:
-                        ProfileView()
+                        ProfileView(onSignedOut: onSignedOut)
                     }
                 }
 
@@ -128,5 +130,5 @@ private struct TabItem: View {
 }
 
 #Preview {
-    HomeView()
+    HomeView(onSignedOut: {})
 }
