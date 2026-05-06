@@ -17,26 +17,30 @@ struct HomeView: View {
                 VStack(spacing: 0) {
                     HomeHeaderView()
 
-                    ScrollView {
-                        VStack(spacing: 24) {
-                            if viewModel.state.isLoading {
-                                ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: Color(hex: "E63946")))
-                                    .padding(.top, 40)
-                            } else {
-                                switch viewModel.state.selectedTab {
-                                case .race:
+                    if viewModel.state.isLoading {
+                        ScrollView {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: Color(hex: "E63946")))
+                                .padding(.top, 40)
+                        }
+                    } else {
+                        switch viewModel.state.selectedTab {
+                        case .race:
+                            ScrollView {
+                                VStack(spacing: 24) {
                                     RaceTabView(state: viewModel.state, path: $path)
-                                case .forum:
-                                    PlaceholderView(title: "Forum")
-                                case .profile:
-                                    PlaceholderView(title: "Profile")
                                 }
+                                .padding(.horizontal, 24)
+                                .padding(.top, 20)
+                                .padding(.bottom, 100)
+                            }
+                        case .forum:
+                            ForumTabView(path: $path, threads: viewModel.state.forumThreads)
+                        case .profile:
+                            ScrollView {
+                                PlaceholderView(title: "Profile")
                             }
                         }
-                        .padding(.horizontal, 24)
-                        .padding(.top, 20)
-                        .padding(.bottom, 100) // Space for bottom nav
                     }
                 }
 
@@ -48,7 +52,14 @@ struct HomeView: View {
                 if destination == "schedule" {
                     ScheduleView(schedule: viewModel.state.raceSchedule)
                 } else if destination == "standings" {
-                    StandingsView(standings: viewModel.state.driverStandings)
+                    StandingsView(
+                        drivers: viewModel.state.driverStandings,
+                        constructors: viewModel.state.constructorStandings
+                    )
+                } else if destination == "createThread" {
+                    CreateThreadView(onThreadCreated: {
+                        viewModel.send(.refresh)
+                    })
                 }
             }
         }
@@ -531,11 +542,156 @@ private struct TabItem: View {
     }
 }
 
+// ── Forum Tab Content ────────────────────────────────────────────────────────
+
+private struct ForumTabView: View {
+    @Binding var path: NavigationPath
+    let threads: [Thread]
+
+    var body: some View {
+        ZStack(alignment: .bottomTrailing) {
+            if threads.isEmpty {
+                VStack(spacing: 12) {
+                    Spacer()
+                    Text("No threads yet")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                    Text("Tap + to start the first conversation.")
+                        .font(.system(size: 14))
+                        .foregroundColor(Color(hex: "8E8E93"))
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.horizontal, 24)
+            } else {
+                ScrollView {
+                    VStack(spacing: 12) {
+                        ForEach(threads, id: \.id) { thread in
+                            ThreadCard(thread: thread)
+                        }
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 16)
+                    .padding(.bottom, 100)
+                }
+            }
+
+            Button(action: { path.append("createThread") }) {
+                Image(systemName: "plus")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(width: 56, height: 56)
+                    .background(Color(hex: "E63946"))
+                    .clipShape(Circle())
+                    .shadow(color: Color.black.opacity(0.4), radius: 6, x: 0, y: 3)
+            }
+            .padding(.trailing, 20)
+            .padding(.bottom, 110)
+        }
+    }
+}
+
 private struct PlaceholderView: View {
     let title: String
     var body: some View {
         Text(title).font(.largeTitle).foregroundColor(.white).padding(.top, 100)
     }
+}
+
+private struct ThreadCard: View {
+    let thread: Thread
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .center) {
+                ZStack {
+                    Circle().fill(Color(hex: "E63946"))
+                    Text(thread.author.avatar.prefix(2).uppercased())
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.white)
+                }
+                .frame(width: 36, height: 36)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(thread.author.username)
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white)
+                    Text(formatRelative(thread.createdAt))
+                        .font(.system(size: 12))
+                        .foregroundColor(Color(hex: "8E8E93"))
+                }
+
+                Spacer()
+
+                Text(thread.category.uppercased())
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(Color(hex: "E63946"))
+                    .padding(.horizontal, 8, .vertical, 4)
+                    .background(Color(hex: "E63946").opacity(0.12))
+                    .cornerRadius(6)
+            }
+
+            Text(thread.title)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(.white)
+                .lineLimit(2)
+
+            if let excerpt = thread.excerpt, !excerpt.isEmpty {
+                Text(excerpt)
+                    .font(.system(size: 14))
+                    .foregroundColor(Color(hex: "8E8E93"))
+                    .lineLimit(3)
+            } else if !thread.content.isEmpty {
+                let preview = thread.content.prefix(160)
+                Text(String(preview) + (thread.content.count > 160 ? "…" : ""))
+                    .font(.system(size: 14))
+                    .foregroundColor(Color(hex: "8E8E93"))
+                    .lineLimit(3)
+            }
+
+            HStack(spacing: 16) {
+                HStack(spacing: 4) {
+                    Text("❤️")
+                        .font(.system(size: 14))
+                    Text("\(thread.likes)")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(Color(hex: "8E8E93"))
+                }
+
+                HStack(spacing: 4) {
+                    Text("💬")
+                        .font(.system(size: 14))
+                    Text("\(thread.comments.count)")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(Color(hex: "8E8E93"))
+                }
+
+                Spacer()
+
+                if thread.bookmarked {
+                    Text("★ Saved")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(Color(hex: "E63946"))
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(hex: "161616"))
+        .cornerRadius(20)
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color(hex: "262626"), lineWidth: 1)
+        )
+    }
+}
+
+// Best-effort formatter for ISO-ish timestamps coming from the GraphQL response.
+// Falls back to the date portion if anything goes wrong.
+private func formatRelative(_ createdAt: String) -> String {
+    let datePart = createdAt.split(separator: "T").first ?? createdAt
+    let timePart = createdAt.split(separator: "T").last?.split(separator: ".").first?.prefix(5) ?? ""
+    return timePart.isEmpty ? datePart : "\(datePart) · \(timePart)"
 }
 
 #Preview {

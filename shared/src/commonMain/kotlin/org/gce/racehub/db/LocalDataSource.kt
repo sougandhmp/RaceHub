@@ -101,7 +101,8 @@ class LocalDataSource(driverFactory: DatabaseDriverFactory) {
             TrendingThread(
                 id = it.id,
                 title = it.title,
-                likes = it.likes.toInt()
+                likes = it.likes.toInt(),
+                createdAt = it.createdAt
             )
         }
     }
@@ -113,7 +114,8 @@ class LocalDataSource(driverFactory: DatabaseDriverFactory) {
                 dbQuery.insertTrendingThread(
                     id = it.id,
                     title = it.title,
-                    likes = it.likes.toLong()
+                    likes = it.likes.toLong(),
+                    createdAt = it.createdAt
                 )
             }
         }

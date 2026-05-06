@@ -6,12 +6,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -74,7 +72,8 @@ private val TeamBlue = Color(0xFF0600EF)
 fun HomeScreen(
     viewModel: HomeViewModel = koinViewModel(),
     onViewAllSchedule: () -> Unit,
-    onViewAllStandings: () -> Unit
+    onViewAllStandings: () -> Unit,
+    onCreateThread: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -106,7 +105,10 @@ fun HomeScreen(
                         onViewAllStandings = onViewAllStandings
                     )
 
-                    HomeTab.Forum -> PlaceholderScreen("Forum")
+                    HomeTab.Forum -> ForumScreen(
+                        threads = state.forumThreads,
+                        onCreateThread = onCreateThread
+                    )
                     HomeTab.Profile -> PlaceholderScreen("Profile")
                 }
             }
@@ -504,76 +506,6 @@ private fun columnWeight(totalColumns: Int, index: Int): Float {
         else -> 1f
     }
 }
-
-@Composable
-internal fun StandingItem(standing: DriverStanding, teamColor: Color) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(IntrinsicSize.Min)
-            .clip(RoundedCornerShape(16.dp))
-            .background(CardBg)
-            .border(1.dp, CardBorder, RoundedCornerShape(16.dp)),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxHeight()
-                .width(4.dp)
-                .background(teamColor)
-        )
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFF262626)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = standing.position.toString(),
-                    color = MutedGray,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = standing.team,
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = standing.driverName,
-                    color = MutedGray,
-                    fontSize = 12.sp
-                )
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = standing.points.toString(),
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.ExtraBold
-                )
-                Text(
-                    text = "PTS",
-                    color = MutedGray,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-    }
-}
-
 
 @Composable
 private fun LatestResultsSection(results: List<Race>) {

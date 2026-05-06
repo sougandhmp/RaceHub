@@ -3,6 +3,7 @@ package org.gce.racehub.home
 import org.gce.racehub.race.domain.model.ConstructorStanding
 import org.gce.racehub.race.domain.model.DriverStanding
 import org.gce.racehub.race.domain.model.Race
+import org.gce.racehub.race.domain.model.Thread
 import org.gce.racehub.race.domain.model.TrendingThread
 
 /**
@@ -34,6 +35,9 @@ data class HomeState(
 
     /** Trending forum threads. Empty until loaded. */
     val trendingThreads: List<TrendingThread> = emptyList(),
+
+    /** Full forum threads shown on the Forum tab. Empty until loaded. */
+    val forumThreads: List<Thread> = emptyList(),
 
     /** Which tab the user is currently viewing. */
     val selectedTab: HomeTab = HomeTab.Race,

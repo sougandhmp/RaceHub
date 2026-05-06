@@ -10,6 +10,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
 import org.gce.racehub.auth.di.createProductionAuthModule
 import org.gce.racehub.di.appModule
+import org.gce.racehub.home.CreateThreadScreen
+import org.gce.racehub.home.HomeIntent
 import org.gce.racehub.home.HomeScreen
 import org.gce.racehub.home.HomeViewModel
 import org.gce.racehub.home.ScheduleScreen
@@ -22,7 +24,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.dsl.koinConfiguration
 
 /** Top-level navigation destinations for the app. */
-private enum class Screen { Login, SignUp, Home, Schedule, Standings }
+private enum class Screen { Login, SignUp, Home, Schedule, Standings, CreateThread }
 
 /**
  * Root composable. Owns the top-level navigation state and routes each
@@ -54,7 +56,8 @@ fun App() {
             Screen.Home -> HomeScreen(
                 viewModel = homeViewModel,
                 onViewAllSchedule = { screen = Screen.Schedule },
-                onViewAllStandings = { screen = Screen.Standings }
+                onViewAllStandings = { screen = Screen.Standings },
+                onCreateThread = { screen = Screen.CreateThread }
             )
 
             Screen.Schedule -> ScheduleScreen(
@@ -64,8 +67,17 @@ fun App() {
             )
 
             Screen.Standings -> StandingsScreen(
-                standings = homeState.driverStandings,
+                drivers = homeState.driverStandings,
+                constructors = homeState.constructorStandings,
                 onBack = { screen = Screen.Home }
+            )
+
+            Screen.CreateThread -> CreateThreadScreen(
+                onCancel = { screen = Screen.Home },
+                onThreadCreated = {
+                    homeViewModel.onIntent(HomeIntent.Refresh)
+                    screen = Screen.Home
+                }
             )
         }
     }

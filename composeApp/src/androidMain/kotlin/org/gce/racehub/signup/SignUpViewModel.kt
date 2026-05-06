@@ -9,9 +9,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.gce.racehub.auth.domain.session.UserSession
 import org.gce.racehub.auth.domain.usecase.SignUpUseCase
 
-class SignUpViewModel(private val signUpUseCase: SignUpUseCase) : ViewModel() {
+class SignUpViewModel(
+    private val signUpUseCase: SignUpUseCase,
+    private val userSession: UserSession
+) : ViewModel() {
 
     private val _state = MutableStateFlow(SignUpState())
     val state: StateFlow<SignUpState> = _state.asStateFlow()
@@ -52,9 +56,10 @@ class SignUpViewModel(private val signUpUseCase: SignUpUseCase) : ViewModel() {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
 
             val s = _state.value
-            val result = signUpUseCase.execute(s.name, s.email, s.password, s.confirmPassword)
+            val result = signUpUseCase(s.name, s.email, s.password, s.confirmPassword)
 
             if (result.isSuccess) {
+                result.user?.let(userSession::setUser)
                 _state.update { it.copy(isLoading = false) }
                 _effect.send(SignUpEffect.NavigateToHome)
             } else {

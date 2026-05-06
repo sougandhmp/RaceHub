@@ -5,6 +5,7 @@ import org.gce.racehub.auth.data.network.HttpClientFactory
 import org.gce.racehub.auth.data.repository.AuthRepositoryImpl
 import org.gce.racehub.auth.data.repository.AuthRepositoryNetworkImpl
 import org.gce.racehub.auth.domain.repository.AuthRepository
+import org.gce.racehub.auth.domain.session.UserSession
 import org.gce.racehub.auth.domain.usecase.LoginUseCase
 import org.gce.racehub.auth.domain.usecase.SignUpUseCase
 import org.koin.core.module.Module
@@ -44,6 +45,9 @@ fun createAuthModule(baseUrl: String, useFakeRepository: Boolean = false): Modul
             AuthRepositoryNetworkImpl(get())
         }
     }
+
+    // Process-wide holder for the currently authenticated user
+    single { UserSession() }
 
     factory { LoginUseCase(get()) }
     factory { SignUpUseCase(get()) }

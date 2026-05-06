@@ -28,7 +28,8 @@ CREATE TABLE ConstructorStandingEntity (
 CREATE TABLE TrendingThreadEntity (
     id TEXT NOT NULL PRIMARY KEY,
     title TEXT NOT NULL,
-    likes INTEGER NOT NULL
+    likes INTEGER NOT NULL,
+    createdAt TEXT NOT NULL
 );
 
 -- Race Queries
@@ -66,11 +67,11 @@ DELETE FROM ConstructorStandingEntity;
 
 -- Trending Thread Queries
 insertTrendingThread:
-INSERT OR REPLACE INTO TrendingThreadEntity(id, title, likes)
-VALUES (?, ?, ?);
+INSERT OR REPLACE INTO TrendingThreadEntity(id, title, likes, createdAt)
+VALUES (?, ?, ?, ?);
 
 getAllTrendingThreads:
-SELECT * FROM TrendingThreadEntity;
+SELECT * FROM TrendingThreadEntity ORDER BY datetime(createdAt) DESC;
 
 deleteAllTrendingThreads:
 DELETE FROM TrendingThreadEntity;

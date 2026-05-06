@@ -17,5 +17,5 @@ class GetDriverStandingsUseCase(private val repository: HomeRepository) {
      * @return The [DriverStanding] list sorted by championship position
      *         (position 1 at index 0).
      */
-    suspend fun execute(): List<DriverStanding> = repository.getDriverStandings()
+    suspend operator fun invoke(): List<DriverStanding> = repository.getDriverStandings()
 }

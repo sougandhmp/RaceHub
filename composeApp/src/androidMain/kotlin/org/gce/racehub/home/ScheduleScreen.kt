@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -74,12 +75,12 @@ fun ScheduleScreen(
             item {
                 if (latestThread != null) {
                     ScheduleLatestThreadCard(thread = latestThread)
-                    Divider(
+                    HorizontalDivider(
                         modifier = Modifier
                             .padding(vertical = 8.dp)
                             .fillMaxWidth(),
-                        color = CardBorder,
-                        thickness = 1.dp
+                        thickness = 1.dp,
+                        color = CardBorder
                     )
                 }
             }

@@ -28,10 +28,15 @@ final class LoginViewModel: ObservableObject {
     /// Use case that validates credentials and delegates to the repository.
     private let loginUseCase: LoginUseCase
 
+    /// Process-wide holder for the authenticated user. Populated on success
+    /// so feature ViewModels (e.g. Create Thread) can read `userId`.
+    private let userSession: UserSession
+
     init() {
         // Use dependency injection to get the network repository
         // Koin is already initialized in iOSApp.swift with the correct base URL
         loginUseCase = AuthDependencyProvider.companion.shared.createLoginUseCase()
+        userSession = RaceDependencyProvider.companion.shared.userSession
     }
 
     /// Entry point for all View interactions.
@@ -64,10 +69,13 @@ final class LoginViewModel: ObservableObject {
 
         Task {
             do {
-                let result = try await loginUseCase.execute(email: state.email, password: state.password)
+                let result = try await loginUseCase(email: state.email, password: state.password)
                 state.isLoading = false
 
                 if result.isSuccess {
+                    if let user = result.user {
+                        userSession.setUser(user: user)
+                    }
                     effectSubject.send(.navigateToHome)
                 } else {
                     state.errorMessage = result.error

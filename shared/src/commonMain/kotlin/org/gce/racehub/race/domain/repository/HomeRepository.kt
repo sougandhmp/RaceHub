@@ -3,6 +3,7 @@ package org.gce.racehub.race.domain.repository
 import org.gce.racehub.race.domain.model.ConstructorStanding
 import org.gce.racehub.race.domain.model.DriverStanding
 import org.gce.racehub.race.domain.model.Race
+import org.gce.racehub.race.domain.model.Thread
 import org.gce.racehub.race.domain.model.TrendingThread
 
 /**
@@ -28,6 +29,32 @@ interface HomeRepository {
 
     /** Returns the trending threads from the forum. */
     suspend fun getTrendingThreads(): List<TrendingThread>
+
+    /**
+     * Returns full forum threads matching the provided filters.
+     *
+     * @param sort Sort key (e.g., "latest", "top"). `null` lets the server decide.
+     * @param category Restricts to a single category. `null` returns all categories.
+     * @param userId Caller's user id; used to populate per-thread `bookmarked` flag.
+     */
+    suspend fun getThreads(
+        sort: String? = null,
+        category: String? = null,
+        userId: String? = null
+    ): List<Thread>
+
+    /**
+     * Creates a new forum thread on behalf of [userId].
+     *
+     * @return The newly created thread (id, title, createdAt populated by the server).
+     * @throws Exception if the request fails.
+     */
+    suspend fun createThread(
+        userId: String,
+        title: String,
+        category: String,
+        content: String
+    ): Thread
 
     // ── Swift-friendly index-based accessors ─────────────────────────────────
 

@@ -27,6 +27,38 @@ class HomeRepositoryNetworkImpl(
     private val localDataSource: LocalDataSource
 ) : HomeRepository {
 
+    // GraphQL mutation to create a new forum thread
+    private val createThreadMutation = $$"""
+        mutation CreateThread($userId: ID!, $input: CreateThreadInput!) {
+            createThread(userId: $userId, input: $input) {
+                id
+                title
+                createdAt
+            }
+        }
+    """.trimIndent()
+
+    // GraphQL query to fetch full forum threads with author and comments
+    private val threadsQuery = $$"""
+        query GetThreads($sort: String, $category: String, $userId: ID) {
+            threads(sort: $sort, category: $category, userId: $userId) {
+                id
+                title
+                category
+                author { username avatar }
+                excerpt
+                content
+                createdAt
+                likes
+                bookmarked(userId: $userId)
+                comments {
+                    content
+                    author { username }
+                }
+            }
+        }
+    """.trimIndent()
+
     // GraphQL query to fetch complete dashboard data
     private val dashboardQuery = """
         query GetDashboard {
@@ -123,7 +155,8 @@ class HomeRepositoryNetworkImpl(
             TrendingThread(
                 id = dto.id,
                 title = dto.title,
-                likes = dto.likes
+                likes = dto.likes,
+                createdAt = dto.createdAt
             )
         }
         if (trendingThreads.isNotEmpty()) {
@@ -213,6 +246,86 @@ class HomeRepositoryNetworkImpl(
             backgroundSync()
         }
         return localThreads
+    }
+
+    /**
+     * Fetches forum threads directly from the network. Not cached locally
+     * because the schema (author, comments, bookmarks) doesn't fit the
+     * existing trending-threads SQLDelight table.
+     */
+    override suspend fun getThreads(
+        sort: String?,
+        category: String?,
+        userId: String?
+    ): List<Thread> {
+        return try {
+            val response: GraphQLResponse<ThreadsData> = httpClient.post("$baseUrl/graphql") {
+                contentType(ContentType.Application.Json)
+                setBody(
+                    GraphQLRequestWithVariables(
+                        query = threadsQuery,
+                        variables = ThreadsVariables(sort = sort, category = category, userId = userId)
+                    )
+                )
+            }.body()
+
+            response.data.threads.map { dto ->
+                Thread(
+                    id = dto.id,
+                    title = dto.title,
+                    category = dto.category,
+                    author = ThreadAuthor(dto.author.username, dto.author.avatar),
+                    excerpt = dto.excerpt,
+                    content = dto.content,
+                    createdAt = dto.createdAt,
+                    likes = dto.likes,
+                    bookmarked = dto.bookmarked,
+                    comments = dto.comments.map { c ->
+                        ThreadComment(content = c.content, authorUsername = c.author.username)
+                    }
+                )
+            }
+        } catch (e: Exception) {
+            println("Failed to fetch threads: ${e.message}")
+            emptyList()
+        }
+    }
+
+    /**
+     * Creates a new forum thread via GraphQL mutation.
+     */
+    override suspend fun createThread(
+        userId: String,
+        title: String,
+        category: String,
+        content: String
+    ): Thread {
+        val response: GraphQLResponse<CreateThreadData> = httpClient.post("$baseUrl/graphql") {
+            contentType(ContentType.Application.Json)
+            setBody(
+                GraphQLCreateThreadRequest(
+                    query = createThreadMutation,
+                    variables = CreateThreadVariables(
+                        userId = userId,
+                        input = CreateThreadInput(title, category, content)
+                    )
+                )
+            )
+        }.body()
+
+        val created = response.data.createThread
+        return Thread(
+            id = created.id,
+            title = created.title,
+            category = category,
+            author = ThreadAuthor(username = "", avatar = ""),
+            excerpt = null,
+            content = content,
+            createdAt = created.createdAt,
+            likes = 0,
+            bookmarked = false,
+            comments = emptyList()
+        )
     }
 
     /**

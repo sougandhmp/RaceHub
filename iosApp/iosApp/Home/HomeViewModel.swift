@@ -30,9 +30,9 @@ final class HomeViewModel: ObservableObject {
         effectSubject.eraseToAnyPublisher()
     }
 
-    /// Direct repository access; index-based methods are used instead of
+    /// Repository resolved via Koin; index-based methods are used instead of
     /// list-returning methods to avoid Kotlin collection bridging issues.
-    private let repository = HomeRepositoryImpl()
+    private let repository: HomeRepository = RaceDependencyProvider.companion.shared.homeRepository
 
     init() {
         loadData()
@@ -75,12 +75,14 @@ final class HomeViewModel: ObservableObject {
             // Fetch additional data
             let constructorStandings = try await repository.getConstructorStandings()
             let trendingThreads = try await repository.getTrendingThreads()
+            let forumThreads = try await repository.getThreads(sort: "latest", category: nil, userId: nil)
 
             state.isLoading = false
             state.raceSchedule = races
             state.driverStandings = driverStandings
             state.constructorStandings = constructorStandings
             state.trendingThreads = trendingThreads
+            state.forumThreads = forumThreads
         }
     }
 }

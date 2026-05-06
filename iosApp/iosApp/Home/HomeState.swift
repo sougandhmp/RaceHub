@@ -27,6 +27,9 @@ struct HomeState {
     /// Trending forum threads.
     var trendingThreads: [TrendingThread] = []
 
+    /// Full forum threads shown on the Forum tab. Empty until loaded.
+    var forumThreads: [Thread] = []
+
     /// Which tab the user is currently viewing.
     var selectedTab: HomeTab = .race
 

@@ -23,7 +23,7 @@ class SignUpUseCase(private val authRepository: AuthRepository) {
      * @return [AuthResult] with the created [User] on success, or a
      *         human-readable error message on the first validation failure.
      */
-    suspend fun execute(
+    suspend operator fun invoke(
         name: String,
         email: String,
         password: String,
