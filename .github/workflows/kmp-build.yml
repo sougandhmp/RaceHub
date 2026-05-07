@@ -47,7 +47,7 @@ jobs:
         with:
           appId: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
           serviceCredentialsFile: ${{ github.workspace }}/firebase-service-account.json
-          groups: testers
+          groups: racers
           file: composeApp/build/outputs/apk/debug/composeApp-debug.apk
 
   ios-build:
