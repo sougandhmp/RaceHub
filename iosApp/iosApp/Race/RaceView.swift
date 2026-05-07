@@ -86,10 +86,10 @@ private struct NextRaceSection: View {
                     .padding(.vertical, 4)
 
                 HStack(spacing: 4) {
-                    Text("Forecast").foregroundColor(Color(hex: "8E8E93"))
-                    Text("22° · 30% rain").foregroundColor(.white)
-                    Text("Length").foregroundColor(Color(hex: "8E8E93")).padding(.leading, 4)
-                    Text("4.361 km").foregroundColor(.white)
+                    Text("Circuit").foregroundColor(Color(hex: "8E8E93"))
+                    Text(race?.circuit ?? "—")
+                        .foregroundColor(.white)
+                        .fontWeight(.medium)
                 }
                 .font(.system(size: 14))
             }
@@ -139,8 +139,9 @@ private struct StandingsTabSection: View {
             HStack(spacing: 4) {
                 ForEach(StandingsTab.allCases, id: \.self) { tab in
                     Button(action: { selected = tab }) {
-                        Text(tab.label)
+                        Text(tab == .drivers ? "DRIVERS" : "TEAMS")
                             .font(.system(size: 13, weight: .bold))
+                            .kerning(0.5)
                             .foregroundColor(selected == tab ? .white : Color(hex: "8E8E93"))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 10)
@@ -307,9 +308,10 @@ private struct LatestResultsSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Latest Results")
+            Text("LATEST RESULTS")
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundColor(Color(hex: "8E8E93"))
+                .kerning(0.5)
 
             if results.isEmpty {
                 Text("No completed races yet this season.")
@@ -361,6 +363,10 @@ private struct LatestResultRow: View {
                     .font(.system(size: 18))
             }
 
+            Text(race.circuit)
+                .font(.system(size: 12))
+                .foregroundColor(Color(hex: "8E8E93"))
+
             Text(race.date)
                 .font(.system(size: 14))
                 .foregroundColor(Color(hex: "8E8E93"))
@@ -384,34 +390,31 @@ private struct LatestThreadSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Latest Thread")
+                Text("LATEST THREAD")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(Color(hex: "8E8E93"))
+                    .kerning(0.5)
                 Spacer()
                 Text("FORUM")
                     .font(.system(size: 12, weight: .bold))
                     .foregroundColor(Color(hex: "E63946"))
             }
 
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(spacing: 8) {
-                    ZStack {
-                        Circle().fill(Color(hex: "E63946"))
-                        Text("RH").font(.system(size: 12, weight: .bold)).foregroundColor(.white)
-                    }
-                    .frame(width: 32, height: 32)
-
-                    Text("Race Hub").font(.system(size: 14, weight: .bold)).foregroundColor(.white)
-
-                    Spacer()
-
-                    Text("PINNED")
-                        .font(.system(size: 10, weight: .bold))
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("TRENDING")
+                        .font(.system(size: 10, weight: .black))
                         .foregroundColor(Color(hex: "E63946"))
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
                         .background(Color(hex: "E63946").opacity(0.1))
                         .cornerRadius(4)
+                    Spacer()
+                    if let date = thread?.createdAt {
+                        Text(date)
+                            .font(.system(size: 11))
+                            .foregroundColor(Color(hex: "8E8E93"))
+                    }
                 }
 
                 Text(thread?.title ?? "No threads yet — be the first to post.")

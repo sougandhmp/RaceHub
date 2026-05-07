@@ -49,10 +49,11 @@ jobs:
           path: composeApp/build/outputs/apk/debug/*.apk
 
       - name: Decode Firebase Service Account
+        if: false
         run: echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" | base64 --decode > ${{ github.workspace }}/firebase-service-account.json
 
       - name: Upload to Firebase App Distribution
-        if: success()
+        if: false
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
           appId: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
@@ -97,8 +98,30 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      - name: Build shared KMP framework (simulator only)
-        run: ./gradlew :shared:assembleSharedDebugXCFramework --build-cache --parallel
+      - name: Import iOS Certificate
+        if: false
+        env:
+          IOS_CERTIFICATE_P12: ${{ secrets.IOS_CERTIFICATE_P12 }}
+          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -hex 12)
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          echo "$IOS_CERTIFICATE_P12" | base64 --decode > /tmp/certificate.p12
+          security import /tmp/certificate.p12 -k "$KEYCHAIN_PATH" -P "$IOS_CERTIFICATE_PASSWORD" -A
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+
+      - name: Install Provisioning Profile
+        if: false
+        run: |
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          echo "${{ secrets.IOS_PROVISIONING_PROFILE }}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
+
+      - name: Build shared KMP framework
+        run: ./gradlew :shared:assembleSharedReleaseXCFramework --build-cache --parallel
 
       - name: Build iOS App (Simulator)
         run: |
@@ -107,11 +130,63 @@ jobs:
             -project iosApp.xcodeproj \
             -scheme iosApp \
             -configuration Debug \
-            -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 16' \
-            ONLY_ACTIVE_ARCH=YES \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             build
+
+      - name: Archive iOS App
+        if: false
+        run: |
+          cd iosApp
+          xcodebuild \
+            -project iosApp.xcodeproj \
+            -scheme iosApp \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath $RUNNER_TEMP/iosApp.xcarchive \
+            archive
+
+      - name: Export IPA
+        if: false
+        run: |
+          cat > /tmp/ExportOptions.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>ad-hoc</string>
+            <key>compileBitcode</key>
+            <false/>
+          </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive \
+            -archivePath $RUNNER_TEMP/iosApp.xcarchive \
+            -exportOptionsPlist /tmp/ExportOptions.plist \
+            -exportPath $RUNNER_TEMP/ipa
+
+      - name: Upload iOS IPA Artifact
+        if: false
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa
+          path: ${{ runner.temp }}/ipa/*.ipa
+
+      - name: Decode Firebase Service Account
+        if: false
+        run: echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" | base64 --decode > ${{ github.workspace }}/firebase-service-account.json
+
+      - name: Upload to Firebase App Distribution
+        if: false
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_IOS_APP_ID }}
+          serviceCredentialsFile: ${{ github.workspace }}/firebase-service-account.json
+          groups: racers
+          file: ${{ runner.temp }}/ipa/iosApp.ipa
 
       - name: Upload iOS Build Logs
         if: always()

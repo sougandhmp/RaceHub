@@ -37,11 +37,22 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -73,6 +84,7 @@ fun ThreadDetailScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     val allComments = thread.comments + state.postedComments
+    var showComments by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.initLikes(thread.likes)
@@ -163,33 +175,64 @@ fun ThreadDetailScreen(
                     likes = state.likes,
                     isLiked = state.isLiked,
                     isLiking = state.isLiking,
-                    onLikeClick = { viewModel.onIntent(ThreadDetailIntent.ToggleLike(thread.id)) }
+                    showComments = showComments,
+                    onLikeClick = { viewModel.onIntent(ThreadDetailIntent.ToggleLike(thread.id)) },
+                    onToggleComments = { showComments = !showComments }
                 )
             }
 
             item {
-                Text(
-                    text = "COMMENTS · ${allComments.size}",
-                    color = DetailMuted,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp,
-                    modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
-                )
-            }
-
-            if (allComments.isEmpty()) {
-                item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { showComments = !showComments }
+                        .padding(top = 8.dp, bottom = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
-                        text = "No comments yet. Be the first to reply.",
+                        text = "COMMENTS · ${allComments.size}",
                         color = DetailMuted,
-                        fontSize = 13.sp,
-                        modifier = Modifier.padding(vertical = 12.dp)
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    Icon(
+                        imageVector = if (showComments) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                        contentDescription = if (showComments) "Hide comments" else "Show comments",
+                        tint = DetailMuted,
+                        modifier = Modifier.size(16.dp)
                     )
                 }
-            } else {
-                items(items = allComments) { comment ->
-                    CommentCard(comment = comment)
+            }
+
+            item {
+                AnimatedVisibility(
+                    visible = showComments,
+                    enter = expandVertically(
+                        expandFrom = Alignment.Top,
+                        animationSpec = tween(300)
+                    ) + fadeIn(animationSpec = tween(300)),
+                    exit = shrinkVertically(
+                        shrinkTowards = Alignment.Top,
+                        animationSpec = tween(300)
+                    ) + fadeOut(animationSpec = tween(300))
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        if (allComments.isEmpty()) {
+                            Text(
+                                text = "No comments yet. Be the first to reply.",
+                                color = DetailMuted,
+                                fontSize = 13.sp,
+                                modifier = Modifier.padding(vertical = 12.dp)
+                            )
+                        } else {
+                            allComments.forEach { comment ->
+                                CommentCard(comment = comment)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -202,7 +245,9 @@ private fun ThreadHeader(
     likes: Int,
     isLiked: Boolean,
     isLiking: Boolean,
-    onLikeClick: () -> Unit
+    showComments: Boolean,
+    onLikeClick: () -> Unit,
+    onToggleComments: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -259,7 +304,23 @@ private fun ThreadHeader(
                 onClick = onLikeClick
             )
             Spacer(modifier = Modifier.width(16.dp))
-            Metric(icon = "💬", value = thread.comments.size.toString())
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable(onClick = onToggleComments)
+                    .background(if (showComments) DetailRed.copy(alpha = 0.10f) else Color.Transparent)
+                    .padding(horizontal = 6.dp, vertical = 4.dp)
+            ) {
+                Text(text = "💬", fontSize = 14.sp)
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = thread.comments.size.toString(),
+                    color = if (showComments) DetailRed else DetailMuted,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
             Spacer(modifier = Modifier.weight(1f))
             if (thread.bookmarked) {
                 Text(
