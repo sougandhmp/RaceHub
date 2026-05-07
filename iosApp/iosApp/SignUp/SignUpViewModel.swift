@@ -28,8 +28,14 @@ final class SignUpViewModel: ObservableObject {
     /// Use case that validates the sign-up form and delegates to the repository.
     private let signUpUseCase: SignUpUseCase
 
+    /// Process-wide holder for the authenticated user. Populated on success
+    /// so the session is persisted and the app navigates directly to Home on relaunch.
+    private let userSession: UserSession
+
     init() {
-        signUpUseCase = SignUpUseCase(authRepository: AuthRepositoryImpl())
+        let authProvider = AuthDependencyProvider.companion.shared
+        signUpUseCase = authProvider.createSignUpUseCase()
+        userSession = authProvider.userSession
     }
 
     /// Entry point for all View interactions.
@@ -77,6 +83,9 @@ final class SignUpViewModel: ObservableObject {
                 state.isLoading = false
 
                 if result.isSuccess {
+                    if let user = result.user {
+                        userSession.setUser(user: user)
+                    }
                     effectSubject.send(.navigateToHome)
                 } else {
                     state.errorMessage = result.error

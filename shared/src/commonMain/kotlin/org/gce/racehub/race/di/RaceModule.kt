@@ -8,6 +8,7 @@ import org.gce.racehub.race.domain.usecase.CreateThreadUseCase
 import org.gce.racehub.race.domain.usecase.GetConstructorStandingsUseCase
 import org.gce.racehub.race.domain.usecase.GetDriverStandingsUseCase
 import org.gce.racehub.race.domain.usecase.GetMyProfileUseCase
+import org.gce.racehub.race.domain.usecase.LikeThreadUseCase
 import org.gce.racehub.race.domain.usecase.GetRaceScheduleUseCase
 import org.gce.racehub.race.domain.usecase.GetThreadsUseCase
 import org.gce.racehub.race.domain.usecase.GetTrendingThreadsUseCase
@@ -26,6 +27,7 @@ val raceModule = module {
     factory { CreateThreadUseCase(get()) }
     factory { AddCommentUseCase(get()) }
     factory { GetMyProfileUseCase(get()) }
+    factory { LikeThreadUseCase(get()) }
 }
 
 

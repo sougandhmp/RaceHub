@@ -25,6 +25,7 @@ struct ThreadDetailView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
                         threadHeader
+                            .onAppear { viewModel.initLikes(thread.likes) }
 
                         Text("COMMENTS · \(allComments.count)")
                             .font(.system(size: 11, weight: .bold))
@@ -125,7 +126,12 @@ struct ThreadDetailView: View {
             }
 
             HStack(spacing: 16) {
-                Metric(icon: "❤️", value: "\(thread.likes)")
+                LikeButtonView(
+                    likes: viewModel.state.likes,
+                    isLiked: viewModel.state.isLiked,
+                    isLiking: viewModel.state.isLiking,
+                    onTap: { viewModel.send(.toggleLike(threadId: thread.id)) }
+                )
                 Metric(icon: "💬", value: "\(thread.comments.count)")
                 Spacer()
                 if thread.bookmarked {
@@ -233,6 +239,32 @@ private struct AuthorBadge: View {
                 .foregroundColor(.white)
         }
         .frame(width: size, height: size)
+    }
+}
+
+private struct LikeButtonView: View {
+    let likes: Int32
+    let isLiked: Bool
+    let isLiking: Bool
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 4) {
+                Image(systemName: isLiked ? "heart.fill" : "heart")
+                    .font(.system(size: 14))
+                    .foregroundColor(isLiked ? Color(hex: "E63946") : Color(hex: "8E8E93"))
+                Text("\(likes)")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(isLiked ? Color(hex: "E63946") : Color(hex: "8E8E93"))
+            }
+            .padding(.horizontal, 6)
+            .padding(.vertical, 4)
+            .background(isLiked ? Color(hex: "E63946").opacity(0.1) : Color.clear)
+            .cornerRadius(8)
+        }
+        .disabled(isLiking)
+        .buttonStyle(.plain)
     }
 }
 

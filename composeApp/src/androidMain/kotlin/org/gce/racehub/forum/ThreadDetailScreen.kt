@@ -22,6 +22,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,6 +42,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -70,6 +73,10 @@ fun ThreadDetailScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     val allComments = thread.comments + state.postedComments
+
+    LaunchedEffect(Unit) {
+        viewModel.initLikes(thread.likes)
+    }
 
     LaunchedEffect(state.errorMessage) {
         val msg = state.errorMessage
@@ -150,7 +157,15 @@ fun ThreadDetailScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(vertical = 16.dp)
         ) {
-            item { ThreadHeader(thread = thread) }
+            item {
+                ThreadHeader(
+                    thread = thread,
+                    likes = state.likes,
+                    isLiked = state.isLiked,
+                    isLiking = state.isLiking,
+                    onLikeClick = { viewModel.onIntent(ThreadDetailIntent.ToggleLike(thread.id)) }
+                )
+            }
 
             item {
                 Text(
@@ -182,7 +197,13 @@ fun ThreadDetailScreen(
 }
 
 @Composable
-private fun ThreadHeader(thread: Thread) {
+private fun ThreadHeader(
+    thread: Thread,
+    likes: Int,
+    isLiked: Boolean,
+    isLiking: Boolean,
+    onLikeClick: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -231,7 +252,12 @@ private fun ThreadHeader(thread: Thread) {
 
         Spacer(modifier = Modifier.height(16.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Metric(icon = "❤", value = thread.likes.toString())
+            LikeButton(
+                likes = likes,
+                isLiked = isLiked,
+                isLiking = isLiking,
+                onClick = onLikeClick
+            )
             Spacer(modifier = Modifier.width(16.dp))
             Metric(icon = "💬", value = thread.comments.size.toString())
             Spacer(modifier = Modifier.weight(1f))
@@ -354,6 +380,36 @@ private fun CategoryPill(category: String) {
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.5.sp
+        )
+    }
+}
+
+@Composable
+private fun LikeButton(
+    likes: Int,
+    isLiked: Boolean,
+    isLiking: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(enabled = !isLiking, onClick = onClick)
+            .padding(horizontal = 6.dp, vertical = 4.dp)
+    ) {
+        Icon(
+            imageVector = if (isLiked) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+            contentDescription = if (isLiked) "Unlike" else "Like",
+            tint = if (isLiked) DetailRed else DetailMuted,
+            modifier = Modifier.size(16.dp)
+        )
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(
+            text = likes.toString(),
+            color = if (isLiked) DetailRed else DetailMuted,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold
         )
     }
 }

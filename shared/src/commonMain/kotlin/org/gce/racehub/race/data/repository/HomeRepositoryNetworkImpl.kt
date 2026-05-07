@@ -53,6 +53,16 @@ class HomeRepositoryNetworkImpl(
         }
     """.trimIndent()
 
+    // GraphQL mutation to toggle like on a forum thread
+    private val likeThreadMutation = $$"""
+        mutation UserInteractions($id: ID!) {
+            likeThread(id: $id) {
+                id
+                likes
+            }
+        }
+    """.trimIndent()
+
     // GraphQL mutation to create a new forum thread
     private val createThreadMutation = $$"""
         mutation CreateThread($userId: ID!, $input: CreateThreadInput!) {
@@ -413,6 +423,27 @@ class HomeRepositoryNetworkImpl(
         val added = response.data?.addComment
             ?: error(response.errors?.joinToString { it.message } ?: "Failed to add comment")
         return ThreadComment(content = added.content, authorUsername = userId)
+    }
+
+    /**
+     * Toggles the like on the thread identified by [id] via GraphQL mutation.
+     *
+     * @return The updated like count returned by the server.
+     */
+    override suspend fun likeThread(id: String): Int {
+        val response: GraphQLResponse<LikeThreadData> = httpClient.post("$baseUrl/graphql") {
+            contentType(ContentType.Application.Json)
+            setBody(
+                GraphQLLikeThreadRequest(
+                    query = likeThreadMutation,
+                    variables = LikeThreadVariables(id = id)
+                )
+            )
+        }.body()
+
+        val result = response.data?.likeThread
+            ?: error(response.errors?.joinToString { it.message } ?: "Failed to like thread")
+        return result.likes
     }
 
     /**
