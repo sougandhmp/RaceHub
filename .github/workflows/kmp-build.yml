@@ -72,16 +72,11 @@ jobs:
       - name: Build shared KMP framework
         run: ./gradlew :shared:assembleSharedXCFramework
 
-      - name: Install CocoaPods dependencies
-        run: |
-          cd iosApp
-          pod install
-
       - name: Build iOS App (Simulator)
         run: |
           cd iosApp
           xcodebuild \
-            -workspace iosApp.xcworkspace \
+            -project iosApp.xcodeproj \
             -scheme iosApp \
             -configuration Debug \
             -sdk iphonesimulator \
