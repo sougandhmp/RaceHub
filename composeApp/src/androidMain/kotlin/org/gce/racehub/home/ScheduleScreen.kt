@@ -170,7 +170,14 @@ private fun RaceItem(
             Spacer(modifier = Modifier.width(8.dp))
             Text(text = race.countryFlag, fontSize = 18.sp)
         }
-        
+
+        Text(
+            text = race.circuit,
+            color = MutedGray,
+            fontSize = 12.sp,
+            modifier = Modifier.padding(top = 2.dp)
+        )
+
         Text(
             text = race.date,
             color = MutedGray,

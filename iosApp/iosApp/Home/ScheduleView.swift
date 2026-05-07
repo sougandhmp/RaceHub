@@ -152,6 +152,10 @@ struct RaceRow: View {
                     .font(.system(size: 18))
             }
 
+            Text(race.circuit)
+                .font(.system(size: 12))
+                .foregroundColor(Color(hex: "888888"))
+
             Text(race.date)
                 .font(.system(size: 14))
                 .foregroundColor(Color(hex: "888888"))

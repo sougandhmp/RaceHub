@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -193,11 +192,14 @@ private fun NextRaceSection(race: Race?, onViewAll: () -> Unit) {
                 fontSize = 14.sp,
                 modifier = Modifier.padding(vertical = 8.dp)
             )
-            Row {
-                Text(text = "Forecast ", color = MutedGray, fontSize = 14.sp)
-                Text(text = "22° · 30% rain ", color = Color.White, fontSize = 14.sp)
-                Text(text = "Length ", color = MutedGray, fontSize = 14.sp)
-                Text(text = "4.361 km", color = Color.White, fontSize = 14.sp)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text = "Circuit  ", color = MutedGray, fontSize = 14.sp)
+                Text(
+                    text = race?.circuit ?: "—",
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
     }
@@ -294,10 +296,11 @@ private fun StandingsSegmentedControl(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = if (tab == StandingsTab.Drivers) "Driver Standings" else "Constructor Standings",
+                    text = if (tab == StandingsTab.Drivers) "DRIVERS" else "TEAMS",
                     color = if (isSelected) Color.White else MutedGray,
                     fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.5.sp
                 )
             }
         }
@@ -415,10 +418,11 @@ private fun columnWeight(totalColumns: Int, index: Int): Float {
 private fun LatestResultsSection(results: List<Race>) {
     Column {
         Text(
-            text = "Latest Results",
+            text = "LATEST RESULTS",
             color = MutedGray,
             fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,
+            letterSpacing = 0.5.sp,
             modifier = Modifier.padding(bottom = 12.dp)
         )
         if (results.isEmpty()) {
@@ -487,6 +491,12 @@ private fun LatestResultItem(race: Race) {
             Text(text = race.countryFlag, fontSize = 18.sp)
         }
         Text(
+            text = race.circuit,
+            color = MutedGray,
+            fontSize = 12.sp,
+            modifier = Modifier.padding(top = 2.dp)
+        )
+        Text(
             text = race.date,
             color = MutedGray,
             fontSize = 14.sp,
@@ -506,10 +516,11 @@ private fun LatestThreadSection(thread: TrendingThread?) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Latest Thread",
+                text = "LATEST THREAD",
                 color = MutedGray,
                 fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = 0.5.sp
             )
             Text(
                 text = "FORUM",
@@ -526,40 +537,29 @@ private fun LatestThreadSection(thread: TrendingThread?) {
                 .border(1.dp, CardBorder, RoundedCornerShape(20.dp))
                 .padding(16.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(RacingRed),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "RH",
-                        color = Color.White,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                Spacer(modifier = Modifier.width(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
-                    text = "Race Hub",
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.weight(1f))
-                Text(
-                    text = "PINNED",
+                    text = "TRENDING",
                     color = RacingRed,
                     fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.Black,
                     modifier = Modifier
                         .background(RacingRed.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
                         .padding(horizontal = 6.dp, vertical = 2.dp)
                 )
+                thread?.createdAt?.let { date ->
+                    Text(
+                        text = date,
+                        color = MutedGray,
+                        fontSize = 11.sp
+                    )
+                }
             }
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = thread?.title ?: "No threads yet — be the first to post.",
                 color = Color.White,

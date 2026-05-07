@@ -8,6 +8,7 @@ struct ThreadDetailView: View {
     let thread: Shared.Thread
 
     @StateObject private var viewModel = ThreadDetailViewModel()
+    @State private var showComments = false
 
     private var allComments: [Shared.ThreadComment] {
         thread.comments + viewModel.state.postedComments
@@ -27,21 +28,37 @@ struct ThreadDetailView: View {
                         threadHeader
                             .onAppear { viewModel.initLikes(thread.likes) }
 
-                        Text("COMMENTS · \(allComments.count)")
-                            .font(.system(size: 11, weight: .bold))
-                            .kerning(1)
-                            .foregroundColor(Color(hex: "8E8E93"))
-                            .padding(.top, 8)
-                            .padding(.bottom, 4)
-
-                        if allComments.isEmpty {
-                            Text("No comments yet. Be the first to reply.")
-                                .font(.system(size: 13))
+                        HStack {
+                            Text("COMMENTS · \(allComments.count)")
+                                .font(.system(size: 11, weight: .bold))
+                                .kerning(1)
                                 .foregroundColor(Color(hex: "8E8E93"))
-                                .padding(.vertical, 12)
-                        } else {
-                            ForEach(Array(allComments.enumerated()), id: \.offset) { _, comment in
-                                CommentCard(comment: comment)
+                            Spacer()
+                            Image(systemName: showComments ? "chevron.up" : "chevron.down")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(Color(hex: "8E8E93"))
+                        }
+                        .padding(.top, 8)
+                        .padding(.bottom, 4)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                showComments.toggle()
+                            }
+                        }
+
+                        if showComments {
+                            if allComments.isEmpty {
+                                Text("No comments yet. Be the first to reply.")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(Color(hex: "8E8E93"))
+                                    .padding(.vertical, 12)
+                                    .transition(.move(edge: .top).combined(with: .opacity))
+                            } else {
+                                ForEach(Array(allComments.enumerated()), id: \.offset) { _, comment in
+                                    CommentCard(comment: comment)
+                                        .transition(.move(edge: .top).combined(with: .opacity))
+                                }
                             }
                         }
                     }
@@ -132,7 +149,23 @@ struct ThreadDetailView: View {
                     isLiking: viewModel.state.isLiking,
                     onTap: { viewModel.send(.toggleLike(threadId: thread.id)) }
                 )
-                Metric(icon: "💬", value: "\(thread.comments.count)")
+                Button(action: {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        showComments.toggle()
+                    }
+                }) {
+                    HStack(spacing: 4) {
+                        Text("💬").font(.system(size: 14))
+                        Text("\(thread.comments.count)")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(showComments ? Color(hex: "E63946") : Color(hex: "8E8E93"))
+                    }
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 4)
+                    .background(showComments ? Color(hex: "E63946").opacity(0.1) : Color.clear)
+                    .cornerRadius(8)
+                }
+                .buttonStyle(.plain)
                 Spacer()
                 if thread.bookmarked {
                     Text("★ Saved")
