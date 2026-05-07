@@ -80,6 +80,14 @@ interface HomeRepository {
         content: String
     ): ThreadComment
 
+    /**
+     * Toggles the like on the thread identified by [id].
+     *
+     * @return The updated like count from the server.
+     * @throws Exception if the request fails.
+     */
+    suspend fun likeThread(id: String): Int
+
     // ── Swift-friendly index-based accessors ─────────────────────────────────
 
     /** Number of races in the calendar; use with [getRace] from Swift. */

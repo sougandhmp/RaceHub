@@ -215,3 +215,25 @@ data class ProfileDto(
 data class ProfileThreadDto(
     val title: String
 )
+
+@Serializable
+data class GraphQLLikeThreadRequest(
+    val query: String,
+    val variables: LikeThreadVariables
+)
+
+@Serializable
+data class LikeThreadVariables(
+    val id: String
+)
+
+@Serializable
+data class LikeThreadData(
+    val likeThread: LikedThreadDto
+)
+
+@Serializable
+data class LikedThreadDto(
+    val id: String,
+    val likes: Int
+)
