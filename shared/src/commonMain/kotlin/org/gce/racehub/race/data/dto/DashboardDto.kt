@@ -237,3 +237,77 @@ data class LikedThreadDto(
     val id: String,
     val likes: Int
 )
+
+@Serializable
+data class RacesData(
+    val races: List<RaceScheduleDto>
+)
+
+@Serializable
+data class RaceScheduleDto(
+    val slug: String,
+    val grandPrix: String,
+    val circuit: String,
+    val country: String,
+    val city: String,
+    val dateTime: String,
+    val round: Int,
+    val status: String,
+    val weather: String? = null
+)
+
+@Serializable
+data class GraphQLRaceDetailRequest(
+    val query: String,
+    val variables: RaceDetailVariables
+)
+
+@Serializable
+data class RaceDetailVariables(
+    val slug: String
+)
+
+@Serializable
+data class RaceDetailData(
+    val race: RaceDetailDto
+)
+
+@Serializable
+data class RaceDetailDto(
+    val grandPrix: String,
+    val circuit: String,
+    val overview: String? = null,
+    val trackFacts: TrackFactsDto? = null,
+    val sessions: List<SessionDto> = emptyList(),
+    val results: List<RaceResultDetailDto> = emptyList(),
+    val fastestLap: FastestLapDto? = null
+)
+
+@Serializable
+data class TrackFactsDto(
+    val laps: Int,
+    val lapRecord: String? = null,
+    val distanceKm: Double,
+    val corners: Int
+)
+
+@Serializable
+data class SessionDto(
+    val label: String,
+    val dateTime: String
+)
+
+@Serializable
+data class RaceResultDetailDto(
+    val position: Int,
+    val driver: String,
+    val team: String,
+    val points: Int,
+    val time: String? = null
+)
+
+@Serializable
+data class FastestLapDto(
+    val driver: String,
+    val time: String
+)

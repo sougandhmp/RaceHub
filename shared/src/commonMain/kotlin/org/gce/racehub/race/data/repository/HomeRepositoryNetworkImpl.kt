@@ -95,6 +95,55 @@ class HomeRepositoryNetworkImpl(
         }
     """.trimIndent()
 
+    // GraphQL query to fetch full race detail by slug
+    private val raceDetailQuery = $$"""
+        query GetRaceDetail($slug: String!) {
+            race(slug: $slug) {
+                grandPrix
+                circuit
+                overview
+                trackFacts {
+                    laps
+                    lapRecord
+                    distanceKm
+                    corners
+                }
+                sessions {
+                    label
+                    dateTime
+                }
+                results {
+                    position
+                    driver
+                    team
+                    points
+                    time
+                }
+                fastestLap {
+                    driver
+                    time
+                }
+            }
+        }
+    """.trimIndent()
+
+    // GraphQL query to fetch the full race schedule
+    private val racesQuery = """
+        query GetRaces {
+            races {
+                round
+                slug
+                grandPrix
+                circuit
+                country
+                city
+                dateTime
+                status
+                weather
+            }
+        }
+    """.trimIndent()
+
     // GraphQL query to fetch complete dashboard data
     private val dashboardQuery = """
         query GetDashboard {
@@ -133,6 +182,40 @@ class HomeRepositoryNetworkImpl(
     """.trimIndent()
 
     /**
+     * Fetches the full race schedule from the network and saves it locally.
+     */
+    private suspend fun syncRaceSchedule() {
+        try {
+            val response: GraphQLResponse<RacesData> = httpClient.post("$baseUrl/graphql") {
+                contentType(ContentType.Application.Json)
+                setBody(GraphQLRequest(racesQuery))
+            }.body()
+
+            val races = response.data?.races
+            if (races == null) {
+                println("🚀 NETWORK LOG | Failed to sync races: ${response.errors?.joinToString { it.message } ?: "no data"}")
+                return
+            }
+
+            localDataSource.saveRaces(races.map { dto ->
+                Race(
+                    id = dto.slug,
+                    name = dto.grandPrix,
+                    circuit = dto.circuit,
+                    country = dto.country,
+                    city = dto.city,
+                    dateTime = dto.dateTime,
+                    round = dto.round,
+                    status = dto.status,
+                    weather = dto.weather
+                )
+            })
+        } catch (e: Exception) {
+            println("🚀 NETWORK LOG | Failed to sync races: ${e.message}")
+        }
+    }
+
+    /**
      * Syncs all dashboard data from the network to the local database.
      * Runs silently without blocking; errors are logged but not thrown.
      */
@@ -145,12 +228,12 @@ class HomeRepositoryNetworkImpl(
 
             val dashboard = response.data?.dashboard
             if (dashboard == null) {
-                println("Failed to sync dashboard: ${response.errors?.joinToString { it.message } ?: "no data"}")
+                println("🚀 NETWORK LOG | Failed to sync dashboard: ${response.errors?.joinToString { it.message } ?: "no data"}")
                 return
             }
             saveDashboardData(dashboard)
         } catch (e: Exception) {
-            println("Failed to sync dashboard: ${e.message}")
+            println("🚀 NETWORK LOG | Failed to sync dashboard: ${e.message}")
         }
     }
 
@@ -219,12 +302,12 @@ class HomeRepositoryNetworkImpl(
                     id = "upcoming",
                     name = it.grandPrix,
                     circuit = "",
-                    country = it.city,
-                    countryFlag = "",
-                    date = it.dateTime,
+                    country = "",
+                    city = it.city,
+                    dateTime = it.dateTime,
                     round = 0,
-                    isCompleted = false,
-                    daysRemaining = null
+                    status = it.status,
+                    weather = null
                 )
             )
         }
@@ -233,16 +316,17 @@ class HomeRepositoryNetworkImpl(
     }
 
     /**
-     * Returns the race schedule, refreshing from the network if empty.
-     * Subsequent calls trigger background syncs without blocking.
+     * Returns the full race schedule, fetching from the dedicated races query.
+     * Blocks on first load; subsequent calls refresh in the background.
      */
     override suspend fun getRaceSchedule(): List<Race> {
         val localRaces = localDataSource.getAllRaces()
         if (localRaces.isEmpty()) {
-            syncDashboard()
+            syncRaceSchedule()
         } else {
-            // Trigger background refresh
-            backgroundSync()
+            try {
+                withTimeoutOrNull(5000) { syncRaceSchedule() }
+            } catch (_: CancellationException) {}
         }
         return localDataSource.getAllRaces()
     }
@@ -330,7 +414,7 @@ class HomeRepositoryNetworkImpl(
                 )
             }
         } catch (e: Exception) {
-            println("Failed to fetch threads: ${e.message}")
+            println("🚀 NETWORK LOG | Failed to fetch threads: ${e.message}")
             emptyList()
         }
     }
@@ -423,6 +507,30 @@ class HomeRepositoryNetworkImpl(
         val added = response.data?.addComment
             ?: error(response.errors?.joinToString { it.message } ?: "Failed to add comment")
         return ThreadComment(content = added.content, authorUsername = userId)
+    }
+
+    /**
+     * Fetches full race detail for the given [slug] via GraphQL query.
+     */
+    override suspend fun getRaceDetail(slug: String): RaceDetail {
+        val response: GraphQLResponse<RaceDetailData> = httpClient.post("$baseUrl/graphql") {
+            contentType(ContentType.Application.Json)
+            setBody(GraphQLRaceDetailRequest(query = raceDetailQuery, variables = RaceDetailVariables(slug)))
+        }.body()
+
+        val dto = response.data?.race
+            ?: error(response.errors?.joinToString { it.message } ?: "Failed to load race detail")
+        return RaceDetail(
+            grandPrix = dto.grandPrix,
+            circuit = dto.circuit,
+            overview = dto.overview,
+            trackFacts = dto.trackFacts?.let {
+                TrackFacts(laps = it.laps, lapRecord = it.lapRecord, distanceKm = it.distanceKm, corners = it.corners)
+            },
+            sessions = dto.sessions.map { RaceSession(label = it.label, dateTime = it.dateTime) },
+            results = dto.results.map { RaceResult(position = it.position, driver = it.driver, team = it.team, points = it.points, time = it.time) },
+            fastestLap = dto.fastestLap?.let { FastestLap(driver = it.driver, time = it.time) }
+        )
     }
 
     /**

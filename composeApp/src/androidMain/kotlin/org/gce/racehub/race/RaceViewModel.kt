@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.gce.racehub.race.domain.usecase.GetConstructorStandingsUseCase
 import org.gce.racehub.race.domain.usecase.GetDriverStandingsUseCase
+import org.gce.racehub.race.domain.usecase.GetRaceDetailUseCase
 import org.gce.racehub.race.domain.usecase.GetRaceScheduleUseCase
 import org.gce.racehub.race.domain.usecase.GetTrendingThreadsUseCase
 
@@ -18,7 +19,8 @@ class RaceViewModel(
     private val getRaceScheduleUseCase: GetRaceScheduleUseCase,
     private val getDriverStandingsUseCase: GetDriverStandingsUseCase,
     private val getConstructorStandingsUseCase: GetConstructorStandingsUseCase,
-    private val getTrendingThreadsUseCase: GetTrendingThreadsUseCase
+    private val getTrendingThreadsUseCase: GetTrendingThreadsUseCase,
+    private val getRaceDetailUseCase: GetRaceDetailUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(RaceState())
@@ -49,14 +51,19 @@ class RaceViewModel(
                 val drivers = getDriverStandingsUseCase()
                 val constructors = getConstructorStandingsUseCase()
                 val trending = getTrendingThreadsUseCase()
+                val sorted = schedule.sortedBy { r -> r.round }
                 _state.update {
                     it.copy(
                         isLoading = false,
-                        raceSchedule = schedule,
+                        raceSchedule = sorted,
                         driverStandings = drivers,
                         constructorStandings = constructors,
                         trendingThreads = trending
                     )
+                }
+                val nextRace = sorted.firstOrNull { !it.isCompleted }
+                if (nextRace != null) {
+                    fetchRaceDetail(nextRace.id)
                 }
             } catch (e: Exception) {
                 _state.update {
@@ -65,6 +72,18 @@ class RaceViewModel(
                         errorMessage = e.message ?: "Failed to load data. Pull to refresh."
                     )
                 }
+            }
+        }
+    }
+
+    private fun fetchRaceDetail(slug: String) {
+        viewModelScope.launch {
+            _state.update { it.copy(isLoadingDetail = true) }
+            try {
+                val detail = getRaceDetailUseCase(slug)
+                _state.update { it.copy(isLoadingDetail = false, nextRaceDetail = detail) }
+            } catch (e: Exception) {
+                _state.update { it.copy(isLoadingDetail = false) }
             }
         }
     }

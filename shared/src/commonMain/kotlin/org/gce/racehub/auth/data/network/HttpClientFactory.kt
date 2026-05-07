@@ -28,7 +28,7 @@ object HttpClientFactory {
             install(Logging) {
                 logger = object : Logger {
                     override fun log(message: String) {
-                        println("HTTP: $message")
+                        println("🚀 NETWORK LOG | $message")
                     }
                 }
                 level = LogLevel.ALL

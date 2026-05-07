@@ -39,8 +39,11 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
+      - name: Set build number
+        run: echo "BUILD_NUMBER=$(date +'%y%m%d%H%M')" >> $GITHUB_ENV
+
       - name: Build Android Debug APK
-        run: ./gradlew :composeApp:assembleDebug --build-cache --parallel
+        run: ./gradlew :composeApp:assembleDebug -PbuildNumber=${{ env.BUILD_NUMBER }} --build-cache --parallel
 
       - name: Upload Android APK Artifact
         uses: actions/upload-artifact@v4
