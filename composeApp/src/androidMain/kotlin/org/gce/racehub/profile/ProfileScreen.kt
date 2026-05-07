@@ -2,6 +2,7 @@ package org.gce.racehub.profile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,21 +40,22 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.gce.racehub.auth.domain.model.User
 import org.gce.racehub.race.domain.model.UserProfile
+import org.gce.racehub.theme.AppColorScheme
+import org.gce.racehub.theme.LocalAppColors
+import org.gce.racehub.theme.ThemeManager
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-
-private val DarkBg = Color(0xFF0A0A0A)
-private val CardBg = Color(0xFF161616)
-private val CardBorder = Color(0xFF262626)
-private val MutedGray = Color(0xFF8E8E93)
-private val RacingRed = Color(0xFFE63946)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel = koinViewModel(),
+    themeManager: ThemeManager = koinInject(),
     onSignedOut: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val isDark by themeManager.isDarkMode.collectAsStateWithLifecycle()
+    val colors = LocalAppColors.current
     var isRefreshing by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.isLoadingProfile) {
@@ -79,67 +81,146 @@ fun ProfileScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(DarkBg)
+                .background(colors.background)
         ) {
-        val user = state.user
-        if (user == null) {
-            Text(
-                text = "Not signed in.",
-                color = MutedGray,
-                fontSize = 16.sp,
-                modifier = Modifier.align(Alignment.Center)
-            )
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 24.dp, vertical = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                ProfileHeader(user = user, profile = state.profile)
-                Spacer(modifier = Modifier.height(24.dp))
-                ProfileStats(user = user, profile = state.profile)
-                Spacer(modifier = Modifier.height(24.dp))
-                ProfileDetails(user = user)
-                state.profile?.let { profile ->
-                    if (profile.recentThreadTitles.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(24.dp))
-                        ThreadTitleSection(
-                            heading = "RECENT POSTS",
-                            titles = profile.recentThreadTitles
-                        )
-                    }
-                    if (profile.savedThreadTitles.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        ThreadTitleSection(
-                            heading = "SAVED",
-                            titles = profile.savedThreadTitles
-                        )
-                    }
-                }
-                if (state.isLoadingProfile) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    CircularProgressIndicator(color = RacingRed, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
-                }
-                state.errorMessage?.let { message ->
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(text = message, color = RacingRed, fontSize = 13.sp)
-                }
-                Spacer(modifier = Modifier.height(32.dp))
-                SignOutButton(
-                    isSigningOut = state.isSigningOut,
-                    onClick = { viewModel.onIntent(ProfileIntent.SignOut) }
+            val user = state.user
+            if (user == null) {
+                Text(
+                    text = "Not signed in.",
+                    color = colors.mutedText,
+                    fontSize = 16.sp,
+                    modifier = Modifier.align(Alignment.Center)
                 )
-                Spacer(modifier = Modifier.height(24.dp))
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp, vertical = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    ProfileHeader(user = user, profile = state.profile, colors = colors)
+                    Spacer(modifier = Modifier.height(24.dp))
+                    ProfileStats(user = user, profile = state.profile, colors = colors)
+                    Spacer(modifier = Modifier.height(24.dp))
+                    ProfileDetails(user = user, colors = colors)
+                    Spacer(modifier = Modifier.height(24.dp))
+                    ThemeToggle(
+                        isDark = isDark,
+                        onToggle = { themeManager.setDarkMode(it) },
+                        colors = colors
+                    )
+                    state.profile?.let { profile ->
+                        if (profile.recentThreadTitles.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(24.dp))
+                            ThreadTitleSection(
+                                heading = "RECENT POSTS",
+                                titles = profile.recentThreadTitles,
+                                colors = colors
+                            )
+                        }
+                        if (profile.savedThreadTitles.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            ThreadTitleSection(
+                                heading = "SAVED",
+                                titles = profile.savedThreadTitles,
+                                colors = colors
+                            )
+                        }
+                    }
+                    if (state.isLoadingProfile) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        CircularProgressIndicator(
+                            color = colors.racingRed,
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    state.errorMessage?.let { message ->
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(text = message, color = colors.racingRed, fontSize = 13.sp)
+                    }
+                    Spacer(modifier = Modifier.height(32.dp))
+                    SignOutButton(
+                        isSigningOut = state.isSigningOut,
+                        colors = colors,
+                        onClick = { viewModel.onIntent(ProfileIntent.SignOut) }
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
             }
-        }
         }
     }
 }
 
 @Composable
-private fun ProfileHeader(user: User, profile: UserProfile?) {
+private fun ThemeToggle(
+    isDark: Boolean,
+    onToggle: (Boolean) -> Unit,
+    colors: AppColorScheme
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "APPEARANCE",
+            color = colors.mutedText,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 1.sp,
+            modifier = Modifier.padding(bottom = 10.dp)
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(colors.card)
+                .border(1.dp, colors.cardBorder, RoundedCornerShape(12.dp))
+                .padding(4.dp)
+        ) {
+            ThemePill(
+                label = "Light",
+                isSelected = !isDark,
+                colors = colors,
+                modifier = Modifier.weight(1f),
+                onClick = { onToggle(false) }
+            )
+            ThemePill(
+                label = "Dark",
+                isSelected = isDark,
+                colors = colors,
+                modifier = Modifier.weight(1f),
+                onClick = { onToggle(true) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun ThemePill(
+    label: String,
+    isSelected: Boolean,
+    colors: AppColorScheme,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(if (isSelected) colors.racingRed else Color.Transparent)
+            .clickable { onClick() }
+            .padding(vertical = 10.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            color = if (isSelected) Color.White else colors.mutedText,
+            fontSize = 14.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+        )
+    }
+}
+
+@Composable
+private fun ProfileHeader(user: User, profile: UserProfile?, colors: AppColorScheme) {
     val initials = profile?.avatar?.takeIf { it.isNotBlank() }
         ?.let { it.take(2).uppercase() }
         ?: avatarInitials(user)
@@ -151,7 +232,7 @@ private fun ProfileHeader(user: User, profile: UserProfile?) {
             modifier = Modifier
                 .size(96.dp)
                 .clip(CircleShape)
-                .background(RacingRed),
+                .background(colors.racingRed),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -164,25 +245,25 @@ private fun ProfileHeader(user: User, profile: UserProfile?) {
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = displayName,
-            color = Color.White,
+            color = colors.primaryText,
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold
         )
         handle?.takeIf { it.isNotBlank() }?.let { h ->
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = "@$h", color = MutedGray, fontSize = 14.sp)
+            Text(text = "@$h", color = colors.mutedText, fontSize = 14.sp)
         }
         user.role?.takeIf { it.isNotBlank() }?.let { role ->
             Spacer(modifier = Modifier.height(8.dp))
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(6.dp))
-                    .background(RacingRed.copy(alpha = 0.12f))
+                    .background(colors.racingRed.copy(alpha = 0.12f))
                     .padding(horizontal = 10.dp, vertical = 4.dp)
             ) {
                 Text(
                     text = role.uppercase(),
-                    color = RacingRed,
+                    color = colors.racingRed,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 0.5.sp
@@ -193,35 +274,35 @@ private fun ProfileHeader(user: User, profile: UserProfile?) {
 }
 
 @Composable
-private fun ProfileStats(user: User, profile: UserProfile?) {
+private fun ProfileStats(user: User, profile: UserProfile?, colors: AppColorScheme) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(CardBg)
-            .border(1.dp, CardBorder, RoundedCornerShape(16.dp))
+            .background(colors.card)
+            .border(1.dp, colors.cardBorder, RoundedCornerShape(16.dp))
             .padding(vertical = 16.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        StatCell(label = "POSTS", value = (profile?.postsCount ?: user.postsCount).toString())
-        StatCell(label = "SAVED", value = profile?.savedCount?.toString() ?: "—")
-        StatCell(label = "COUNTRY", value = user.country?.uppercase() ?: "—")
+        StatCell(label = "POSTS", value = (profile?.postsCount ?: user.postsCount).toString(), colors = colors)
+        StatCell(label = "SAVED", value = profile?.savedCount?.toString() ?: "—", colors = colors)
+        StatCell(label = "COUNTRY", value = user.country?.uppercase() ?: "—", colors = colors)
     }
 }
 
 @Composable
-private fun StatCell(label: String, value: String) {
+private fun StatCell(label: String, value: String, colors: AppColorScheme) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = value,
-            color = Color.White,
+            color = colors.primaryText,
             fontSize = 18.sp,
             fontWeight = FontWeight.ExtraBold
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = label,
-            color = MutedGray,
+            color = colors.mutedText,
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 1.sp
@@ -230,40 +311,40 @@ private fun StatCell(label: String, value: String) {
 }
 
 @Composable
-private fun ProfileDetails(user: User) {
+private fun ProfileDetails(user: User, colors: AppColorScheme) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(CardBg)
-            .border(1.dp, CardBorder, RoundedCornerShape(16.dp))
+            .background(colors.card)
+            .border(1.dp, colors.cardBorder, RoundedCornerShape(16.dp))
             .padding(16.dp)
     ) {
-        DetailRow(label = "Email", value = user.email)
+        DetailRow(label = "Email", value = user.email, colors = colors)
         user.username?.takeIf { it.isNotBlank() }?.let {
             Spacer(modifier = Modifier.height(12.dp))
-            DetailRow(label = "Username", value = it)
+            DetailRow(label = "Username", value = it, colors = colors)
         }
         user.joinedAt?.takeIf { it.isNotBlank() }?.let {
             Spacer(modifier = Modifier.height(12.dp))
-            DetailRow(label = "Joined", value = formatJoined(it))
+            DetailRow(label = "Joined", value = formatJoined(it), colors = colors)
         }
     }
 }
 
 @Composable
-private fun ThreadTitleSection(heading: String, titles: List<String>) {
+private fun ThreadTitleSection(heading: String, titles: List<String>, colors: AppColorScheme) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(CardBg)
-            .border(1.dp, CardBorder, RoundedCornerShape(16.dp))
+            .background(colors.card)
+            .border(1.dp, colors.cardBorder, RoundedCornerShape(16.dp))
             .padding(16.dp)
     ) {
         Text(
             text = heading,
-            color = MutedGray,
+            color = colors.mutedText,
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 1.sp
@@ -273,7 +354,7 @@ private fun ThreadTitleSection(heading: String, titles: List<String>) {
             Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = title,
-                color = Color.White,
+                color = colors.primaryText,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 lineHeight = 20.sp
@@ -283,21 +364,21 @@ private fun ThreadTitleSection(heading: String, titles: List<String>) {
 }
 
 @Composable
-private fun DetailRow(label: String, value: String) {
+private fun DetailRow(label: String, value: String, colors: AppColorScheme) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = label,
-            color = MutedGray,
+            color = colors.mutedText,
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.width(96.dp)
         )
         Text(
             text = value,
-            color = Color.White,
+            color = colors.primaryText,
             fontSize = 14.sp,
             fontWeight = FontWeight.Medium
         )
@@ -305,7 +386,7 @@ private fun DetailRow(label: String, value: String) {
 }
 
 @Composable
-private fun SignOutButton(isSigningOut: Boolean, onClick: () -> Unit) {
+private fun SignOutButton(isSigningOut: Boolean, colors: AppColorScheme, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         enabled = !isSigningOut,
@@ -313,10 +394,10 @@ private fun SignOutButton(isSigningOut: Boolean, onClick: () -> Unit) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp)),
         colors = ButtonDefaults.buttonColors(
-            containerColor = RacingRed,
+            containerColor = colors.racingRed,
             contentColor = Color.White,
-            disabledContainerColor = CardBg,
-            disabledContentColor = MutedGray
+            disabledContainerColor = colors.card,
+            disabledContentColor = colors.mutedText
         )
     ) {
         if (isSigningOut) {
@@ -338,7 +419,6 @@ private fun avatarInitials(user: User): String {
     return source.trim().split(" ").take(2).map { it.first() }.joinToString("").uppercase()
 }
 
-// "2024-08-13T..." → "Aug 2024"; falls back to the raw string if parsing fails.
 private fun formatJoined(joinedAt: String?): String {
     if (joinedAt.isNullOrBlank()) return "—"
     val datePart = joinedAt.substringBefore('T')

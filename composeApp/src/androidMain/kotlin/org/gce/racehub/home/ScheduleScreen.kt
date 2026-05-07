@@ -187,10 +187,6 @@ private fun RaceItem(
     }
 }
 
-/**
- * Card displaying the latest trending thread on the race schedule page.
- * Shows thread title, like count, and a visual indicator for trending content.
- */
 @Composable
 private fun ScheduleLatestThreadCard(thread: TrendingThread) {
     Column(
@@ -270,4 +266,3 @@ private fun ScheduleLatestThreadCard(thread: TrendingThread) {
         }
     }
 }
-

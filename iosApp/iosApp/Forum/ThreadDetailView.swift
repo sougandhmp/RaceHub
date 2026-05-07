@@ -301,20 +301,6 @@ private struct LikeButtonView: View {
     }
 }
 
-private struct Metric: View {
-    let icon: String
-    let value: String
-
-    var body: some View {
-        HStack(spacing: 4) {
-            Text(icon).font(.system(size: 14))
-            Text(value)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(Color(hex: "8E8E93"))
-        }
-    }
-}
-
 private func formatTimestamp(_ createdAt: String) -> String {
     let datePart = createdAt.split(separator: "T").first.map(String.init) ?? createdAt
     let timePart = createdAt.split(separator: "T").last?.split(separator: ".").first?.prefix(5) ?? ""

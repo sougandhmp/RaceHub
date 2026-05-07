@@ -1,7 +1,10 @@
 package org.gce.racehub
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -25,99 +28,107 @@ import org.gce.racehub.race.RaceViewModel
 import org.gce.racehub.race.di.raceModule
 import org.gce.racehub.race.domain.model.Thread
 import org.gce.racehub.signup.SignUpScreen
+import org.gce.racehub.theme.DarkAppColors
+import org.gce.racehub.theme.LightAppColors
+import org.gce.racehub.theme.LocalAppColors
+import org.gce.racehub.theme.RacingRed
+import org.gce.racehub.theme.ThemeManager
 import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.dsl.koinConfiguration
 
-/** Top-level navigation destinations for the app. */
 private enum class Screen { Login, SignUp, Home, Schedule, Standings, CreateThread, ThreadDetail }
 
-/**
- * Root composable. Owns the top-level navigation state and routes each
- * [Screen] value to the appropriate screen composable.
- *
- * The Race and Forum ViewModels are resolved here so the same instance is
- * shared between the Home tabs and the detail screens that hang off them
- * (Schedule, Standings).
- */
 @Composable
 fun App() {
-    MaterialTheme {
-        val userSession: UserSession = koinInject()
-        var screen by remember { mutableStateOf(if (userSession.currentUser.value != null) Screen.Home else Screen.Login) }
-        var selectedThread by remember { mutableStateOf<Thread?>(null) }
+    val themeManager: ThemeManager = koinInject()
+    val isDark by themeManager.isDarkMode.collectAsState()
+    val appColors = if (isDark) DarkAppColors else LightAppColors
 
-        val raceViewModel: RaceViewModel = koinViewModel()
-        val forumViewModel: ForumViewModel = koinViewModel()
-        val raceState by raceViewModel.state.collectAsState()
+    val materialColorScheme = if (isDark) {
+        darkColorScheme(primary = RacingRed)
+    } else {
+        lightColorScheme(primary = RacingRed)
+    }
 
-        LaunchedEffect(Unit) {
-            if (userSession.currentUser.value != null) {
-                raceViewModel.onIntent(RaceIntent.Refresh)
-                forumViewModel.onIntent(ForumIntent.Refresh)
-            }
-        }
+    CompositionLocalProvider(LocalAppColors provides appColors) {
+        MaterialTheme(colorScheme = materialColorScheme) {
+            val userSession: UserSession = koinInject()
+            var screen by remember { mutableStateOf(if (userSession.currentUser.value != null) Screen.Home else Screen.Login) }
+            var selectedThread by remember { mutableStateOf<Thread?>(null) }
 
-        when (screen) {
-            Screen.Login -> LoginScreen(
-                onLoginSuccess = {
+            val raceViewModel: RaceViewModel = koinViewModel()
+            val forumViewModel: ForumViewModel = koinViewModel()
+            val raceState by raceViewModel.state.collectAsState()
+
+            LaunchedEffect(Unit) {
+                if (userSession.currentUser.value != null) {
                     raceViewModel.onIntent(RaceIntent.Refresh)
                     forumViewModel.onIntent(ForumIntent.Refresh)
-                    screen = Screen.Home
-                },
-                onNavigateToSignUp = { screen = Screen.SignUp }
-            )
-
-            Screen.SignUp -> SignUpScreen(
-                onSignUpSuccess = {
-                    raceViewModel.onIntent(RaceIntent.Refresh)
-                    forumViewModel.onIntent(ForumIntent.Refresh)
-                    screen = Screen.Home
-                },
-                onNavigateToLogin = { screen = Screen.Login }
-            )
-
-            Screen.Home -> HomeScreen(
-                onViewAllSchedule = { screen = Screen.Schedule },
-                onViewAllStandings = { screen = Screen.Standings },
-                onCreateThread = { screen = Screen.CreateThread },
-                onThreadClick = { thread ->
-                    selectedThread = thread
-                    screen = Screen.ThreadDetail
-                },
-                onSignedOut = { screen = Screen.Login }
-            )
-
-            Screen.Schedule -> ScheduleScreen(
-                schedule = raceState.raceSchedule,
-                latestThread = raceState.trendingThreads.firstOrNull(),
-                onBack = { screen = Screen.Home }
-            )
-
-            Screen.Standings -> StandingsScreen(
-                drivers = raceState.driverStandings,
-                constructors = raceState.constructorStandings,
-                onBack = { screen = Screen.Home }
-            )
-
-            Screen.CreateThread -> CreateThreadScreen(
-                onCancel = { screen = Screen.Home },
-                onThreadCreated = {
-                    forumViewModel.onIntent(ForumIntent.Refresh)
-                    screen = Screen.Home
                 }
-            )
+            }
 
-            Screen.ThreadDetail -> {
-                val thread = selectedThread
-                if (thread == null) {
-                    screen = Screen.Home
-                } else {
-                    ThreadDetailScreen(
-                        thread = thread,
-                        onBack = { screen = Screen.Home }
-                    )
+            when (screen) {
+                Screen.Login -> LoginScreen(
+                    onLoginSuccess = {
+                        raceViewModel.onIntent(RaceIntent.Refresh)
+                        forumViewModel.onIntent(ForumIntent.Refresh)
+                        screen = Screen.Home
+                    },
+                    onNavigateToSignUp = { screen = Screen.SignUp }
+                )
+
+                Screen.SignUp -> SignUpScreen(
+                    onSignUpSuccess = {
+                        raceViewModel.onIntent(RaceIntent.Refresh)
+                        forumViewModel.onIntent(ForumIntent.Refresh)
+                        screen = Screen.Home
+                    },
+                    onNavigateToLogin = { screen = Screen.Login }
+                )
+
+                Screen.Home -> HomeScreen(
+                    onViewAllSchedule = { screen = Screen.Schedule },
+                    onViewAllStandings = { screen = Screen.Standings },
+                    onCreateThread = { screen = Screen.CreateThread },
+                    onThreadClick = { thread ->
+                        selectedThread = thread
+                        screen = Screen.ThreadDetail
+                    },
+                    onSignedOut = { screen = Screen.Login }
+                )
+
+                Screen.Schedule -> ScheduleScreen(
+                    schedule = raceState.raceSchedule,
+                    latestThread = raceState.trendingThreads.firstOrNull(),
+                    onBack = { screen = Screen.Home }
+                )
+
+                Screen.Standings -> StandingsScreen(
+                    drivers = raceState.driverStandings,
+                    constructors = raceState.constructorStandings,
+                    onBack = { screen = Screen.Home }
+                )
+
+                Screen.CreateThread -> CreateThreadScreen(
+                    onCancel = { screen = Screen.Home },
+                    onThreadCreated = {
+                        forumViewModel.onIntent(ForumIntent.Refresh)
+                        screen = Screen.Home
+                    }
+                )
+
+                Screen.ThreadDetail -> {
+                    val thread = selectedThread
+                    if (thread == null) {
+                        screen = Screen.Home
+                    } else {
+                        ThreadDetailScreen(
+                            thread = thread,
+                            onBack = { screen = Screen.Home }
+                        )
+                    }
                 }
             }
         }

@@ -42,15 +42,9 @@ import org.gce.racehub.race.domain.model.ConstructorStanding
 import org.gce.racehub.race.domain.model.DriverStanding
 import org.gce.racehub.race.domain.model.Race
 import org.gce.racehub.race.domain.model.TrendingThread
+import org.gce.racehub.theme.AppColorScheme
+import org.gce.racehub.theme.LocalAppColors
 import org.koin.compose.viewmodel.koinViewModel
-
-private val RacingRed = Color(0xFFE63946)
-private val DarkBg = Color(0xFF0A0A0A)
-private val CardBg = Color(0xFF161616)
-private val CardBorder = Color(0xFF262626)
-private val MutedGray = Color(0xFF8E8E93)
-private val HeaderBg = Color(0xFF2A1116)
-private val RowAltBg = Color(0xFF1B0E11)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,6 +54,7 @@ fun RaceScreen(
     onViewAllStandings: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val colors = LocalAppColors.current
     var isRefreshing by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.isLoading) {
@@ -72,18 +67,19 @@ fun RaceScreen(
             isRefreshing = true
             viewModel.onIntent(RaceIntent.Refresh)
         },
-        modifier = Modifier.fillMaxSize().background(DarkBg)
+        modifier = Modifier.fillMaxSize().background(colors.background)
     ) {
         if (state.isLoading && state.raceSchedule.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize()) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center),
-                    color = RacingRed
+                    color = colors.racingRed
                 )
             }
         } else {
             RaceTabContent(
                 state = state,
+                colors = colors,
                 onViewAllSchedule = onViewAllSchedule,
                 onViewAllStandings = onViewAllStandings
             )
@@ -94,42 +90,43 @@ fun RaceScreen(
 @Composable
 private fun RaceTabContent(
     state: RaceState,
+    colors: AppColorScheme,
     onViewAllSchedule: () -> Unit,
     onViewAllStandings: () -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp),
+            .padding(horizontal = 20.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         item {
             NextRaceSection(
                 race = state.raceSchedule.firstOrNull { !it.isCompleted },
+                colors = colors,
                 onViewAll = onViewAllSchedule
             )
         }
         item {
-            StandingsTabSection(
-                drivers = state.driverStandings.take(5),
-                constructors = state.constructorStandings.take(5),
+            StandingsSection(
+                drivers = state.driverStandings.take(3),
+                constructors = state.constructorStandings.take(3),
+                colors = colors,
                 onViewAll = onViewAllStandings
             )
         }
         item {
-            LatestResultsSection(
-                results = state.raceSchedule.filter { it.isCompleted }.takeLast(3).reversed()
+            FeaturedSection(
+                thread = state.trendingThreads.firstOrNull(),
+                colors = colors
             )
-        }
-        item {
-            LatestThreadSection(thread = state.trendingThreads.firstOrNull())
         }
         item { Spacer(modifier = Modifier.height(16.dp)) }
     }
 }
 
 @Composable
-private fun NextRaceSection(race: Race?, onViewAll: () -> Unit) {
+private fun NextRaceSection(race: Race?, colors: AppColorScheme, onViewAll: () -> Unit) {
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -138,31 +135,21 @@ private fun NextRaceSection(race: Race?, onViewAll: () -> Unit) {
         ) {
             Text(
                 text = "NEXT RACE",
-                color = MutedGray,
-                fontSize = 12.sp,
+                color = colors.mutedText,
+                fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
-                letterSpacing = 0.5.sp
+                letterSpacing = 1.sp
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 race?.daysRemaining?.let { days ->
                     Text(
-                        text = "R${race.round} · $days DAYS",
-                        color = RacingRed,
-                        fontSize = 12.sp,
+                        text = "RD ${race.round} · $days DAYS",
+                        color = colors.racingRed,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(end = 12.dp)
-                    )
-                }
-                TextButton(
-                    onClick = onViewAll,
-                    contentPadding = PaddingValues(0.dp),
-                    modifier = Modifier.heightIn(min = 24.dp)
-                ) {
-                    Text(
-                        text = "VIEW ALL",
-                        color = RacingRed,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
+                        modifier = Modifier
+                            .background(colors.racingRed.copy(alpha = 0.1f), RoundedCornerShape(6.dp))
+                            .padding(horizontal = 8.dp, vertical = 3.dp)
                     )
                 }
             }
@@ -172,45 +159,64 @@ private fun NextRaceSection(race: Race?, onViewAll: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(20.dp))
-                .background(CardBg)
-                .border(1.dp, CardBorder, RoundedCornerShape(20.dp))
+                .background(colors.card)
+                .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
                 .padding(20.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = race?.name ?: "Canadian GP",
-                    color = Color.White,
-                    fontSize = 28.sp,
+                    color = colors.primaryText,
+                    fontSize = 26.sp,
                     fontWeight = FontWeight.ExtraBold
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(text = race?.countryFlag ?: "🇨🇦", fontSize = 24.sp)
+                Text(text = race?.countryFlag ?: "🇨🇦", fontSize = 22.sp)
             }
+            Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = race?.date ?: "Sun May 24 · 8:00 PM UTC · Montreal",
-                color = MutedGray,
-                fontSize = 14.sp,
-                modifier = Modifier.padding(vertical = 8.dp)
+                color = colors.mutedText,
+                fontSize = 13.sp
             )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "Circuit  ", color = MutedGray, fontSize = 14.sp)
-                Text(
-                    text = race?.circuit ?: "—",
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                )
+            Spacer(modifier = Modifier.height(10.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = "Circuit  ", color = colors.mutedText, fontSize = 13.sp)
+                    Text(
+                        text = race?.circuit ?: "—",
+                        color = colors.primaryText,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+                TextButton(
+                    onClick = onViewAll,
+                    contentPadding = PaddingValues(0.dp),
+                    modifier = Modifier.heightIn(min = 20.dp)
+                ) {
+                    Text(
+                        text = "See all",
+                        color = colors.racingRed,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
         }
     }
 }
 
-private enum class StandingsTab { Drivers, Teams }
+private enum class StandingsTab { Drivers, Constructors }
 
 @Composable
-private fun StandingsTabSection(
+private fun StandingsSection(
     drivers: List<DriverStanding>,
     constructors: List<ConstructorStanding>,
+    colors: AppColorScheme,
     onViewAll: () -> Unit
 ) {
     var selected by rememberSaveable { mutableStateOf(StandingsTab.Drivers) }
@@ -224,10 +230,10 @@ private fun StandingsTabSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = if (selected == StandingsTab.Drivers) "Driver Standings" else "Constructor Standings",
-                color = MutedGray,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold
+                text = "Standings",
+                color = colors.primaryText,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
             )
             TextButton(
                 onClick = onViewAll,
@@ -235,54 +241,57 @@ private fun StandingsTabSection(
                 modifier = Modifier.heightIn(min = 24.dp)
             ) {
                 Text(
-                    text = "VIEW ALL",
-                    color = RacingRed,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
+                    text = "See all",
+                    color = colors.racingRed,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
         }
-        StandingsSegmentedControl(
-            selected = selected,
-            onSelected = { selected = it }
-        )
+        StandingsTabPills(selected = selected, onSelected = { selected = it }, colors = colors)
         Spacer(modifier = Modifier.height(12.dp))
         when (selected) {
-            StandingsTab.Drivers -> DriverStandingsTable(
-                drivers = drivers.ifEmpty {
+            StandingsTab.Drivers -> {
+                val displayDrivers = drivers.ifEmpty {
                     listOf(
-                        DriverStanding(1, "Kimi Antonelli", "Mercedes", 72, 2),
-                        DriverStanding(2, "George Russell", "Mercedes", 63, 1),
-                        DriverStanding(3, "Charles Leclerc", "Ferrari", 49, 0)
+                        DriverStanding(1, "George Russell", "Mercedes", 142, 3),
+                        DriverStanding(2, "Max Verstappen", "Red Bull", 134, 2),
+                        DriverStanding(3, "Lando Norris", "McLaren", 121, 1)
                     )
                 }
-            )
-
-            StandingsTab.Teams -> ConstructorStandingsTable(
-                constructors = constructors.ifEmpty {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    displayDrivers.forEach { DriverStandingCard(it, colors) }
+                }
+            }
+            StandingsTab.Constructors -> {
+                val displayConstructors = constructors.ifEmpty {
                     listOf(
-                        ConstructorStanding(1, "Mercedes", 135, 3),
-                        ConstructorStanding(2, "Ferrari", 90, 0),
-                        ConstructorStanding(3, "McLaren", 46, 0)
+                        ConstructorStanding(1, "Mercedes", 276, 4),
+                        ConstructorStanding(2, "Red Bull", 207, 2),
+                        ConstructorStanding(3, "McLaren", 170, 1)
                     )
                 }
-            )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    displayConstructors.forEach { ConstructorStandingCard(it, colors) }
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun StandingsSegmentedControl(
+private fun StandingsTabPills(
     selected: StandingsTab,
-    onSelected: (StandingsTab) -> Unit
+    onSelected: (StandingsTab) -> Unit,
+    colors: AppColorScheme
 ) {
     Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(CardBg)
-            .border(1.dp, CardBorder, RoundedCornerShape(12.dp))
-            .padding(4.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(colors.card)
+            .border(1.dp, colors.cardBorder, RoundedCornerShape(10.dp))
+            .padding(3.dp),
+        horizontalArrangement = Arrangement.spacedBy(0.dp)
     ) {
         StandingsTab.entries.forEach { tab ->
             val isSelected = tab == selected
@@ -290,17 +299,16 @@ private fun StandingsSegmentedControl(
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(if (isSelected) RacingRed else Color.Transparent)
+                    .background(if (isSelected) colors.racingRed else Color.Transparent)
                     .clickable { onSelected(tab) }
-                    .padding(vertical = 10.dp),
+                    .padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = if (tab == StandingsTab.Drivers) "DRIVERS" else "TEAMS",
-                    color = if (isSelected) Color.White else MutedGray,
+                    text = if (tab == StandingsTab.Drivers) "Drivers" else "Constructors",
+                    color = if (isSelected) Color.White else colors.mutedText,
                     fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.5.sp
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                 )
             }
         }
@@ -308,205 +316,109 @@ private fun StandingsSegmentedControl(
 }
 
 @Composable
-private fun DriverStandingsTable(drivers: List<DriverStanding>) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(CardBg)
-            .border(1.dp, CardBorder, RoundedCornerShape(16.dp))
-    ) {
-        StandingsTableHeader(columns = listOf("POS", "NAME", "TEAM", "POINTS", "WINS"))
-        drivers.forEachIndexed { index, standing ->
-            StandingsTableRow(
-                cells = listOf(
-                    standing.position.toString(),
-                    standing.driverName,
-                    standing.team,
-                    standing.points.toString(),
-                    standing.wins.toString()
-                ),
-                isAlternate = index % 2 == 1
-            )
-        }
-    }
-}
-
-@Composable
-private fun ConstructorStandingsTable(constructors: List<ConstructorStanding>) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(CardBg)
-            .border(1.dp, CardBorder, RoundedCornerShape(16.dp))
-    ) {
-        StandingsTableHeader(columns = listOf("POS", "TEAM", "POINTS", "WINS"))
-        constructors.forEachIndexed { index, standing ->
-            StandingsTableRow(
-                cells = listOf(
-                    standing.position.toString(),
-                    standing.name,
-                    standing.points.toString(),
-                    standing.wins.toString()
-                ),
-                isAlternate = index % 2 == 1
-            )
-        }
-    }
-}
-
-@Composable
-private fun StandingsTableHeader(columns: List<String>) {
+private fun DriverStandingCard(standing: DriverStanding, colors: AppColorScheme) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(HeaderBg)
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+            .clip(RoundedCornerShape(14.dp))
+            .background(colors.card)
+            .border(1.dp, colors.cardBorder, RoundedCornerShape(14.dp))
+            .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        columns.forEachIndexed { index, label ->
-            Text(
-                text = label,
-                color = MutedGray,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 0.5.sp,
-                modifier = Modifier.weight(columnWeight(columns.size, index))
-            )
-        }
-    }
-}
-
-@Composable
-private fun StandingsTableRow(cells: List<String>, isAlternate: Boolean) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(if (isAlternate) RowAltBg else Color.Transparent)
-            .padding(horizontal = 12.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        cells.forEachIndexed { index, value ->
-            val isPos = index == 0
-            Text(
-                text = value,
-                color = Color.White,
-                fontSize = 14.sp,
-                fontWeight = if (isPos) FontWeight.Bold else FontWeight.Medium,
-                modifier = Modifier.weight(columnWeight(cells.size, index))
-            )
-        }
-    }
-}
-
-private fun columnWeight(totalColumns: Int, index: Int): Float {
-    return when (totalColumns) {
-        5 -> when (index) {
-            0 -> 0.6f; 1 -> 1.6f; 2 -> 1.4f; 3 -> 0.9f; else -> 0.7f
-        }
-
-        4 -> when (index) {
-            0 -> 0.6f; 1 -> 1.8f; 2 -> 0.9f; else -> 0.7f
-        }
-
-        else -> 1f
-    }
-}
-
-@Composable
-private fun LatestResultsSection(results: List<Race>) {
-    Column {
-        Text(
-            text = "LATEST RESULTS",
-            color = MutedGray,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
-            letterSpacing = 0.5.sp,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-        if (results.isEmpty()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(CardBg)
-                    .border(1.dp, CardBorder, RoundedCornerShape(16.dp))
-                    .padding(16.dp)
-            ) {
-                Text(
-                    text = "No completed races yet this season.",
-                    color = MutedGray,
-                    fontSize = 14.sp
-                )
-            }
-        } else {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                results.forEach { race -> LatestResultItem(race) }
-            }
-        }
-    }
-}
-
-@Composable
-private fun LatestResultItem(race: Race) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(CardBg)
-            .border(1.dp, CardBorder, RoundedCornerShape(16.dp))
-            .padding(16.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(
+                    if (standing.position == 1) colors.racingRed.copy(alpha = 0.12f)
+                    else colors.cardBorder.copy(alpha = 0.5f)
+                ),
+            contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "ROUND ${race.round}",
-                color = MutedGray,
-                fontSize = 12.sp,
+                text = standing.position.toString(),
+                color = if (standing.position == 1) colors.racingRed else colors.mutedText,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.ExtraBold
+            )
+        }
+        Spacer(modifier = Modifier.width(14.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = standing.driverName,
+                color = colors.primaryText,
+                fontSize = 15.sp,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "FINAL",
-                color = RacingRed,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .background(RacingRed.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
-                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                text = standing.team,
+                color = colors.mutedText,
+                fontSize = 12.sp
             )
         }
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = race.name,
-                color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(text = race.countryFlag, fontSize = 18.sp)
-        }
         Text(
-            text = race.circuit,
-            color = MutedGray,
-            fontSize = 12.sp,
-            modifier = Modifier.padding(top = 2.dp)
-        )
-        Text(
-            text = race.date,
-            color = MutedGray,
-            fontSize = 14.sp,
-            modifier = Modifier.padding(top = 4.dp)
+            text = standing.points.toString(),
+            color = colors.primaryText,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.ExtraBold
         )
     }
 }
 
 @Composable
-private fun LatestThreadSection(thread: TrendingThread?) {
+private fun ConstructorStandingCard(standing: ConstructorStanding, colors: AppColorScheme) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(colors.card)
+            .border(1.dp, colors.cardBorder, RoundedCornerShape(14.dp))
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(
+                    if (standing.position == 1) colors.racingRed.copy(alpha = 0.12f)
+                    else colors.cardBorder.copy(alpha = 0.5f)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = standing.position.toString(),
+                color = if (standing.position == 1) colors.racingRed else colors.mutedText,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.ExtraBold
+            )
+        }
+        Spacer(modifier = Modifier.width(14.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = standing.name,
+                color = colors.primaryText,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "${standing.wins} wins",
+                color = colors.mutedText,
+                fontSize = 12.sp
+            )
+        }
+        Text(
+            text = standing.points.toString(),
+            color = colors.primaryText,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.ExtraBold
+        )
+    }
+}
+
+@Composable
+private fun FeaturedSection(thread: TrendingThread?, colors: AppColorScheme) {
     Column {
         Row(
             modifier = Modifier
@@ -516,25 +428,25 @@ private fun LatestThreadSection(thread: TrendingThread?) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "LATEST THREAD",
-                color = MutedGray,
-                fontSize = 12.sp,
+                text = "FEATURED",
+                color = colors.mutedText,
+                fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
-                letterSpacing = 0.5.sp
+                letterSpacing = 1.sp
             )
             Text(
-                text = "FORUM",
-                color = RacingRed,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold
+                text = "Forum",
+                color = colors.racingRed,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold
             )
         }
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(20.dp))
-                .background(CardBg)
-                .border(1.dp, CardBorder, RoundedCornerShape(20.dp))
+                .background(colors.card)
+                .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
                 .padding(16.dp)
         ) {
             Row(
@@ -542,34 +454,35 @@ private fun LatestThreadSection(thread: TrendingThread?) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "TRENDING",
-                    color = RacingRed,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Black,
+                Box(
                     modifier = Modifier
-                        .background(RacingRed.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                )
-                thread?.createdAt?.let { date ->
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(colors.racingRed.copy(alpha = 0.1f))
+                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                ) {
                     Text(
-                        text = date,
-                        color = MutedGray,
-                        fontSize = 11.sp
+                        text = "TRENDING",
+                        color = colors.racingRed,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Black
                     )
+                }
+                thread?.createdAt?.let { date ->
+                    Text(text = date, color = colors.mutedText, fontSize = 11.sp)
                 }
             }
             Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = thread?.title ?: "No threads yet — be the first to post.",
-                color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
+                color = colors.primaryText,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Bold,
+                lineHeight = 24.sp
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = thread?.let { "❤️ ${it.likes}" } ?: "❤️ 0",
-                color = MutedGray,
+                text = "♥ ${thread?.likes ?: 0}",
+                color = colors.mutedText,
                 fontSize = 12.sp
             )
         }

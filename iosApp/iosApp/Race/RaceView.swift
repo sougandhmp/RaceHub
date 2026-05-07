@@ -1,40 +1,42 @@
 import SwiftUI
 import Shared
 
-/// Race tab content. Owns its own `RaceViewModel` by default but accepts an
-/// injected one so the parent (HomeView) can share the instance with the
-/// Schedule and Standings detail screens.
 struct RaceView: View {
 
     @ObservedObject var viewModel: RaceViewModel
+    @Environment(\.colorScheme) private var colorScheme
     let onViewAllSchedule: () -> Void
     let onViewAllStandings: () -> Void
+
+    private var colors: AppColors { AppColors.forScheme(colorScheme) }
 
     var body: some View {
         ScrollView {
             if viewModel.state.isLoading && viewModel.state.raceSchedule.isEmpty {
                 ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle(tint: Color(hex: "E63946")))
+                    .progressViewStyle(CircularProgressViewStyle(tint: AppColors.racingRed))
                     .frame(maxWidth: .infinity)
                     .padding(.top, 40)
             } else {
                 VStack(spacing: 24) {
                     NextRaceSection(
                         race: viewModel.state.raceSchedule.first { !$0.isCompleted },
+                        colors: colors,
                         onViewAll: onViewAllSchedule
                     )
-                    StandingsTabSection(
-                        drivers: Array(viewModel.state.driverStandings.prefix(5)),
-                        constructors: Array(viewModel.state.constructorStandings.prefix(5)),
+                    StandingsSection(
+                        drivers: Array(viewModel.state.driverStandings.prefix(3)),
+                        constructors: Array(viewModel.state.constructorStandings.prefix(3)),
+                        colors: colors,
                         onViewAll: onViewAllStandings
                     )
-                    LatestResultsSection(
-                        results: Array(viewModel.state.raceSchedule.filter { $0.isCompleted }.suffix(3).reversed())
+                    FeaturedSection(
+                        thread: viewModel.state.trendingThreads.first,
+                        colors: colors
                     )
-                    LatestThreadSection(thread: viewModel.state.trendingThreads.first)
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 20)
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
                 .padding(.bottom, 100)
             }
         }
@@ -48,76 +50,80 @@ struct RaceView: View {
 
 private struct NextRaceSection: View {
     let race: Race?
+    let colors: AppColors
     let onViewAll: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("NEXT RACE")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(Color(hex: "8E8E93"))
-                    .kerning(0.5)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(colors.mutedText)
+                    .kerning(1)
                 Spacer()
                 if let race = race, let days = race.daysRemaining {
-                    Text("R\(Int(race.round)) · \(Int(truncating: days)) DAYS")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(Color(hex: "E63946"))
-                        .padding(.trailing, 8)
-                }
-                Button(action: onViewAll) {
-                    Text("VIEW ALL")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(Color(hex: "E63946"))
+                    Text("RD \(Int(race.round)) · \(Int(truncating: days)) DAYS")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(AppColors.racingRed)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(AppColors.racingRed.opacity(0.1))
+                        .cornerRadius(6)
                 }
             }
 
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 6) {
                 HStack(alignment: .center, spacing: 8) {
                     Text(race?.name ?? "Canadian GP")
-                        .font(.system(size: 28, weight: .heavy))
-                        .foregroundColor(.white)
+                        .font(.system(size: 26, weight: .heavy))
+                        .foregroundColor(colors.primaryText)
                     Text(race?.countryFlag ?? "🇨🇦")
-                        .font(.system(size: 24))
+                        .font(.system(size: 22))
                 }
 
                 Text(race?.date ?? "Sun May 24 · 8:00 PM UTC · Montreal")
-                    .font(.system(size: 14))
-                    .foregroundColor(Color(hex: "8E8E93"))
-                    .padding(.vertical, 4)
+                    .font(.system(size: 13))
+                    .foregroundColor(colors.mutedText)
 
-                HStack(spacing: 4) {
-                    Text("Circuit").foregroundColor(Color(hex: "8E8E93"))
-                    Text(race?.circuit ?? "—")
-                        .foregroundColor(.white)
-                        .fontWeight(.medium)
+                HStack {
+                    HStack(spacing: 4) {
+                        Text("Circuit")
+                            .foregroundColor(colors.mutedText)
+                        Text(race?.circuit ?? "—")
+                            .foregroundColor(colors.primaryText)
+                            .fontWeight(.medium)
+                    }
+                    .font(.system(size: 13))
+                    Spacer()
+                    Button(action: onViewAll) {
+                        Text("See all")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(AppColors.racingRed)
+                    }
                 }
-                .font(.system(size: 14))
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(hex: "161616"))
+            .background(colors.card)
             .cornerRadius(20)
             .overlay(
                 RoundedRectangle(cornerRadius: 20)
-                    .stroke(Color(hex: "262626"), lineWidth: 1)
+                    .stroke(colors.cardBorder, lineWidth: 1)
             )
         }
     }
 }
 
-// MARK: - Standings preview
+// MARK: - Standings
 
 private enum StandingsTab: String, CaseIterable {
-    case drivers, teams
-    var label: String { self == .drivers ? "Driver Standings" : "Constructor Standings" }
+    case drivers, constructors
 }
 
-private let HeaderBgHex = "2A1116"
-private let RowAltBgHex = "1B0E11"
-
-private struct StandingsTabSection: View {
+private struct StandingsSection: View {
     let drivers: [DriverStanding]
     let constructors: [ConstructorStanding]
+    let colors: AppColors
     let onViewAll: () -> Void
 
     @State private var selected: StandingsTab = .drivers
@@ -125,210 +131,44 @@ private struct StandingsTabSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text(selected == .drivers ? "Driver Standings" : "Constructor Standings")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(Color(hex: "8E8E93"))
+                Text("Standings")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(colors.primaryText)
                 Spacer()
                 Button(action: onViewAll) {
-                    Text("VIEW ALL")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(Color(hex: "E63946"))
+                    Text("See all")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(AppColors.racingRed)
                 }
             }
 
-            HStack(spacing: 4) {
-                ForEach(StandingsTab.allCases, id: \.self) { tab in
-                    Button(action: { selected = tab }) {
-                        Text(tab == .drivers ? "DRIVERS" : "TEAMS")
-                            .font(.system(size: 13, weight: .bold))
-                            .kerning(0.5)
-                            .foregroundColor(selected == tab ? .white : Color(hex: "8E8E93"))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .background(selected == tab ? Color(hex: "E63946") : Color.clear)
-                            .cornerRadius(8)
-                    }
-                }
-            }
-            .padding(4)
-            .background(Color(hex: "161616"))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color(hex: "262626"), lineWidth: 1)
-            )
+            StandingsTabPills(selected: $selected, colors: colors)
 
             switch selected {
             case .drivers:
-                let displayDrivers = drivers.isEmpty
+                let displayDrivers: [DriverStanding] = drivers.isEmpty
                     ? [
-                        DriverStanding(position: 1, driverName: "Kimi Antonelli", team: "Mercedes", points: 72, wins: 2),
-                        DriverStanding(position: 2, driverName: "George Russell", team: "Mercedes", points: 63, wins: 1),
-                        DriverStanding(position: 3, driverName: "Charles Leclerc", team: "Ferrari", points: 49, wins: 0)
+                        DriverStanding(position: 1, driverName: "George Russell", team: "Mercedes", points: 142, wins: 3),
+                        DriverStanding(position: 2, driverName: "Max Verstappen", team: "Red Bull", points: 134, wins: 2),
+                        DriverStanding(position: 3, driverName: "Lando Norris", team: "McLaren", points: 121, wins: 1)
                       ]
                     : drivers
-                DriverStandingsTable(drivers: displayDrivers)
-            case .teams:
-                let displayConstructors = constructors.isEmpty
+                VStack(spacing: 8) {
+                    ForEach(displayDrivers, id: \.position) { standing in
+                        DriverStandingCard(standing: standing, colors: colors)
+                    }
+                }
+            case .constructors:
+                let displayConstructors: [ConstructorStanding] = constructors.isEmpty
                     ? [
-                        ConstructorStanding(position: 1, name: "Mercedes", points: 135, wins: 3),
-                        ConstructorStanding(position: 2, name: "Ferrari", points: 90, wins: 0),
-                        ConstructorStanding(position: 3, name: "McLaren", points: 46, wins: 0)
+                        ConstructorStanding(position: 1, name: "Mercedes", points: 276, wins: 4),
+                        ConstructorStanding(position: 2, name: "Red Bull", points: 207, wins: 2),
+                        ConstructorStanding(position: 3, name: "McLaren", points: 170, wins: 1)
                       ]
                     : constructors
-                ConstructorStandingsTable(constructors: displayConstructors)
-            }
-        }
-    }
-}
-
-private struct DriverStandingsTable: View {
-    let drivers: [DriverStanding]
-
-    var body: some View {
-        VStack(spacing: 0) {
-            StandingsTableHeader(columns: ["POS", "NAME", "TEAM", "POINTS", "WINS"])
-            ForEach(Array(drivers.enumerated()), id: \.element.position) { index, standing in
-                StandingsTableRow(
-                    cells: [
-                        "\(Int(standing.position))",
-                        standing.driverName,
-                        standing.team,
-                        "\(Int(standing.points))",
-                        "\(Int(standing.wins))"
-                    ],
-                    isAlternate: index % 2 == 1
-                )
-            }
-        }
-        .background(Color(hex: "161616"))
-        .cornerRadius(16)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color(hex: "262626"), lineWidth: 1)
-        )
-    }
-}
-
-private struct ConstructorStandingsTable: View {
-    let constructors: [ConstructorStanding]
-
-    var body: some View {
-        VStack(spacing: 0) {
-            StandingsTableHeader(columns: ["POS", "TEAM", "POINTS", "WINS"])
-            ForEach(Array(constructors.enumerated()), id: \.element.position) { index, standing in
-                StandingsTableRow(
-                    cells: [
-                        "\(Int(standing.position))",
-                        standing.name,
-                        "\(Int(standing.points))",
-                        "\(Int(standing.wins))"
-                    ],
-                    isAlternate: index % 2 == 1
-                )
-            }
-        }
-        .background(Color(hex: "161616"))
-        .cornerRadius(16)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color(hex: "262626"), lineWidth: 1)
-        )
-    }
-}
-
-private struct StandingsTableHeader: View {
-    let columns: [String]
-
-    var body: some View {
-        GeometryReader { geo in
-            HStack(spacing: 0) {
-                ForEach(Array(columns.enumerated()), id: \.offset) { index, label in
-                    Text(label)
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(Color(hex: "8E8E93"))
-                        .kerning(0.5)
-                        .frame(width: columnWidth(total: columns.count, index: index, available: geo.size.width - 24), alignment: .leading)
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .frame(width: geo.size.width)
-            .background(Color(hex: HeaderBgHex))
-        }
-        .frame(height: 36)
-    }
-}
-
-private struct StandingsTableRow: View {
-    let cells: [String]
-    let isAlternate: Bool
-
-    var body: some View {
-        GeometryReader { geo in
-            HStack(spacing: 0) {
-                ForEach(Array(cells.enumerated()), id: \.offset) { index, value in
-                    Text(value)
-                        .font(.system(size: 14, weight: index == 0 ? .bold : .medium))
-                        .foregroundColor(.white)
-                        .lineLimit(1)
-                        .frame(width: columnWidth(total: cells.count, index: index, available: geo.size.width - 24), alignment: .leading)
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 12)
-            .frame(width: geo.size.width)
-            .background(isAlternate ? Color(hex: RowAltBgHex) : Color.clear)
-        }
-        .frame(height: 44)
-    }
-}
-
-private func columnWeight(total: Int, index: Int) -> Double {
-    switch total {
-    case 5:
-        switch index { case 0: return 0.6; case 1: return 1.6; case 2: return 1.4; case 3: return 0.9; default: return 0.7 }
-    case 4:
-        switch index { case 0: return 0.6; case 1: return 1.8; case 2: return 0.9; default: return 0.7 }
-    default:
-        return 1
-    }
-}
-
-private func columnWidth(total: Int, index: Int, available: CGFloat) -> CGFloat {
-    let weights = (0..<total).map { columnWeight(total: total, index: $0) }
-    let sum = weights.reduce(0, +)
-    return available * CGFloat(columnWeight(total: total, index: index) / sum)
-}
-
-// MARK: - Latest results
-
-private struct LatestResultsSection: View {
-    let results: [Race]
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("LATEST RESULTS")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(Color(hex: "8E8E93"))
-                .kerning(0.5)
-
-            if results.isEmpty {
-                Text("No completed races yet this season.")
-                    .font(.system(size: 14))
-                    .foregroundColor(Color(hex: "8E8E93"))
-                    .padding(16)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color(hex: "161616"))
-                    .cornerRadius(16)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(Color(hex: "262626"), lineWidth: 1)
-                    )
-            } else {
-                VStack(spacing: 12) {
-                    ForEach(results, id: \.id) { race in
-                        LatestResultRow(race: race)
+                VStack(spacing: 8) {
+                    ForEach(displayConstructors, id: \.position) { standing in
+                        ConstructorStandingCard(standing: standing, colors: colors)
                     }
                 }
             }
@@ -336,102 +176,175 @@ private struct LatestResultsSection: View {
     }
 }
 
-private struct LatestResultRow: View {
-    let race: Race
+private struct StandingsTabPills: View {
+    @Binding var selected: StandingsTab
+    let colors: AppColors
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("ROUND \(Int(race.round))")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(Color(hex: "8E8E93"))
-                Spacer()
-                Text("FINAL")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(Color(hex: "E63946"))
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Color(hex: "E63946").opacity(0.1))
-                    .cornerRadius(4)
+        HStack(spacing: 0) {
+            ForEach(StandingsTab.allCases, id: \.self) { tab in
+                let isSelected = tab == selected
+                Button(action: { selected = tab }) {
+                    Text(tab == .drivers ? "Drivers" : "Constructors")
+                        .font(.system(size: 13, weight: isSelected ? .bold : .medium))
+                        .foregroundColor(isSelected ? .white : colors.mutedText)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(isSelected ? AppColors.racingRed : Color.clear)
+                        .cornerRadius(8)
+                }
             }
-
-            HStack(spacing: 8) {
-                Text(race.name)
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.white)
-                Text(race.countryFlag)
-                    .font(.system(size: 18))
-            }
-
-            Text(race.circuit)
-                .font(.system(size: 12))
-                .foregroundColor(Color(hex: "8E8E93"))
-
-            Text(race.date)
-                .font(.system(size: 14))
-                .foregroundColor(Color(hex: "8E8E93"))
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(hex: "161616"))
-        .cornerRadius(16)
+        .padding(3)
+        .background(colors.card)
+        .cornerRadius(10)
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color(hex: "262626"), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(colors.cardBorder, lineWidth: 1)
         )
     }
 }
 
-// MARK: - Latest thread
+private struct DriverStandingCard: View {
+    let standing: DriverStanding
+    let colors: AppColors
 
-private struct LatestThreadSection: View {
+    var body: some View {
+        HStack(spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(standing.position == 1
+                          ? AppColors.racingRed.opacity(0.12)
+                          : colors.cardBorder.opacity(0.5))
+                Text("\(Int(standing.position))")
+                    .font(.system(size: 14, weight: .heavy))
+                    .foregroundColor(standing.position == 1 ? AppColors.racingRed : colors.mutedText)
+            }
+            .frame(width: 32, height: 32)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(standing.driverName)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(colors.primaryText)
+                Text(standing.team)
+                    .font(.system(size: 12))
+                    .foregroundColor(colors.mutedText)
+            }
+
+            Spacer()
+
+            Text("\(Int(standing.points))")
+                .font(.system(size: 20, weight: .heavy))
+                .foregroundColor(colors.primaryText)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity)
+        .background(colors.card)
+        .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(colors.cardBorder, lineWidth: 1)
+        )
+    }
+}
+
+private struct ConstructorStandingCard: View {
+    let standing: ConstructorStanding
+    let colors: AppColors
+
+    var body: some View {
+        HStack(spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(standing.position == 1
+                          ? AppColors.racingRed.opacity(0.12)
+                          : colors.cardBorder.opacity(0.5))
+                Text("\(Int(standing.position))")
+                    .font(.system(size: 14, weight: .heavy))
+                    .foregroundColor(standing.position == 1 ? AppColors.racingRed : colors.mutedText)
+            }
+            .frame(width: 32, height: 32)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(standing.name)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(colors.primaryText)
+                Text("\(Int(standing.wins)) wins")
+                    .font(.system(size: 12))
+                    .foregroundColor(colors.mutedText)
+            }
+
+            Spacer()
+
+            Text("\(Int(standing.points))")
+                .font(.system(size: 20, weight: .heavy))
+                .foregroundColor(colors.primaryText)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity)
+        .background(colors.card)
+        .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(colors.cardBorder, lineWidth: 1)
+        )
+    }
+}
+
+// MARK: - Featured
+
+private struct FeaturedSection: View {
     let thread: TrendingThread?
+    let colors: AppColors
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("LATEST THREAD")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(Color(hex: "8E8E93"))
-                    .kerning(0.5)
+                Text("FEATURED")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(colors.mutedText)
+                    .kerning(1)
                 Spacer()
-                Text("FORUM")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(Color(hex: "E63946"))
+                Text("Forum")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(AppColors.racingRed)
             }
 
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     Text("TRENDING")
                         .font(.system(size: 10, weight: .black))
-                        .foregroundColor(Color(hex: "E63946"))
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color(hex: "E63946").opacity(0.1))
-                        .cornerRadius(4)
+                        .foregroundColor(AppColors.racingRed)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(AppColors.racingRed.opacity(0.1))
+                        .cornerRadius(6)
                     Spacer()
                     if let date = thread?.createdAt {
                         Text(date)
                             .font(.system(size: 11))
-                            .foregroundColor(Color(hex: "8E8E93"))
+                            .foregroundColor(colors.mutedText)
                     }
                 }
 
                 Text(thread?.title ?? "No threads yet — be the first to post.")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.white)
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundColor(colors.primaryText)
+                    .lineSpacing(4)
 
-                Text(thread.map { "❤️ \(Int($0.likes))" } ?? "❤️ 0")
+                Text("♥ \(thread.map { Int($0.likes) } ?? 0)")
                     .font(.system(size: 12))
-                    .foregroundColor(Color(hex: "8E8E93"))
+                    .foregroundColor(colors.mutedText)
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(hex: "161616"))
+            .background(colors.card)
             .cornerRadius(20)
             .overlay(
                 RoundedRectangle(cornerRadius: 20)
-                    .stroke(Color(hex: "262626"), lineWidth: 1)
+                    .stroke(colors.cardBorder, lineWidth: 1)
             )
         }
     }

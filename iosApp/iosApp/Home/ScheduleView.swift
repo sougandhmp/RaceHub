@@ -170,5 +170,3 @@ struct RaceRow: View {
         )
     }
 }
-
-
