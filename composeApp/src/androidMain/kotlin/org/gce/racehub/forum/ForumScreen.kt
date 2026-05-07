@@ -28,11 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,13 +38,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.gce.racehub.race.domain.model.Thread
+import org.gce.racehub.theme.AppColorScheme
+import org.gce.racehub.theme.LocalAppColors
 import org.koin.compose.viewmodel.koinViewModel
-
-private val ForumRed = Color(0xFFE63946)
-private val ForumDarkBg = Color(0xFF0A0A0A)
-private val ForumCardBg = Color(0xFF161616)
-private val ForumCardBorder = Color(0xFF262626)
-private val ForumMuted = Color(0xFF8E8E93)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,26 +50,19 @@ fun ForumScreen(
     onThreadClick: (Thread) -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    var isRefreshing by remember { mutableStateOf(false) }
-
-    LaunchedEffect(state.isLoading) {
-        if (!state.isLoading) isRefreshing = false
-    }
+    val colors = LocalAppColors.current
 
     PullToRefreshBox(
-        isRefreshing = isRefreshing,
-        onRefresh = {
-            isRefreshing = true
-            viewModel.onIntent(ForumIntent.Refresh)
-        },
-        modifier = Modifier.fillMaxSize().background(ForumDarkBg)
+        isRefreshing = state.isLoading,
+        onRefresh = { viewModel.onIntent(ForumIntent.Refresh) },
+        modifier = Modifier.fillMaxSize().background(colors.background)
     ) {
         when {
             state.isLoading && state.threads.isEmpty() -> {
                 Box(modifier = Modifier.fillMaxSize()) {
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center),
-                        color = ForumRed
+                        color = colors.racingRed
                     )
                 }
             }
@@ -90,14 +75,14 @@ fun ForumScreen(
                 ) {
                     Text(
                         text = "No threads yet",
-                        color = Color.White,
+                        color = colors.primaryText,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Tap + to start the first conversation.",
-                        color = ForumMuted,
+                        color = colors.mutedText,
                         fontSize = 14.sp
                     )
                 }
@@ -110,7 +95,7 @@ fun ForumScreen(
                     contentPadding = PaddingValues(vertical = 16.dp)
                 ) {
                     items(items = state.threads, key = { it.id }) { thread ->
-                        ThreadCard(thread = thread, onClick = { onThreadClick(thread) })
+                        ThreadCard(thread = thread, colors = colors, onClick = { onThreadClick(thread) })
                     }
                 }
             }
@@ -118,7 +103,7 @@ fun ForumScreen(
 
         FloatingActionButton(
             onClick = onCreateThread,
-            containerColor = ForumRed,
+            containerColor = colors.racingRed,
             contentColor = Color.White,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
@@ -130,39 +115,39 @@ fun ForumScreen(
 }
 
 @Composable
-private fun ThreadCard(thread: Thread, onClick: () -> Unit) {
+private fun ThreadCard(thread: Thread, colors: AppColorScheme, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(ForumCardBg)
-            .border(1.dp, ForumCardBorder, RoundedCornerShape(20.dp))
+            .background(colors.card)
+            .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
             .clickable(onClick = onClick)
             .padding(16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            AuthorAvatar(initials = thread.author.avatar)
+            AuthorAvatar(initials = thread.author.avatar, colors = colors)
             Spacer(modifier = Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = thread.author.username,
-                    color = Color.White,
+                    color = colors.primaryText,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = formatRelative(thread.createdAt),
-                    color = ForumMuted,
+                    color = colors.mutedText,
                     fontSize = 12.sp
                 )
             }
-            CategoryChip(category = thread.category)
+            CategoryChip(category = thread.category, colors = colors)
         }
 
         Spacer(modifier = Modifier.height(12.dp))
         Text(
             text = thread.title,
-            color = Color.White,
+            color = colors.primaryText,
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
             lineHeight = 22.sp
@@ -174,7 +159,7 @@ private fun ThreadCard(thread: Thread, onClick: () -> Unit) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = preview,
-                color = ForumMuted,
+                color = colors.mutedText,
                 fontSize = 14.sp,
                 lineHeight = 20.sp,
                 maxLines = 3
@@ -183,14 +168,14 @@ private fun ThreadCard(thread: Thread, onClick: () -> Unit) {
 
         Spacer(modifier = Modifier.height(12.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            ThreadMetric(icon = "❤", value = thread.likes.toString())
+            ThreadMetric(icon = "❤", value = thread.likes.toString(), colors = colors)
             Spacer(modifier = Modifier.width(16.dp))
-            ThreadMetric(icon = "💬", value = thread.comments.size.toString())
+            ThreadMetric(icon = "💬", value = thread.comments.size.toString(), colors = colors)
             Spacer(modifier = Modifier.weight(1f))
             if (thread.bookmarked) {
                 Text(
                     text = "★ Saved",
-                    color = ForumRed,
+                    color = colors.racingRed,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -200,12 +185,12 @@ private fun ThreadCard(thread: Thread, onClick: () -> Unit) {
 }
 
 @Composable
-private fun AuthorAvatar(initials: String) {
+private fun AuthorAvatar(initials: String, colors: AppColorScheme) {
     Box(
         modifier = Modifier
             .size(36.dp)
             .clip(CircleShape)
-            .background(ForumRed),
+            .background(colors.racingRed),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -218,16 +203,16 @@ private fun AuthorAvatar(initials: String) {
 }
 
 @Composable
-private fun CategoryChip(category: String) {
+private fun CategoryChip(category: String, colors: AppColorScheme) {
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(6.dp))
-            .background(ForumRed.copy(alpha = 0.12f))
+            .background(colors.racingRed.copy(alpha = 0.12f))
             .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
         Text(
             text = category.uppercase(),
-            color = ForumRed,
+            color = colors.racingRed,
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.5.sp
@@ -236,16 +221,14 @@ private fun CategoryChip(category: String) {
 }
 
 @Composable
-private fun ThreadMetric(icon: String, value: String) {
+private fun ThreadMetric(icon: String, value: String, colors: AppColorScheme) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(text = icon, fontSize = 14.sp, color = ForumMuted)
+        Text(text = icon, fontSize = 14.sp, color = colors.mutedText)
         Spacer(modifier = Modifier.width(4.dp))
-        Text(text = value, color = ForumMuted, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+        Text(text = value, color = colors.mutedText, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 
-// Best-effort formatter for ISO-ish timestamps coming from the GraphQL response.
-// Falls back to the date portion if anything goes wrong.
 private fun formatRelative(createdAt: String): String {
     val datePart = createdAt.substringBefore('T')
     val timePart = createdAt.substringAfter('T', missingDelimiterValue = "").substringBefore('.').take(5)

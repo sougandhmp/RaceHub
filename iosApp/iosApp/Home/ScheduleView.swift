@@ -5,25 +5,27 @@ struct ScheduleView: View {
     let schedule: [Race]
     let latestThread: TrendingThread?
     @Environment(\.dismiss) var dismiss
+    @Environment(\.colorScheme) private var colorScheme
+    private var colors: AppColors { AppColors.forScheme(colorScheme) }
 
     var body: some View {
         let nextRace = schedule.first { !$0.isCompleted }
 
         ZStack {
-            Color(hex: "0A0A0A").ignoresSafeArea()
+            colors.background.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 HStack {
                     Button(action: { dismiss() }) {
                         Image(systemName: "arrow.left")
-                            .foregroundColor(.white)
+                            .foregroundColor(colors.primaryText)
                             .font(.system(size: 20, weight: .bold))
                     }
                     Spacer()
                     Text("SCHEDULE")
                         .font(.system(size: 18, weight: .black))
                         .kerning(2)
-                        .foregroundColor(.white)
+                        .foregroundColor(colors.primaryText)
                     Spacer()
                     Image(systemName: "arrow.left")
                         .opacity(0)
@@ -34,13 +36,13 @@ struct ScheduleView: View {
                 ScrollView {
                     VStack(spacing: 16) {
                         if let thread = latestThread {
-                            ScheduleLatestThreadCard(thread: thread)
+                            ScheduleLatestThreadCard(thread: thread, colors: colors)
                             Divider()
-                                .background(Color(hex: "2A2A2A"))
+                                .background(colors.cardBorder)
                                 .padding(.vertical, 8)
                         }
                         ForEach(schedule, id: \.id) { race in
-                            RaceRow(race: race, isNextRace: race.id == nextRace?.id)
+                            RaceRow(race: race, isNextRace: race.id == nextRace?.id, colors: colors)
                         }
                     }
                     .padding(.horizontal, 24)
@@ -54,6 +56,7 @@ struct ScheduleView: View {
 
 private struct ScheduleLatestThreadCard: View {
     let thread: TrendingThread
+    let colors: AppColors
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -61,21 +64,21 @@ private struct ScheduleLatestThreadCard: View {
                 Text("LATEST DISCUSSION")
                     .font(.system(size: 11, weight: .heavy))
                     .kerning(1)
-                    .foregroundColor(Color(hex: "E10600"))
+                    .foregroundColor(AppColors.racingRed)
                 Spacer()
                 Text("TRENDING")
                     .font(.system(size: 9, weight: .black))
-                    .foregroundColor(Color(hex: "E10600"))
+                    .foregroundColor(AppColors.racingRed)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
-                    .background(Color(hex: "E10600").opacity(0.1))
+                    .background(AppColors.racingRed.opacity(0.1))
                     .cornerRadius(4)
             }
 
             HStack(spacing: 12) {
                 ZStack {
                     Circle()
-                        .fill(Color(hex: "E10600"))
+                        .fill(AppColors.racingRed)
                         .frame(width: 28, height: 28)
                     Text("💬")
                         .font(.system(size: 14))
@@ -84,14 +87,14 @@ private struct ScheduleLatestThreadCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(thread.title)
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(colors.primaryText)
                         .lineLimit(2)
                     HStack(spacing: 4) {
                         Text("❤️")
                             .font(.system(size: 12))
                         Text("\(Int(thread.likes)) likes")
                             .font(.system(size: 11))
-                            .foregroundColor(Color(hex: "888888"))
+                            .foregroundColor(colors.mutedText)
                     }
                 }
                 Spacer()
@@ -99,11 +102,11 @@ private struct ScheduleLatestThreadCard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(hex: "1A1A1A"))
+        .background(colors.card)
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Color(hex: "2A2A2A"), lineWidth: 1)
+                .stroke(colors.cardBorder, lineWidth: 1)
         )
     }
 }
@@ -111,25 +114,26 @@ private struct ScheduleLatestThreadCard: View {
 struct RaceRow: View {
     let race: Race
     let isNextRace: Bool
+    let colors: AppColors
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("ROUND \(Int(race.round))")
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(race.isCompleted ? Color(hex: "888888") : Color(hex: "E10600"))
+                    .foregroundColor(race.isCompleted ? colors.mutedText : AppColors.racingRed)
 
                 Spacer()
 
                 if race.isCompleted {
                     Text("COMPLETED")
                         .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(Color(hex: "888888"))
+                        .foregroundColor(colors.mutedText)
                 } else {
                     if let days = race.daysRemaining {
                         Text("\(Int(truncating: days)) DAYS")
                             .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(Color(hex: "E10600"))
+                            .foregroundColor(AppColors.racingRed)
                             .padding(.trailing, isNextRace ? 4 : 0)
                     }
                     if isNextRace {
@@ -138,7 +142,7 @@ struct RaceRow: View {
                             .foregroundColor(.white)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Color(hex: "E10600"))
+                            .background(AppColors.racingRed)
                             .cornerRadius(4)
                     }
                 }
@@ -147,26 +151,27 @@ struct RaceRow: View {
             HStack(spacing: 8) {
                 Text(race.name)
                     .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(colors.primaryText)
                 Text(race.countryFlag)
                     .font(.system(size: 18))
             }
 
             Text(race.circuit)
                 .font(.system(size: 12))
-                .foregroundColor(Color(hex: "888888"))
+                .foregroundColor(colors.mutedText)
 
             Text(race.date)
                 .font(.system(size: 14))
-                .foregroundColor(Color(hex: "888888"))
+                .foregroundColor(colors.mutedText)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(hex: "1A1A1A"))
+        .background(colors.card)
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(isNextRace ? Color(hex: "E10600") : Color(hex: "2A2A2A"), lineWidth: isNextRace ? 2 : 1)
+                .stroke(isNextRace ? AppColors.racingRed : colors.cardBorder,
+                        lineWidth: isNextRace ? 2 : 1)
         )
     }
 }

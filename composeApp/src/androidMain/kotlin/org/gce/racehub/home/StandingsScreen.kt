@@ -45,39 +45,41 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.gce.racehub.race.domain.model.ConstructorStanding
 import org.gce.racehub.race.domain.model.DriverStanding
+import org.gce.racehub.theme.AppColorTokens
+import org.gce.racehub.theme.hexColor
 
-private val DarkBg = Color(0xFF0A0A0A)
-private val CardBg = Color(0xFF161616)
-private val CardBorder = Color(0xFF262626)
-private val MutedGray = Color(0xFF8E8E93)
-private val RacingRed = Color(0xFFE10600)
+private val DarkBg    = hexColor(AppColorTokens.darkBackground)
+private val CardBg    = hexColor(AppColorTokens.darkCard)
+private val CardBorder = hexColor(AppColorTokens.darkCardBorder)
+private val MutedGray = hexColor(AppColorTokens.darkMutedText)
+private val RacingRed = hexColor(AppColorTokens.f1Red)
 
-private val Gold = Color(0xFFFFD700)
-private val Silver = Color(0xFFC0C0C0)
-private val Bronze = Color(0xFFCD7F32)
+private val Gold   = hexColor(AppColorTokens.gold)
+private val Silver = hexColor(AppColorTokens.silver)
+private val Bronze = hexColor(AppColorTokens.bronze)
 
-private val TeamMercedes = Color(0xFF00D2BE)
-private val TeamMcLaren = Color(0xFFFF8700)
-private val TeamRedBull = Color(0xFF0600EF)
-private val TeamFerrari = Color(0xFFDC0000)
-private val TeamAston = Color(0xFF006F62)
-private val TeamAlpine = Color(0xFF0090FF)
-private val TeamWilliams = Color(0xFF005AFF)
-private val TeamRb = Color(0xFF1660AD)
-private val TeamHaas = Color(0xFFB6BABD)
-private val TeamSauber = Color(0xFF52E252)
+private val TeamMercedes = hexColor(AppColorTokens.teamMercedes)
+private val TeamMcLaren  = hexColor(AppColorTokens.teamMcLaren)
+private val TeamRedBull  = hexColor(AppColorTokens.teamRedBull)
+private val TeamFerrari  = hexColor(AppColorTokens.teamFerrari)
+private val TeamAston    = hexColor(AppColorTokens.teamAston)
+private val TeamAlpine   = hexColor(AppColorTokens.teamAlpine)
+private val TeamWilliams = hexColor(AppColorTokens.teamWilliams)
+private val TeamRb       = hexColor(AppColorTokens.teamRb)
+private val TeamHaas     = hexColor(AppColorTokens.teamHaas)
+private val TeamSauber   = hexColor(AppColorTokens.teamSauber)
 
 private fun teamColorFor(team: String): Color = when {
     team.contains("Mercedes", ignoreCase = true) -> TeamMercedes
-    team.contains("McLaren", ignoreCase = true) -> TeamMcLaren
+    team.contains("McLaren",  ignoreCase = true) -> TeamMcLaren
     team.contains("Red Bull", ignoreCase = true) -> TeamRedBull
-    team.contains("Ferrari", ignoreCase = true) -> TeamFerrari
-    team.contains("Aston", ignoreCase = true) -> TeamAston
-    team.contains("Alpine", ignoreCase = true) -> TeamAlpine
+    team.contains("Ferrari",  ignoreCase = true) -> TeamFerrari
+    team.contains("Aston",    ignoreCase = true) -> TeamAston
+    team.contains("Alpine",   ignoreCase = true) -> TeamAlpine
     team.contains("Williams", ignoreCase = true) -> TeamWilliams
-    team.contains("RB", ignoreCase = true) -> TeamRb
-    team.contains("Haas", ignoreCase = true) -> TeamHaas
-    team.contains("Sauber", ignoreCase = true) -> TeamSauber
+    team.contains("RB",       ignoreCase = true) -> TeamRb
+    team.contains("Haas",     ignoreCase = true) -> TeamHaas
+    team.contains("Sauber",   ignoreCase = true) -> TeamSauber
     else -> MutedGray
 }
 
@@ -119,8 +121,12 @@ fun StandingsScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = DarkBg
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = DarkBg,
+                    scrolledContainerColor = Color.Unspecified,
+                    navigationIconContentColor = Color.Unspecified,
+                    titleContentColor = Color.Unspecified,
+                    actionIconContentColor = Color.Unspecified
                 )
             )
         },
@@ -318,7 +324,7 @@ private fun PositionBadge(position: Int, accent: Color) {
         modifier = Modifier
             .size(40.dp)
             .clip(CircleShape)
-            .background(if (isPodium) accent.copy(alpha = 0.15f) else Color(0xFF1F1F1F))
+            .background(if (isPodium) accent.copy(alpha = 0.15f) else hexColor(AppColorTokens.darkSurface))
             .border(
                 width = 1.dp,
                 color = if (isPodium) accent else CardBorder,

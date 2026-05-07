@@ -86,18 +86,14 @@ private struct ThemeToggleView: View {
                 .kerning(1)
 
             HStack(spacing: 0) {
-                ThemePill(
-                    label: "Light",
-                    isSelected: !themeManager.isDarkMode,
-                    colors: colors,
-                    action: { themeManager.isDarkMode = false }
-                )
-                ThemePill(
-                    label: "Dark",
-                    isSelected: themeManager.isDarkMode,
-                    colors: colors,
-                    action: { themeManager.isDarkMode = true }
-                )
+                ForEach(ThemeMode.allCases, id: \.self) { mode in
+                    ThemePill(
+                        label: mode.displayName,
+                        isSelected: themeManager.themeMode == mode,
+                        colors: colors,
+                        action: { themeManager.themeMode = mode }
+                    )
+                }
             }
             .padding(4)
             .background(colors.card)

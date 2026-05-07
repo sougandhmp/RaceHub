@@ -63,13 +63,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.gce.racehub.race.domain.model.Thread
 import org.gce.racehub.race.domain.model.ThreadComment
+import org.gce.racehub.theme.AppColorScheme
+import org.gce.racehub.theme.LocalAppColors
 import org.koin.compose.viewmodel.koinViewModel
-
-private val DetailRed = Color(0xFFE63946)
-private val DetailDarkBg = Color(0xFF0A0A0A)
-private val DetailCardBg = Color(0xFF161616)
-private val DetailCardBorder = Color(0xFF262626)
-private val DetailMuted = Color(0xFF8E8E93)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,6 +75,7 @@ fun ThreadDetailScreen(
     viewModel: ThreadDetailViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val colors = LocalAppColors.current
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -102,9 +99,9 @@ fun ThreadDetailScreen(
             SnackbarHost(snackbarHostState) { data ->
                 Snackbar(
                     snackbarData = data,
-                    containerColor = DetailCardBg,
-                    contentColor = Color.White,
-                    actionColor = DetailRed
+                    containerColor = colors.card,
+                    contentColor = colors.primaryText,
+                    actionColor = colors.racingRed
                 )
             }
         },
@@ -113,7 +110,7 @@ fun ThreadDetailScreen(
                 title = {
                     Text(
                         text = "THREAD",
-                        color = Color.White,
+                        color = colors.primaryText,
                         fontWeight = FontWeight.Black,
                         letterSpacing = 2.sp
                     )
@@ -123,7 +120,7 @@ fun ThreadDetailScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = Color.White
+                            tint = colors.primaryText
                         )
                     }
                 },
@@ -142,11 +139,11 @@ fun ThreadDetailScreen(
                         Icon(
                             imageVector = Icons.Filled.Share,
                             contentDescription = "Share",
-                            tint = Color.White
+                            tint = colors.primaryText
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = DetailDarkBg)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = colors.background)
             )
         },
         bottomBar = {
@@ -155,10 +152,11 @@ fun ThreadDetailScreen(
                 onValueChange = { viewModel.onIntent(ThreadDetailIntent.CommentInputChanged(it)) },
                 canSubmit = state.canSubmit,
                 isSubmitting = state.isSubmitting,
-                onSubmit = { viewModel.onIntent(ThreadDetailIntent.SubmitComment(thread.id)) }
+                onSubmit = { viewModel.onIntent(ThreadDetailIntent.SubmitComment(thread.id)) },
+                colors = colors
             )
         },
-        containerColor = DetailDarkBg
+        containerColor = colors.background
     ) { padding ->
         LazyColumn(
             modifier = Modifier
@@ -175,6 +173,7 @@ fun ThreadDetailScreen(
                     isLiked = state.isLiked,
                     isLiking = state.isLiking,
                     showComments = showComments,
+                    colors = colors,
                     onLikeClick = { viewModel.onIntent(ThreadDetailIntent.ToggleLike(thread.id)) },
                     onToggleComments = { showComments = !showComments }
                 )
@@ -191,7 +190,7 @@ fun ThreadDetailScreen(
                 ) {
                     Text(
                         text = "COMMENTS · ${allComments.size}",
-                        color = DetailMuted,
+                        color = colors.mutedText,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp
@@ -200,7 +199,7 @@ fun ThreadDetailScreen(
                     Icon(
                         imageVector = if (showComments) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                         contentDescription = if (showComments) "Hide comments" else "Show comments",
-                        tint = DetailMuted,
+                        tint = colors.mutedText,
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -209,26 +208,22 @@ fun ThreadDetailScreen(
             item {
                 AnimatedVisibility(
                     visible = showComments,
-                    enter = expandVertically(
-                        expandFrom = Alignment.Top,
-                        animationSpec = tween(300)
-                    ) + fadeIn(animationSpec = tween(300)),
-                    exit = shrinkVertically(
-                        shrinkTowards = Alignment.Top,
-                        animationSpec = tween(300)
-                    ) + fadeOut(animationSpec = tween(300))
+                    enter = expandVertically(expandFrom = Alignment.Top, animationSpec = tween(300)) +
+                            fadeIn(animationSpec = tween(300)),
+                    exit = shrinkVertically(shrinkTowards = Alignment.Top, animationSpec = tween(300)) +
+                            fadeOut(animationSpec = tween(300))
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         if (allComments.isEmpty()) {
                             Text(
                                 text = "No comments yet. Be the first to reply.",
-                                color = DetailMuted,
+                                color = colors.mutedText,
                                 fontSize = 13.sp,
                                 modifier = Modifier.padding(vertical = 12.dp)
                             )
                         } else {
                             allComments.forEach { comment ->
-                                CommentCard(comment = comment)
+                                CommentCard(comment = comment, colors = colors)
                             }
                         }
                     }
@@ -245,6 +240,7 @@ private fun ThreadHeader(
     isLiked: Boolean,
     isLiking: Boolean,
     showComments: Boolean,
+    colors: AppColorScheme,
     onLikeClick: () -> Unit,
     onToggleComments: () -> Unit
 ) {
@@ -252,33 +248,36 @@ private fun ThreadHeader(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(DetailCardBg)
-            .border(1.dp, DetailCardBorder, RoundedCornerShape(20.dp))
+            .background(colors.card)
+            .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
             .padding(20.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            AuthorBadge(initials = thread.author.avatar.ifBlank { thread.author.username })
+            AuthorBadge(
+                initials = thread.author.avatar.ifBlank { thread.author.username },
+                colors = colors
+            )
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = thread.author.username.ifBlank { "Anonymous" },
-                    color = Color.White,
+                    color = colors.primaryText,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = formatTimestamp(thread.createdAt),
-                    color = DetailMuted,
+                    color = colors.mutedText,
                     fontSize = 12.sp
                 )
             }
-            CategoryPill(category = thread.category)
+            CategoryPill(category = thread.category, colors = colors)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = thread.title,
-            color = Color.White,
+            color = colors.primaryText,
             fontSize = 22.sp,
             fontWeight = FontWeight.ExtraBold,
             lineHeight = 28.sp
@@ -288,7 +287,7 @@ private fun ThreadHeader(
             Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = thread.content,
-                color = Color(0xFFE5E5E5),
+                color = colors.primaryText,
                 fontSize = 15.sp,
                 lineHeight = 22.sp
             )
@@ -300,6 +299,7 @@ private fun ThreadHeader(
                 likes = likes,
                 isLiked = isLiked,
                 isLiking = isLiking,
+                colors = colors,
                 onClick = onLikeClick
             )
             Spacer(modifier = Modifier.width(16.dp))
@@ -308,14 +308,14 @@ private fun ThreadHeader(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
                     .clickable(onClick = onToggleComments)
-                    .background(if (showComments) DetailRed.copy(alpha = 0.10f) else Color.Transparent)
+                    .background(if (showComments) colors.racingRed.copy(alpha = 0.10f) else Color.Transparent)
                     .padding(horizontal = 6.dp, vertical = 4.dp)
             ) {
                 Text(text = "💬", fontSize = 14.sp)
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = thread.comments.size.toString(),
-                    color = if (showComments) DetailRed else DetailMuted,
+                    color = if (showComments) colors.racingRed else colors.mutedText,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -324,7 +324,7 @@ private fun ThreadHeader(
             if (thread.bookmarked) {
                 Text(
                     text = "★ Saved",
-                    color = DetailRed,
+                    color = colors.racingRed,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -334,28 +334,28 @@ private fun ThreadHeader(
 }
 
 @Composable
-private fun CommentCard(comment: ThreadComment) {
+private fun CommentCard(comment: ThreadComment, colors: AppColorScheme) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(DetailCardBg)
-            .border(1.dp, DetailCardBorder, RoundedCornerShape(16.dp))
+            .background(colors.card)
+            .border(1.dp, colors.cardBorder, RoundedCornerShape(16.dp))
             .padding(14.dp)
     ) {
-        AuthorBadge(initials = comment.authorUsername, sizeDp = 32)
+        AuthorBadge(initials = comment.authorUsername, colors = colors, sizeDp = 32)
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = comment.authorUsername.ifBlank { "Anonymous" },
-                color = Color.White,
+                color = colors.primaryText,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = comment.content,
-                color = Color(0xFFD0D0D0),
+                color = colors.primaryText,
                 fontSize = 14.sp,
                 lineHeight = 20.sp
             )
@@ -369,12 +369,13 @@ private fun CommentInputBar(
     onValueChange: (String) -> Unit,
     canSubmit: Boolean,
     isSubmitting: Boolean,
-    onSubmit: () -> Unit
+    onSubmit: () -> Unit,
+    colors: AppColorScheme
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(DetailDarkBg)
+            .background(colors.background)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -383,38 +384,35 @@ private fun CommentInputBar(
             onValueChange = onValueChange,
             modifier = Modifier.weight(1f),
             enabled = !isSubmitting,
-            placeholder = { Text("Add a comment…", color = DetailMuted) },
+            placeholder = { Text("Add a comment…", color = colors.mutedText) },
             colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                focusedContainerColor = DetailCardBg,
-                unfocusedContainerColor = DetailCardBg,
-                focusedBorderColor = DetailRed,
-                unfocusedBorderColor = DetailCardBorder,
-                cursorColor = DetailRed
+                focusedTextColor = colors.primaryText,
+                unfocusedTextColor = colors.primaryText,
+                focusedContainerColor = colors.card,
+                unfocusedContainerColor = colors.card,
+                focusedBorderColor = colors.racingRed,
+                unfocusedBorderColor = colors.cardBorder,
+                cursorColor = colors.racingRed
             )
         )
         Spacer(modifier = Modifier.width(8.dp))
-        IconButton(
-            onClick = onSubmit,
-            enabled = canSubmit
-        ) {
+        IconButton(onClick = onSubmit, enabled = canSubmit) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.Send,
                 contentDescription = "Post comment",
-                tint = if (canSubmit) DetailRed else DetailMuted
+                tint = if (canSubmit) colors.racingRed else colors.mutedText
             )
         }
     }
 }
 
 @Composable
-private fun AuthorBadge(initials: String, sizeDp: Int = 40) {
+private fun AuthorBadge(initials: String, colors: AppColorScheme, sizeDp: Int = 40) {
     Box(
         modifier = Modifier
             .size(sizeDp.dp)
             .clip(CircleShape)
-            .background(DetailRed),
+            .background(colors.racingRed),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -427,16 +425,16 @@ private fun AuthorBadge(initials: String, sizeDp: Int = 40) {
 }
 
 @Composable
-private fun CategoryPill(category: String) {
+private fun CategoryPill(category: String, colors: AppColorScheme) {
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(6.dp))
-            .background(DetailRed.copy(alpha = 0.12f))
+            .background(colors.racingRed.copy(alpha = 0.12f))
             .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
         Text(
             text = category.uppercase(),
-            color = DetailRed,
+            color = colors.racingRed,
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.5.sp
@@ -449,6 +447,7 @@ private fun LikeButton(
     likes: Int,
     isLiked: Boolean,
     isLiking: Boolean,
+    colors: AppColorScheme,
     onClick: () -> Unit
 ) {
     Row(
@@ -456,18 +455,19 @@ private fun LikeButton(
         modifier = Modifier
             .clip(RoundedCornerShape(8.dp))
             .clickable(enabled = !isLiking, onClick = onClick)
+            .background(if (isLiked) colors.racingRed.copy(alpha = 0.10f) else Color.Transparent)
             .padding(horizontal = 6.dp, vertical = 4.dp)
     ) {
         Icon(
             imageVector = if (isLiked) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
             contentDescription = if (isLiked) "Unlike" else "Like",
-            tint = if (isLiked) DetailRed else DetailMuted,
+            tint = if (isLiked) colors.racingRed else colors.mutedText,
             modifier = Modifier.size(16.dp)
         )
         Spacer(modifier = Modifier.width(4.dp))
         Text(
             text = likes.toString(),
-            color = if (isLiked) DetailRed else DetailMuted,
+            color = if (isLiked) colors.racingRed else colors.mutedText,
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold
         )

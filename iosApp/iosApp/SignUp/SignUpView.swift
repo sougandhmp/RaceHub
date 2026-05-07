@@ -1,5 +1,8 @@
 import SwiftUI
 import Combine
+import Shared
+
+private let t = AppColorTokens.shared
 
 struct SignUpView: View {
 
@@ -11,9 +14,9 @@ struct SignUpView: View {
         ZStack {
             LinearGradient(
                 colors: [
-                    Color(hex: "0A0A0A"),
-                    Color(hex: "1A1A2E"),
-                    Color(hex: "16213E")
+                    Color(hex: t.darkBackground),
+                    Color(hex: t.authDarkBlue),
+                    Color(hex: t.authDeepBlue)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -29,12 +32,12 @@ struct SignUpView: View {
 
                     Text("Join RaceHub")
                         .font(.system(size: 32, weight: .heavy))
-                        .foregroundColor(Color(hex: "E63946"))
+                        .foregroundColor(AppColors.racingRed)
                         .padding(.top, 8)
 
                     Text("Start your racing journey")
                         .font(.subheadline)
-                        .foregroundColor(Color(hex: "8D99AE"))
+                        .foregroundColor(Color(hex: t.authMuted))
                         .padding(.top, 4)
 
                     Spacer(minLength: 40)
@@ -93,7 +96,7 @@ struct SignUpView: View {
                     if let error = viewModel.state.errorMessage {
                         Text(error)
                             .font(.caption)
-                            .foregroundColor(Color(hex: "E63946"))
+                            .foregroundColor(AppColors.racingRed)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.top, 8)
                     }
@@ -117,7 +120,7 @@ struct SignUpView: View {
                     }
                     .background(
                         RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(hex: "E63946").opacity(viewModel.state.isLoading ? 0.4 : 1.0))
+                            .fill(AppColors.racingRed.opacity(viewModel.state.isLoading ? 0.4 : 1.0))
                     )
                     .disabled(viewModel.state.isLoading)
 
@@ -126,12 +129,12 @@ struct SignUpView: View {
                     HStack(spacing: 4) {
                         Text("Already have an account?")
                             .font(.footnote)
-                            .foregroundColor(Color(hex: "8D99AE"))
+                            .foregroundColor(Color(hex: t.authMuted))
 
                         Button(action: onNavigateToLogin) {
                             Text("Sign In")
                                 .font(.footnote.bold())
-                                .foregroundColor(Color(hex: "E63946"))
+                                .foregroundColor(AppColors.racingRed)
                         }
                     }
 
@@ -159,7 +162,7 @@ struct SignUpView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label)
                 .font(.caption)
-                .foregroundColor(Color(hex: "8D99AE"))
+                .foregroundColor(Color(hex: t.authMuted))
 
             TextField(placeholder, text: text)
                 .keyboardType(keyboardType)
@@ -171,7 +174,7 @@ struct SignUpView: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
-                            text.wrappedValue.isEmpty ? Color(hex: "444444") : Color(hex: "E63946"),
+                            text.wrappedValue.isEmpty ? Color(hex: t.authDimBorder) : AppColors.racingRed,
                             lineWidth: 1.5
                         )
                 )
@@ -188,7 +191,7 @@ struct SignUpView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label)
                 .font(.caption)
-                .foregroundColor(Color(hex: "8D99AE"))
+                .foregroundColor(Color(hex: t.authMuted))
 
             HStack {
                 Group {
@@ -205,7 +208,7 @@ struct SignUpView: View {
                 Button(action: onToggle) {
                     Text(isVisible ? "Hide" : "Show")
                         .font(.caption)
-                        .foregroundColor(Color(hex: "8D99AE"))
+                        .foregroundColor(Color(hex: t.authMuted))
                 }
             }
             .padding()
@@ -213,7 +216,7 @@ struct SignUpView: View {
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(
-                        text.wrappedValue.isEmpty ? Color(hex: "444444") : Color(hex: "E63946"),
+                        text.wrappedValue.isEmpty ? Color(hex: t.authDimBorder) : AppColors.racingRed,
                         lineWidth: 1.5
                     )
             )

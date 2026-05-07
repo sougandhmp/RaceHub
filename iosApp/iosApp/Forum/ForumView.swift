@@ -1,30 +1,30 @@
 import SwiftUI
 import Shared
 
-/// Forum tab content. Owns its own `ForumViewModel` by default but accepts an
-/// injected one so the parent (HomeView) can refresh it after creating a thread.
 struct ForumView: View {
 
     @ObservedObject var viewModel: ForumViewModel
     let onCreateThread: () -> Void
     let onThreadTap: (Shared.Thread) -> Void
+    @Environment(\.colorScheme) private var colorScheme
+    private var colors: AppColors { AppColors.forScheme(colorScheme) }
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             ScrollView {
                 if viewModel.state.isLoading && viewModel.state.threads.isEmpty {
                     ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: Color(hex: "E63946")))
+                        .progressViewStyle(CircularProgressViewStyle(tint: AppColors.racingRed))
                         .frame(maxWidth: .infinity)
                         .padding(.top, 40)
                 } else if viewModel.state.threads.isEmpty {
                     VStack(spacing: 12) {
                         Text("No threads yet")
                             .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.white)
+                            .foregroundColor(colors.primaryText)
                         Text("Tap + to start the first conversation.")
                             .font(.system(size: 14))
-                            .foregroundColor(Color(hex: "8E8E93"))
+                            .foregroundColor(colors.mutedText)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.horizontal, 24)
@@ -32,7 +32,7 @@ struct ForumView: View {
                 } else {
                     VStack(spacing: 12) {
                         ForEach(viewModel.state.threads, id: \.id) { thread in
-                            ThreadCard(thread: thread)
+                            ThreadCard(thread: thread, colors: colors)
                                 .contentShape(Rectangle())
                                 .onTapGesture { onThreadTap(thread) }
                         }
@@ -51,7 +51,7 @@ struct ForumView: View {
                     .font(.system(size: 22, weight: .bold))
                     .foregroundColor(.white)
                     .frame(width: 56, height: 56)
-                    .background(Color(hex: "E63946"))
+                    .background(AppColors.racingRed)
                     .clipShape(Circle())
                     .shadow(color: Color.black.opacity(0.4), radius: 6, x: 0, y: 3)
             }
@@ -63,12 +63,13 @@ struct ForumView: View {
 
 private struct ThreadCard: View {
     let thread: Shared.Thread
+    let colors: AppColors
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .center) {
                 ZStack {
-                    Circle().fill(Color(hex: "E63946"))
+                    Circle().fill(AppColors.racingRed)
                     Text(thread.author.avatar.prefix(2).uppercased())
                         .font(.system(size: 12, weight: .bold))
                         .foregroundColor(.white)
@@ -78,38 +79,38 @@ private struct ThreadCard: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(thread.author.username)
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundColor(colors.primaryText)
                     Text(formatRelative(thread.createdAt))
                         .font(.system(size: 12))
-                        .foregroundColor(Color(hex: "8E8E93"))
+                        .foregroundColor(colors.mutedText)
                 }
 
                 Spacer()
 
                 Text(thread.category.uppercased())
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(Color(hex: "E63946"))
+                    .foregroundColor(AppColors.racingRed)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(Color(hex: "E63946").opacity(0.12))
+                    .background(AppColors.racingRed.opacity(0.12))
                     .cornerRadius(6)
             }
 
             Text(thread.title)
                 .font(.system(size: 18, weight: .bold))
-                .foregroundColor(.white)
+                .foregroundColor(colors.primaryText)
                 .lineLimit(2)
 
             if let excerpt = thread.excerpt, !excerpt.isEmpty {
                 Text(excerpt)
                     .font(.system(size: 14))
-                    .foregroundColor(Color(hex: "8E8E93"))
+                    .foregroundColor(colors.mutedText)
                     .lineLimit(3)
             } else if !thread.content.isEmpty {
                 let preview = thread.content.prefix(160)
                 Text(String(preview) + (thread.content.count > 160 ? "…" : ""))
                     .font(.system(size: 14))
-                    .foregroundColor(Color(hex: "8E8E93"))
+                    .foregroundColor(colors.mutedText)
                     .lineLimit(3)
             }
 
@@ -118,14 +119,14 @@ private struct ThreadCard: View {
                     Text("❤️").font(.system(size: 14))
                     Text("\(thread.likes)")
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(Color(hex: "8E8E93"))
+                        .foregroundColor(colors.mutedText)
                 }
 
                 HStack(spacing: 4) {
                     Text("💬").font(.system(size: 14))
                     Text("\(thread.comments.count)")
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(Color(hex: "8E8E93"))
+                        .foregroundColor(colors.mutedText)
                 }
 
                 Spacer()
@@ -133,23 +134,21 @@ private struct ThreadCard: View {
                 if thread.bookmarked {
                     Text("★ Saved")
                         .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(Color(hex: "E63946"))
+                        .foregroundColor(AppColors.racingRed)
                 }
             }
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(hex: "161616"))
+        .background(colors.card)
         .cornerRadius(20)
         .overlay(
             RoundedRectangle(cornerRadius: 20)
-                .stroke(Color(hex: "262626"), lineWidth: 1)
+                .stroke(colors.cardBorder, lineWidth: 1)
         )
     }
 }
 
-// Best-effort formatter for ISO-ish timestamps coming from the GraphQL response.
-// Falls back to the date portion if anything goes wrong.
 private func formatRelative(_ createdAt: String) -> String {
     let datePart = createdAt.split(separator: "T").first ?? Substring(createdAt)
     let timePart = createdAt.split(separator: "T").last?.split(separator: ".").first?.prefix(5) ?? ""

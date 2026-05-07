@@ -1,14 +1,14 @@
 import SwiftUI
 import Shared
 
-/// Detail view for a single forum thread. Shows the full content, the comment
-/// list, an inline composer for new comments, and a system share sheet.
 struct ThreadDetailView: View {
 
     let thread: Shared.Thread
 
     @StateObject private var viewModel = ThreadDetailViewModel()
     @State private var showComments = false
+    @Environment(\.colorScheme) private var colorScheme
+    private var colors: AppColors { AppColors.forScheme(colorScheme) }
 
     private var allComments: [Shared.ThreadComment] {
         thread.comments + viewModel.state.postedComments
@@ -20,7 +20,7 @@ struct ThreadDetailView: View {
 
     var body: some View {
         ZStack {
-            Color(hex: "0A0A0A").ignoresSafeArea()
+            colors.background.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 ScrollView {
@@ -32,11 +32,11 @@ struct ThreadDetailView: View {
                             Text("COMMENTS · \(allComments.count)")
                                 .font(.system(size: 11, weight: .bold))
                                 .kerning(1)
-                                .foregroundColor(Color(hex: "8E8E93"))
+                                .foregroundColor(colors.mutedText)
                             Spacer()
                             Image(systemName: showComments ? "chevron.up" : "chevron.down")
                                 .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(Color(hex: "8E8E93"))
+                                .foregroundColor(colors.mutedText)
                         }
                         .padding(.top, 8)
                         .padding(.bottom, 4)
@@ -51,12 +51,12 @@ struct ThreadDetailView: View {
                             if allComments.isEmpty {
                                 Text("No comments yet. Be the first to reply.")
                                     .font(.system(size: 13))
-                                    .foregroundColor(Color(hex: "8E8E93"))
+                                    .foregroundColor(colors.mutedText)
                                     .padding(.vertical, 12)
                                     .transition(.move(edge: .top).combined(with: .opacity))
                             } else {
                                 ForEach(Array(allComments.enumerated()), id: \.offset) { _, comment in
-                                    CommentCard(comment: comment)
+                                    CommentCard(comment: comment, colors: colors)
                                         .transition(.move(edge: .top).combined(with: .opacity))
                                 }
                             }
@@ -73,7 +73,8 @@ struct ThreadDetailView: View {
                     ),
                     canSubmit: viewModel.state.canSubmit,
                     isSubmitting: viewModel.state.isSubmitting,
-                    onSubmit: { viewModel.send(.submitComment(threadId: thread.id)) }
+                    onSubmit: { viewModel.send(.submitComment(threadId: thread.id)) },
+                    colors: colors
                 )
             }
         }
@@ -83,13 +84,13 @@ struct ThreadDetailView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 ShareLink(item: shareText, subject: Text(thread.title)) {
                     Image(systemName: "square.and.arrow.up")
-                        .foregroundColor(.white)
+                        .foregroundColor(colors.primaryText)
                 }
             }
         }
-        .toolbarBackground(Color(hex: "0A0A0A"), for: .navigationBar)
+        .toolbarBackground(colors.background, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbarColorScheme(colors.isDark ? .dark : .light, for: .navigationBar)
         .alert(
             "Error",
             isPresented: Binding(
@@ -112,32 +113,32 @@ struct ThreadDetailView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(thread.author.username.isEmpty ? "Anonymous" : thread.author.username)
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundColor(colors.primaryText)
                     Text(formatTimestamp(thread.createdAt))
                         .font(.system(size: 12))
-                        .foregroundColor(Color(hex: "8E8E93"))
+                        .foregroundColor(colors.mutedText)
                 }
 
                 Spacer()
 
                 Text(thread.category.uppercased())
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(Color(hex: "E63946"))
+                    .foregroundColor(AppColors.racingRed)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(Color(hex: "E63946").opacity(0.12))
+                    .background(AppColors.racingRed.opacity(0.12))
                     .cornerRadius(6)
             }
 
             Text(thread.title)
                 .font(.system(size: 22, weight: .heavy))
-                .foregroundColor(.white)
+                .foregroundColor(colors.primaryText)
                 .fixedSize(horizontal: false, vertical: true)
 
             if !thread.content.isEmpty {
                 Text(thread.content)
                     .font(.system(size: 15))
-                    .foregroundColor(Color(hex: "E5E5E5"))
+                    .foregroundColor(colors.primaryText)
                     .lineSpacing(4)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -147,6 +148,7 @@ struct ThreadDetailView: View {
                     likes: viewModel.state.likes,
                     isLiked: viewModel.state.isLiked,
                     isLiking: viewModel.state.isLiking,
+                    colors: colors,
                     onTap: { viewModel.send(.toggleLike(threadId: thread.id)) }
                 )
                 Button(action: {
@@ -158,11 +160,11 @@ struct ThreadDetailView: View {
                         Text("💬").font(.system(size: 14))
                         Text("\(thread.comments.count)")
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(showComments ? Color(hex: "E63946") : Color(hex: "8E8E93"))
+                            .foregroundColor(showComments ? AppColors.racingRed : colors.mutedText)
                     }
                     .padding(.horizontal, 6)
                     .padding(.vertical, 4)
-                    .background(showComments ? Color(hex: "E63946").opacity(0.1) : Color.clear)
+                    .background(showComments ? AppColors.racingRed.opacity(0.1) : Color.clear)
                     .cornerRadius(8)
                 }
                 .buttonStyle(.plain)
@@ -170,24 +172,24 @@ struct ThreadDetailView: View {
                 if thread.bookmarked {
                     Text("★ Saved")
                         .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(Color(hex: "E63946"))
+                        .foregroundColor(AppColors.racingRed)
                 }
             }
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(hex: "161616"))
+        .background(colors.card)
         .cornerRadius(20)
         .overlay(
             RoundedRectangle(cornerRadius: 20)
-                .stroke(Color(hex: "262626"), lineWidth: 1)
+                .stroke(colors.cardBorder, lineWidth: 1)
         )
     }
-
 }
 
 private struct CommentCard: View {
     let comment: Shared.ThreadComment
+    let colors: AppColors
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -196,10 +198,10 @@ private struct CommentCard: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(comment.authorUsername.isEmpty ? "Anonymous" : comment.authorUsername)
                     .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(colors.primaryText)
                 Text(comment.content)
                     .font(.system(size: 14))
-                    .foregroundColor(Color(hex: "D0D0D0"))
+                    .foregroundColor(colors.primaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
@@ -207,11 +209,11 @@ private struct CommentCard: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(hex: "161616"))
+        .background(colors.card)
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Color(hex: "262626"), lineWidth: 1)
+                .stroke(colors.cardBorder, lineWidth: 1)
         )
     }
 }
@@ -221,34 +223,35 @@ private struct CommentInputBar: View {
     let canSubmit: Bool
     let isSubmitting: Bool
     let onSubmit: () -> Void
+    let colors: AppColors
 
     var body: some View {
         HStack(spacing: 8) {
             TextField(
                 "",
                 text: $value,
-                prompt: Text("Add a comment…").foregroundColor(Color(hex: "8E8E93"))
+                prompt: Text("Add a comment…").foregroundColor(colors.mutedText)
             )
-            .foregroundColor(.white)
-            .accentColor(Color(hex: "E63946"))
+            .foregroundColor(colors.primaryText)
+            .accentColor(AppColors.racingRed)
             .disabled(isSubmitting)
             .padding(12)
-            .background(Color(hex: "161616"))
+            .background(colors.card)
             .cornerRadius(8)
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color(hex: "262626"), lineWidth: 1)
+                    .stroke(colors.cardBorder, lineWidth: 1)
             )
 
             Button(action: onSubmit) {
                 if isSubmitting {
                     ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: Color(hex: "E63946")))
+                        .progressViewStyle(CircularProgressViewStyle(tint: AppColors.racingRed))
                         .frame(width: 44, height: 44)
                 } else {
                     Image(systemName: "paperplane.fill")
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(canSubmit ? Color(hex: "E63946") : Color(hex: "8E8E93"))
+                        .foregroundColor(canSubmit ? AppColors.racingRed : colors.mutedText)
                         .frame(width: 44, height: 44)
                 }
             }
@@ -256,7 +259,7 @@ private struct CommentInputBar: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(Color(hex: "0A0A0A"))
+        .background(colors.background)
     }
 }
 
@@ -266,7 +269,7 @@ private struct AuthorBadge: View {
 
     var body: some View {
         ZStack {
-            Circle().fill(Color(hex: "E63946"))
+            Circle().fill(AppColors.racingRed)
             Text(String(initials.prefix(2)).uppercased())
                 .font(.system(size: size / 3, weight: .bold))
                 .foregroundColor(.white)
@@ -279,6 +282,7 @@ private struct LikeButtonView: View {
     let likes: Int32
     let isLiked: Bool
     let isLiking: Bool
+    let colors: AppColors
     let onTap: () -> Void
 
     var body: some View {
@@ -286,14 +290,14 @@ private struct LikeButtonView: View {
             HStack(spacing: 4) {
                 Image(systemName: isLiked ? "heart.fill" : "heart")
                     .font(.system(size: 14))
-                    .foregroundColor(isLiked ? Color(hex: "E63946") : Color(hex: "8E8E93"))
+                    .foregroundColor(isLiked ? AppColors.racingRed : colors.mutedText)
                 Text("\(likes)")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(isLiked ? Color(hex: "E63946") : Color(hex: "8E8E93"))
+                    .foregroundColor(isLiked ? AppColors.racingRed : colors.mutedText)
             }
             .padding(.horizontal, 6)
             .padding(.vertical, 4)
-            .background(isLiked ? Color(hex: "E63946").opacity(0.1) : Color.clear)
+            .background(isLiked ? AppColors.racingRed.opacity(0.1) : Color.clear)
             .cornerRadius(8)
         }
         .disabled(isLiking)

@@ -55,14 +55,15 @@ private struct NextRaceSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            // Section header
             HStack {
                 Text("NEXT RACE")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(colors.mutedText)
                     .kerning(1)
                 Spacer()
-                if let race = race, let days = race.daysRemaining {
-                    Text("RD \(Int(race.round)) · \(Int(truncating: days)) DAYS")
+                if let race = race {
+                    Text("ROUND \(Int(race.round))")
                         .font(.system(size: 11, weight: .bold))
                         .foregroundColor(AppColors.racingRed)
                         .padding(.horizontal, 8)
@@ -72,31 +73,47 @@ private struct NextRaceSection: View {
                 }
             }
 
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(alignment: .center, spacing: 8) {
-                    Text(race?.name ?? "Canadian GP")
+            // Card
+            VStack(alignment: .leading, spacing: 0) {
+                // Name + Flag
+                HStack(alignment: .center) {
+                    Text(race?.name ?? "No Upcoming Race")
                         .font(.system(size: 26, weight: .heavy))
                         .foregroundColor(colors.primaryText)
-                    Text(race?.countryFlag ?? "🇨🇦")
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer()
+                    Text(race?.countryFlag ?? "🏁")
                         .font(.system(size: 22))
                 }
 
-                Text(race?.date ?? "Sun May 24 · 8:00 PM UTC · Montreal")
+                // Country
+                Text(race?.country ?? "—")
                     .font(.system(size: 13))
                     .foregroundColor(colors.mutedText)
+                    .padding(.top, 2)
 
+                Spacer().frame(height: 16)
+
+                RaceDetailRow(label: "Circuit", value: race?.circuit ?? "—", colors: colors)
+                Spacer().frame(height: 8)
+                RaceDetailRow(label: "Date", value: race?.date ?? "—", colors: colors)
+
+                Spacer().frame(height: 16)
+
+                // Countdown chip + See all
                 HStack {
-                    HStack(spacing: 4) {
-                        Text("Circuit")
-                            .foregroundColor(colors.mutedText)
-                        Text(race?.circuit ?? "—")
-                            .foregroundColor(colors.primaryText)
-                            .fontWeight(.medium)
+                    if let days = race?.daysRemaining {
+                        Text("\(Int(truncating: days)) DAYS TO RACE")
+                            .font(.system(size: 12, weight: .heavy))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(AppColors.racingRed)
+                            .cornerRadius(8)
                     }
-                    .font(.system(size: 13))
                     Spacer()
                     Button(action: onViewAll) {
-                        Text("See all")
+                        Text("See all →")
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(AppColors.racingRed)
                     }
@@ -110,6 +127,25 @@ private struct NextRaceSection: View {
                 RoundedRectangle(cornerRadius: 20)
                     .stroke(colors.cardBorder, lineWidth: 1)
             )
+        }
+    }
+}
+
+private struct RaceDetailRow: View {
+    let label: String
+    let value: String
+    let colors: AppColors
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 0) {
+            Text(label)
+                .font(.system(size: 13))
+                .foregroundColor(colors.mutedText)
+                .frame(width: 60, alignment: .leading)
+            Text(value)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(colors.primaryText)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 }
