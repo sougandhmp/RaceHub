@@ -335,31 +335,42 @@ private fun ThreadHeader(
 
 @Composable
 private fun CommentCard(comment: ThreadComment, colors: AppColorScheme) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(colors.card)
             .border(1.dp, colors.cardBorder, RoundedCornerShape(16.dp))
-            .padding(14.dp)
+            .padding(16.dp)
     ) {
-        AuthorBadge(initials = comment.authorUsername, colors = colors, sizeDp = 32)
-        Spacer(modifier = Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            AuthorBadge(
+                initials = comment.authorUsername.ifBlank { "?" },
+                colors = colors,
+                sizeDp = 28
+            )
+            Spacer(modifier = Modifier.width(10.dp))
             Text(
                 text = comment.authorUsername.ifBlank { "Anonymous" },
                 color = colors.primaryText,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.weight(1f))
             Text(
-                text = comment.content,
-                color = colors.primaryText,
-                fontSize = 14.sp,
-                lineHeight = 20.sp
+                text = "just now", // Placeholder for actual time if available
+                color = colors.mutedText,
+                fontSize = 11.sp
             )
         }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = comment.content,
+            color = colors.primaryText,
+            fontSize = 14.sp,
+            lineHeight = 20.sp,
+            modifier = Modifier.padding(start = 38.dp) // Align with text start
+        )
     }
 }
 

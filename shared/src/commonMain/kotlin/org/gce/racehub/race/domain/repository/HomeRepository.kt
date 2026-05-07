@@ -3,6 +3,7 @@ package org.gce.racehub.race.domain.repository
 import org.gce.racehub.race.domain.model.ConstructorStanding
 import org.gce.racehub.race.domain.model.DriverStanding
 import org.gce.racehub.race.domain.model.Race
+import org.gce.racehub.race.domain.model.RaceDetail
 import org.gce.racehub.race.domain.model.Thread
 import org.gce.racehub.race.domain.model.ThreadComment
 import org.gce.racehub.race.domain.model.TrendingThread
@@ -31,6 +32,12 @@ interface HomeRepository {
 
     /** Returns the trending threads from the forum. */
     suspend fun getTrendingThreads(): List<TrendingThread>
+
+    /**
+     * Returns full detail for the race identified by [slug].
+     * @throws Exception if the request fails.
+     */
+    suspend fun getRaceDetail(slug: String): RaceDetail
 
     /**
      * Returns full forum threads matching the provided filters.

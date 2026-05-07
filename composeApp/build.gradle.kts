@@ -50,7 +50,7 @@ android {
         applicationId = "com.gce.racehub"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
+        versionCode = project.findProperty("buildNumber")?.toString()?.toIntOrNull() ?: 1
         versionName = "1.0"
     }
 

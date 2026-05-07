@@ -163,6 +163,12 @@ struct RaceRow: View {
             Text(race.date)
                 .font(.system(size: 14))
                 .foregroundColor(colors.mutedText)
+
+            CircuitImageView(
+                circuitName: race.circuit,
+                grandPrixName: race.name,
+                colors: colors
+            )
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)

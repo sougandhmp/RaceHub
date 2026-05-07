@@ -98,6 +98,15 @@ private struct NextRaceSection: View {
                 Spacer().frame(height: 8)
                 RaceDetailRow(label: "Date", value: race?.date ?? "—", colors: colors)
 
+                Spacer().frame(height: 12)
+
+                CircuitImageView(
+                    circuitName: race?.circuit ?? "",
+                    grandPrixName: race?.name ?? "",
+                    colors: colors,
+                    height: 140
+                )
+
                 Spacer().frame(height: 16)
 
                 // Countdown chip + See all
