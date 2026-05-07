@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.SportsScore
 import androidx.compose.material3.Icon
@@ -39,12 +40,10 @@ import org.gce.racehub.profile.ProfileScreen
 import org.gce.racehub.race.RaceScreen
 import org.gce.racehub.race.di.raceModule
 import org.gce.racehub.race.domain.model.Thread
+import org.gce.racehub.theme.LocalAppColors
 import org.koin.compose.KoinApplication
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.dsl.koinConfiguration
-
-private val DarkBg = Color(0xFF0A0A0A)
-private val MutedGray = Color(0xFF8E8E93)
 
 private val HomeTab.icon: ImageVector
     get() = when (this) {
@@ -63,6 +62,7 @@ fun HomeScreen(
     onSignedOut: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val colors = LocalAppColors.current
 
     Scaffold(
         topBar = { HomeHeader() },
@@ -72,7 +72,7 @@ fun HomeScreen(
                 onTabSelected = { viewModel.onIntent(HomeIntent.TabSelected(it)) }
             )
         },
-        containerColor = DarkBg
+        containerColor = colors.background
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -98,25 +98,26 @@ fun HomeScreen(
 
 @Composable
 private fun HomeHeader() {
+    val colors = LocalAppColors.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .statusBarsPadding()
-            .padding(horizontal = 24.dp, vertical = 20.dp),
+            .padding(horizontal = 20.dp, vertical = 16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = "Race Hub",
-            color = Color.White,
+            color = colors.primaryText,
             fontWeight = FontWeight.Bold,
-            fontSize = 32.sp
+            fontSize = 30.sp
         )
         IconButton(onClick = { }) {
             Icon(
-                imageVector = Icons.Filled.Person,
-                contentDescription = "Profile",
-                tint = Color.White,
+                imageVector = Icons.Filled.MoreVert,
+                contentDescription = "Menu",
+                tint = colors.primaryText,
                 modifier = Modifier.size(24.dp)
             )
         }
@@ -128,8 +129,9 @@ private fun HomeBottomNavigation(
     selectedTab: HomeTab,
     onTabSelected: (HomeTab) -> Unit
 ) {
+    val colors = LocalAppColors.current
     NavigationBar(
-        containerColor = Color(0xFF121212),
+        containerColor = colors.navBar,
         tonalElevation = 0.dp,
         windowInsets = WindowInsets.navigationBars
     ) {
@@ -154,11 +156,11 @@ private fun HomeBottomNavigation(
                     )
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = Color.White,
-                    selectedTextColor = Color.White,
-                    indicatorColor = Color(0xFF2C2C2C),
-                    unselectedIconColor = MutedGray,
-                    unselectedTextColor = MutedGray
+                    selectedIconColor = colors.racingRed,
+                    selectedTextColor = colors.racingRed,
+                    indicatorColor = Color.Transparent,
+                    unselectedIconColor = colors.mutedText,
+                    unselectedTextColor = colors.mutedText
                 )
             )
         }

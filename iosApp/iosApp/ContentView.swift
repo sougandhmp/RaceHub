@@ -1,14 +1,13 @@
 import SwiftUI
 import Shared
 
-/// Top-level navigation destinations.
 private enum Screen {
     case login, signUp, home
 }
 
-/// Root view. Owns navigation state and routes to the correct screen.
 struct ContentView: View {
 
+    @StateObject private var themeManager = ThemeManager()
     @State private var screen: Screen
 
     init() {
@@ -17,20 +16,24 @@ struct ContentView: View {
     }
 
     var body: some View {
-        switch screen {
-        case .login:
-            LoginView(
-                onLoginSuccess:    { screen = .home   },
-                onNavigateToSignUp: { screen = .signUp }
-            )
-        case .signUp:
-            SignUpView(
-                onSignUpSuccess:    { screen = .home  },
-                onNavigateToLogin: { screen = .login  }
-            )
-        case .home:
-            HomeView(onSignedOut: { screen = .login })
+        Group {
+            switch screen {
+            case .login:
+                LoginView(
+                    onLoginSuccess:     { screen = .home   },
+                    onNavigateToSignUp: { screen = .signUp }
+                )
+            case .signUp:
+                SignUpView(
+                    onSignUpSuccess:    { screen = .home  },
+                    onNavigateToLogin: { screen = .login  }
+                )
+            case .home:
+                HomeView(onSignedOut: { screen = .login })
+            }
         }
+        .preferredColorScheme(themeManager.isDarkMode ? .dark : .light)
+        .environmentObject(themeManager)
     }
 }
 
