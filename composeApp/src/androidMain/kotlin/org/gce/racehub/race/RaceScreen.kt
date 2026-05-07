@@ -24,10 +24,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -55,18 +53,10 @@ fun RaceScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val colors = LocalAppColors.current
-    var isRefreshing by remember { mutableStateOf(false) }
-
-    LaunchedEffect(state.isLoading) {
-        if (!state.isLoading) isRefreshing = false
-    }
 
     PullToRefreshBox(
-        isRefreshing = isRefreshing,
-        onRefresh = {
-            isRefreshing = true
-            viewModel.onIntent(RaceIntent.Refresh)
-        },
+        isRefreshing = state.isLoading,
+        onRefresh = { viewModel.onIntent(RaceIntent.Refresh) },
         modifier = Modifier.fillMaxSize().background(colors.background)
     ) {
         if (state.isLoading && state.raceSchedule.isEmpty()) {
@@ -140,21 +130,24 @@ private fun NextRaceSection(race: Race?, colors: AppColorScheme, onViewAll: () -
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 1.sp
             )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                race?.daysRemaining?.let { days ->
+            if (race != null) {
+                Box(
+                    modifier = Modifier
+                        .background(colors.racingRed.copy(alpha = 0.1f), RoundedCornerShape(6.dp))
+                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                ) {
                     Text(
-                        text = "RD ${race.round} · $days DAYS",
+                        text = "ROUND ${race.round}",
                         color = colors.racingRed,
                         fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier
-                            .background(colors.racingRed.copy(alpha = 0.1f), RoundedCornerShape(6.dp))
-                            .padding(horizontal = 8.dp, vertical = 3.dp)
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
         }
+
         Spacer(modifier = Modifier.height(12.dp))
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -163,35 +156,61 @@ private fun NextRaceSection(race: Race?, colors: AppColorScheme, onViewAll: () -
                 .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
                 .padding(20.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = race?.name ?: "Canadian GP",
-                    color = colors.primaryText,
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.ExtraBold
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = race?.countryFlag ?: "🇨🇦", fontSize = 22.sp)
-            }
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = race?.date ?: "Sun May 24 · 8:00 PM UTC · Montreal",
-                color = colors.mutedText,
-                fontSize = 13.sp
-            )
-            Spacer(modifier = Modifier.height(10.dp))
+            // Name + Flag
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "Circuit  ", color = colors.mutedText, fontSize = 13.sp)
-                    Text(
-                        text = race?.circuit ?: "—",
-                        color = colors.primaryText,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium
-                    )
+                Text(
+                    text = race?.name ?: "No Upcoming Race",
+                    color = colors.primaryText,
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = race?.countryFlag ?: "🏁", fontSize = 22.sp)
+            }
+
+            // Country
+            Text(
+                text = race?.country ?: "—",
+                color = colors.mutedText,
+                fontSize = 13.sp,
+                modifier = Modifier.padding(top = 2.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            RaceInfoRow(label = "Circuit", value = race?.circuit ?: "—", colors = colors)
+            Spacer(modifier = Modifier.height(8.dp))
+            RaceInfoRow(label = "Date", value = race?.date ?: "—", colors = colors)
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Countdown chip + See all
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val days = race?.daysRemaining
+                if (days != null) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(colors.racingRed)
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = "$days DAYS TO RACE",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                    }
+                } else {
+                    Spacer(modifier = Modifier.width(1.dp))
                 }
                 TextButton(
                     onClick = onViewAll,
@@ -199,7 +218,7 @@ private fun NextRaceSection(race: Race?, colors: AppColorScheme, onViewAll: () -
                     modifier = Modifier.heightIn(min = 20.dp)
                 ) {
                     Text(
-                        text = "See all",
+                        text = "See all →",
                         color = colors.racingRed,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold
@@ -207,6 +226,28 @@ private fun NextRaceSection(race: Race?, colors: AppColorScheme, onViewAll: () -
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun RaceInfoRow(label: String, value: String, colors: AppColorScheme) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Top
+    ) {
+        Text(
+            text = label,
+            color = colors.mutedText,
+            fontSize = 13.sp,
+            modifier = Modifier.width(72.dp)
+        )
+        Text(
+            text = value,
+            color = colors.primaryText,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(1f)
+        )
     }
 }
 

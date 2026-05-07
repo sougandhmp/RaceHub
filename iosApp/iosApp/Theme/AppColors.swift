@@ -1,4 +1,5 @@
 import SwiftUI
+import Shared
 
 extension Color {
     init(hex: String) {
@@ -14,6 +15,8 @@ extension Color {
     }
 }
 
+private let t = AppColorTokens.shared
+
 struct AppColors {
     let background: Color
     let card: Color
@@ -25,34 +28,61 @@ struct AppColors {
     let rowAltBg: Color
     let isDark: Bool
 
-    static let racingRed = Color(hex: "E63946")
+    static let racingRed = Color(hex: t.racingRed)
+    static let f1Red     = Color(hex: t.f1Red)
 
     static func forScheme(_ scheme: ColorScheme) -> AppColors {
         switch scheme {
         case .dark:
             return AppColors(
-                background: Color(hex: "0A0A0A"),
-                card: Color(hex: "161616"),
-                cardBorder: Color(hex: "262626"),
-                mutedText: Color(hex: "8E8E93"),
+                background: Color(hex: t.darkBackground),
+                card:        Color(hex: t.darkCard),
+                cardBorder:  Color(hex: t.darkCardBorder),
+                mutedText:   Color(hex: t.darkMutedText),
                 primaryText: .white,
-                navBar: Color(hex: "0A0A0A"),
-                headerBg: Color(hex: "2A1116"),
-                rowAltBg: Color(hex: "1B0E11"),
+                navBar:      Color(hex: t.darkNavBar),
+                headerBg:    Color(hex: t.darkHeaderBg),
+                rowAltBg:    Color(hex: t.darkRowAltBg),
                 isDark: true
             )
         default:
             return AppColors(
-                background: Color(hex: "F2F2F7"),
-                card: .white,
-                cardBorder: Color(hex: "E5E5EA"),
-                mutedText: Color(hex: "6C6C70"),
-                primaryText: Color(hex: "000000"),
-                navBar: .white,
-                headerBg: Color(hex: "FFECEE"),
-                rowAltBg: Color(hex: "FFF5F6"),
+                background: Color(hex: t.lightBackground),
+                card:        Color(hex: t.lightCard),
+                cardBorder:  Color(hex: t.lightCardBorder),
+                mutedText:   Color(hex: t.lightMutedText),
+                primaryText: .black,
+                navBar:      Color(hex: t.lightNavBar),
+                headerBg:    Color(hex: t.lightHeaderBg),
+                rowAltBg:    Color(hex: t.lightRowAltBg),
                 isDark: false
             )
+        }
+    }
+
+    // MARK: - Team colors (sourced from AppColorTokens)
+    static var teamColor: (String) -> Color = { team in
+        let lower = team.lowercased()
+        if lower.contains("mercedes") { return Color(hex: t.teamMercedes) }
+        if lower.contains("mclaren")  { return Color(hex: t.teamMcLaren)  }
+        if lower.contains("red bull") { return Color(hex: t.teamRedBull)  }
+        if lower.contains("ferrari")  { return Color(hex: t.teamFerrari)  }
+        if lower.contains("aston")    { return Color(hex: t.teamAston)    }
+        if lower.contains("alpine")   { return Color(hex: t.teamAlpine)   }
+        if lower.contains("williams") { return Color(hex: t.teamWilliams) }
+        if lower.contains("rb")       { return Color(hex: t.teamRb)       }
+        if lower.contains("haas")     { return Color(hex: t.teamHaas)     }
+        if lower.contains("sauber")   { return Color(hex: t.teamSauber)   }
+        return Color(hex: t.teamDefault)
+    }
+
+    // MARK: - Podium accents (sourced from AppColorTokens)
+    static func podiumAccent(position: Int) -> Color {
+        switch position {
+        case 1:  return Color(hex: t.gold)
+        case 2:  return Color(hex: t.silver)
+        case 3:  return Color(hex: t.bronze)
+        default: return Color(hex: t.teamDefault)
         }
     }
 }

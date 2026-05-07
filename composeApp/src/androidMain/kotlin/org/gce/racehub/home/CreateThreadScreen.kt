@@ -34,13 +34,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.gce.racehub.theme.AppColorScheme
+import org.gce.racehub.theme.LocalAppColors
 import org.koin.compose.viewmodel.koinViewModel
-
-private val Red = Color(0xFFE63946)
-private val Bg = Color(0xFF0A0A0A)
-private val FieldBg = Color(0xFF161616)
-private val FieldBorder = Color(0xFF262626)
-private val Muted = Color(0xFF8E8E93)
 
 @Composable
 fun CreateThreadScreen(
@@ -49,6 +45,7 @@ fun CreateThreadScreen(
     viewModel: CreateThreadViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val colors = LocalAppColors.current
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
@@ -58,7 +55,7 @@ fun CreateThreadScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(Bg)) {
+    Box(modifier = Modifier.fillMaxSize().background(colors.background)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -71,11 +68,11 @@ fun CreateThreadScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(onClick = onCancel, enabled = !state.isSubmitting) {
-                    Text(text = "Cancel", color = Muted, fontSize = 14.sp)
+                    Text(text = "Cancel", color = colors.mutedText, fontSize = 14.sp)
                 }
                 Text(
                     text = "New Thread",
-                    color = Color.White,
+                    color = colors.primaryText,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -84,20 +81,20 @@ fun CreateThreadScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            FieldLabel("TITLE")
+            FieldLabel("TITLE", colors)
             OutlinedTextField(
                 value = state.title,
                 onValueChange = { viewModel.onIntent(CreateThreadIntent.TitleChanged(it)) },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("What's on your mind?", color = Muted) },
+                placeholder = { Text("What's on your mind?", color = colors.mutedText) },
                 singleLine = true,
                 enabled = !state.isSubmitting,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                colors = darkFieldColors()
+                colors = fieldColors(colors)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
-            FieldLabel("CATEGORY")
+            FieldLabel("CATEGORY", colors)
             OutlinedTextField(
                 value = state.category,
                 onValueChange = { viewModel.onIntent(CreateThreadIntent.CategoryChanged(it)) },
@@ -105,25 +102,25 @@ fun CreateThreadScreen(
                 singleLine = true,
                 enabled = !state.isSubmitting,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                colors = darkFieldColors()
+                colors = fieldColors(colors)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
-            FieldLabel("CONTENT")
+            FieldLabel("CONTENT", colors)
             OutlinedTextField(
                 value = state.content,
                 onValueChange = { viewModel.onIntent(CreateThreadIntent.ContentChanged(it)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(220.dp),
-                placeholder = { Text("Share your thoughts…", color = Muted) },
+                placeholder = { Text("Share your thoughts…", color = colors.mutedText) },
                 enabled = !state.isSubmitting,
-                colors = darkFieldColors()
+                colors = fieldColors(colors)
             )
 
             state.errorMessage?.let { message ->
                 Spacer(modifier = Modifier.height(12.dp))
-                Text(text = message, color = Red, fontSize = 13.sp)
+                Text(text = message, color = colors.racingRed, fontSize = 13.sp)
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -134,10 +131,10 @@ fun CreateThreadScreen(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp)),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Red,
+                    containerColor = colors.racingRed,
                     contentColor = Color.White,
-                    disabledContainerColor = FieldBg,
-                    disabledContentColor = Muted
+                    disabledContainerColor = colors.card,
+                    disabledContentColor = colors.mutedText
                 )
             ) {
                 if (state.isSubmitting) {
@@ -155,10 +152,10 @@ fun CreateThreadScreen(
 }
 
 @Composable
-private fun FieldLabel(text: String) {
+private fun FieldLabel(text: String, colors: AppColorScheme) {
     Text(
         text = text,
-        color = Muted,
+        color = colors.mutedText,
         fontSize = 11.sp,
         fontWeight = FontWeight.Bold,
         letterSpacing = 0.5.sp,
@@ -167,12 +164,12 @@ private fun FieldLabel(text: String) {
 }
 
 @Composable
-private fun darkFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedTextColor = Color.White,
-    unfocusedTextColor = Color.White,
-    focusedContainerColor = FieldBg,
-    unfocusedContainerColor = FieldBg,
-    focusedBorderColor = Red,
-    unfocusedBorderColor = FieldBorder,
-    cursorColor = Red
+private fun fieldColors(colors: AppColorScheme) = OutlinedTextFieldDefaults.colors(
+    focusedTextColor = colors.primaryText,
+    unfocusedTextColor = colors.primaryText,
+    focusedContainerColor = colors.card,
+    unfocusedContainerColor = colors.card,
+    focusedBorderColor = colors.racingRed,
+    unfocusedBorderColor = colors.cardBorder,
+    cursorColor = colors.racingRed
 )

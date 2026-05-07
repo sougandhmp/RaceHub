@@ -1,5 +1,6 @@
 package org.gce.racehub
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -33,6 +34,7 @@ import org.gce.racehub.theme.LightAppColors
 import org.gce.racehub.theme.LocalAppColors
 import org.gce.racehub.theme.RacingRed
 import org.gce.racehub.theme.ThemeManager
+import org.gce.racehub.theme.ThemeMode
 import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -43,7 +45,13 @@ private enum class Screen { Login, SignUp, Home, Schedule, Standings, CreateThre
 @Composable
 fun App() {
     val themeManager: ThemeManager = koinInject()
-    val isDark by themeManager.isDarkMode.collectAsState()
+    val themeMode by themeManager.themeMode.collectAsState()
+    val systemInDark = isSystemInDarkTheme()
+    val isDark = when (themeMode) {
+        ThemeMode.DARK -> true
+        ThemeMode.LIGHT -> false
+        ThemeMode.SYSTEM -> systemInDark
+    }
     val appColors = if (isDark) DarkAppColors else LightAppColors
 
     val materialColorScheme = if (isDark) {

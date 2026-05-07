@@ -41,14 +41,16 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.gce.racehub.theme.AppColorTokens
+import org.gce.racehub.theme.hexColor
 import org.koin.compose.viewmodel.koinViewModel
 
-private val RacingRed = Color(0xFFE63946)
-private val DarkBg = Color(0xFF0A0A0A)
-private val DarkBlue = Color(0xFF1A1A2E)
-private val DeepBlue = Color(0xFF16213E)
-private val MutedGray = Color(0xFF8D99AE)
-private val DimBorder = Color(0xFF444444)
+private val RacingRed = hexColor(AppColorTokens.racingRed)
+private val DarkBg    = hexColor(AppColorTokens.darkBackground)
+private val DarkBlue  = hexColor(AppColorTokens.authDarkBlue)
+private val DeepBlue  = hexColor(AppColorTokens.authDeepBlue)
+private val MutedGray = hexColor(AppColorTokens.authMuted)
+private val DimBorder = hexColor(AppColorTokens.authDimBorder)
 
 @Composable
 fun SignUpScreen(

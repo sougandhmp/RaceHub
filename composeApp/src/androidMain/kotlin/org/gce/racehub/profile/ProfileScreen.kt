@@ -27,9 +27,6 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,6 +40,7 @@ import org.gce.racehub.race.domain.model.UserProfile
 import org.gce.racehub.theme.AppColorScheme
 import org.gce.racehub.theme.LocalAppColors
 import org.gce.racehub.theme.ThemeManager
+import org.gce.racehub.theme.ThemeMode
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -54,13 +52,8 @@ fun ProfileScreen(
     onSignedOut: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val isDark by themeManager.isDarkMode.collectAsStateWithLifecycle()
+    val themeMode by themeManager.themeMode.collectAsStateWithLifecycle()
     val colors = LocalAppColors.current
-    var isRefreshing by remember { mutableStateOf(false) }
-
-    LaunchedEffect(state.isLoadingProfile) {
-        if (!state.isLoadingProfile) isRefreshing = false
-    }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
@@ -71,11 +64,8 @@ fun ProfileScreen(
     }
 
     PullToRefreshBox(
-        isRefreshing = isRefreshing,
-        onRefresh = {
-            isRefreshing = true
-            viewModel.onIntent(ProfileIntent.RefreshProfile)
-        },
+        isRefreshing = state.isLoadingProfile,
+        onRefresh = { viewModel.onIntent(ProfileIntent.RefreshProfile) },
         modifier = Modifier.fillMaxSize()
     ) {
         Box(
@@ -106,8 +96,8 @@ fun ProfileScreen(
                     ProfileDetails(user = user, colors = colors)
                     Spacer(modifier = Modifier.height(24.dp))
                     ThemeToggle(
-                        isDark = isDark,
-                        onToggle = { themeManager.setDarkMode(it) },
+                        themeMode = themeMode,
+                        onSelect = { themeManager.setThemeMode(it) },
                         colors = colors
                     )
                     state.profile?.let { profile ->
@@ -155,10 +145,15 @@ fun ProfileScreen(
 
 @Composable
 private fun ThemeToggle(
-    isDark: Boolean,
-    onToggle: (Boolean) -> Unit,
+    themeMode: ThemeMode,
+    onSelect: (ThemeMode) -> Unit,
     colors: AppColorScheme
 ) {
+    val options = listOf(
+        ThemeMode.SYSTEM to "System",
+        ThemeMode.DARK   to "Dark",
+        ThemeMode.LIGHT  to "Light"
+    )
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = "APPEARANCE",
@@ -176,20 +171,15 @@ private fun ThemeToggle(
                 .border(1.dp, colors.cardBorder, RoundedCornerShape(12.dp))
                 .padding(4.dp)
         ) {
-            ThemePill(
-                label = "Light",
-                isSelected = !isDark,
-                colors = colors,
-                modifier = Modifier.weight(1f),
-                onClick = { onToggle(false) }
-            )
-            ThemePill(
-                label = "Dark",
-                isSelected = isDark,
-                colors = colors,
-                modifier = Modifier.weight(1f),
-                onClick = { onToggle(true) }
-            )
+            options.forEach { (mode, label) ->
+                ThemePill(
+                    label = label,
+                    isSelected = themeMode == mode,
+                    colors = colors,
+                    modifier = Modifier.weight(1f),
+                    onClick = { onSelect(mode) }
+                )
+            }
         }
     }
 }
@@ -221,8 +211,7 @@ private fun ThemePill(
 
 @Composable
 private fun ProfileHeader(user: User, profile: UserProfile?, colors: AppColorScheme) {
-    val initials = profile?.avatar?.takeIf { it.isNotBlank() }
-        ?.let { it.take(2).uppercase() }
+    val initials = profile?.avatar?.takeIf { it.isNotBlank() }?.take(2)?.uppercase()
         ?: avatarInitials(user)
     val displayName = profile?.username?.takeIf { it.isNotBlank() } ?: user.name
     val handle = profile?.username?.takeIf { it.isNotBlank() } ?: user.username

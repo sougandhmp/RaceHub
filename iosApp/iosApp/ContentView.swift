@@ -32,7 +32,7 @@ struct ContentView: View {
                 HomeView(onSignedOut: { screen = .login })
             }
         }
-        .preferredColorScheme(themeManager.isDarkMode ? .dark : .light)
+        .preferredColorScheme(themeManager.preferredColorScheme)
         .environmentObject(themeManager)
     }
 }

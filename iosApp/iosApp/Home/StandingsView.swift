@@ -1,6 +1,8 @@
 import SwiftUI
 import Shared
 
+private let t = AppColorTokens.shared
+
 private enum StandingsCategory: String, CaseIterable {
     case drivers, constructors
     var label: String { self == .drivers ? "DRIVERS" : "CONSTRUCTORS" }
@@ -14,7 +16,7 @@ struct StandingsView: View {
 
     var body: some View {
         ZStack {
-            Color(hex: "0A0A0A").ignoresSafeArea()
+            Color(hex: t.darkBackground).ignoresSafeArea()
 
             VStack(spacing: 0) {
                 HStack {
@@ -43,8 +45,8 @@ struct StandingsView: View {
                             ForEach(Array(drivers.enumerated()), id: \.element.position) { index, standing in
                                 DriverStandingCard(
                                     standing: standing,
-                                    accent: positionAccent(Int(standing.position)),
-                                    teamColor: teamColor(for: standing.team),
+                                    accent: AppColors.podiumAccent(position: Int(standing.position)),
+                                    teamColor: AppColors.teamColor(standing.team),
                                     showLeader: index == 0
                                 )
                             }
@@ -52,8 +54,8 @@ struct StandingsView: View {
                             ForEach(constructors, id: \.position) { standing in
                                 ConstructorStandingCard(
                                     standing: standing,
-                                    accent: positionAccent(Int(standing.position)),
-                                    teamColor: teamColor(for: standing.name)
+                                    accent: AppColors.podiumAccent(position: Int(standing.position)),
+                                    teamColor: AppColors.teamColor(standing.name)
                                 )
                             }
                         }
@@ -64,30 +66,6 @@ struct StandingsView: View {
             }
         }
         .navigationBarHidden(true)
-    }
-
-    private func teamColor(for team: String) -> Color {
-        let lower = team.lowercased()
-        if lower.contains("mercedes") { return Color(hex: "00D2BE") }
-        if lower.contains("mclaren") { return Color(hex: "FF8700") }
-        if lower.contains("red bull") { return Color(hex: "0600EF") }
-        if lower.contains("ferrari") { return Color(hex: "DC0000") }
-        if lower.contains("aston") { return Color(hex: "006F62") }
-        if lower.contains("alpine") { return Color(hex: "0090FF") }
-        if lower.contains("williams") { return Color(hex: "005AFF") }
-        if lower.contains("rb") { return Color(hex: "1660AD") }
-        if lower.contains("haas") { return Color(hex: "B6BABD") }
-        if lower.contains("sauber") { return Color(hex: "52E252") }
-        return Color(hex: "8E8E93")
-    }
-
-    private func positionAccent(_ position: Int) -> Color {
-        switch position {
-        case 1: return Color(hex: "FFD700")
-        case 2: return Color(hex: "C0C0C0")
-        case 3: return Color(hex: "CD7F32")
-        default: return Color(hex: "8E8E93")
-        }
     }
 }
 
@@ -101,20 +79,20 @@ private struct StandingsToggle: View {
                     Text(tab.label)
                         .font(.system(size: 12, weight: .bold))
                         .kerning(1)
-                        .foregroundColor(selected == tab ? .white : Color(hex: "8E8E93"))
+                        .foregroundColor(selected == tab ? .white : Color(hex: t.darkMutedText))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
-                        .background(selected == tab ? Color(hex: "E10600") : Color.clear)
+                        .background(selected == tab ? AppColors.f1Red : Color.clear)
                         .cornerRadius(8)
                 }
             }
         }
         .padding(4)
-        .background(Color(hex: "161616"))
+        .background(Color(hex: t.darkCard))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color(hex: "262626"), lineWidth: 1)
+                .stroke(Color(hex: t.darkCardBorder), lineWidth: 1)
         )
     }
 }
@@ -144,7 +122,7 @@ private struct DriverStandingCard: View {
                             .frame(width: 8, height: 8)
                         Text(standing.team)
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(Color(hex: "8E8E93"))
+                            .foregroundColor(Color(hex: t.darkMutedText))
                     }
                 }
 
@@ -156,11 +134,11 @@ private struct DriverStandingCard: View {
             .padding(.vertical, 14)
         }
         .frame(maxWidth: .infinity)
-        .background(Color(hex: "161616"))
+        .background(Color(hex: t.darkCard))
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(showLeader ? accent.opacity(0.5) : Color(hex: "262626"),
+                .stroke(showLeader ? accent.opacity(0.5) : Color(hex: t.darkCardBorder),
                         lineWidth: showLeader ? 1.5 : 1)
         )
     }
@@ -198,11 +176,11 @@ private struct ConstructorStandingCard: View {
             .padding(.vertical, 16)
         }
         .frame(maxWidth: .infinity)
-        .background(Color(hex: "161616"))
+        .background(Color(hex: t.darkCard))
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Color(hex: "262626"), lineWidth: 1)
+                .stroke(Color(hex: t.darkCardBorder), lineWidth: 1)
         )
     }
 }
@@ -216,9 +194,9 @@ private struct PositionBadge: View {
     var body: some View {
         ZStack {
             Circle()
-                .fill(isPodium ? accent.opacity(0.15) : Color(hex: "1F1F1F"))
+                .fill(isPodium ? accent.opacity(0.15) : Color(hex: t.darkSurface))
             Circle()
-                .stroke(isPodium ? accent : Color(hex: "262626"), lineWidth: 1)
+                .stroke(isPodium ? accent : Color(hex: t.darkCardBorder), lineWidth: 1)
             Text("\(position)")
                 .font(.system(size: 16, weight: .black))
                 .foregroundColor(isPodium ? accent : .white)
@@ -239,13 +217,12 @@ private struct PointsBlock: View {
                     .foregroundColor(.white)
                 Text("PTS")
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(Color(hex: "8E8E93"))
+                    .foregroundColor(Color(hex: t.darkMutedText))
             }
             Text(wins == 1 ? "1 WIN" : "\(wins) WINS")
                 .font(.system(size: 10, weight: .bold))
                 .kerning(0.5)
-                .foregroundColor(wins > 0 ? Color(hex: "E10600") : Color(hex: "8E8E93"))
+                .foregroundColor(wins > 0 ? AppColors.f1Red : Color(hex: t.darkMutedText))
         }
     }
 }
-

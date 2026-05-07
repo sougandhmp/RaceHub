@@ -3,7 +3,9 @@ package org.gce.racehub.theme
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.Color
 
-val RacingRed = Color(0xFFE63946)
+fun hexColor(token: String): Color = Color(0xFF000000L or token.toLong(16))
+
+val RacingRed = hexColor(AppColorTokens.racingRed)
 
 data class AppColorScheme(
     val background: Color,
@@ -20,26 +22,26 @@ data class AppColorScheme(
 }
 
 val DarkAppColors = AppColorScheme(
-    background = Color(0xFF0A0A0A),
-    card = Color(0xFF161616),
-    cardBorder = Color(0xFF262626),
-    mutedText = Color(0xFF8E8E93),
+    background = hexColor(AppColorTokens.darkBackground),
+    card = hexColor(AppColorTokens.darkCard),
+    cardBorder = hexColor(AppColorTokens.darkCardBorder),
+    mutedText = hexColor(AppColorTokens.darkMutedText),
     primaryText = Color.White,
-    headerBg = Color(0xFF2A1116),
-    rowAltBg = Color(0xFF1B0E11),
-    navBar = Color(0xFF121212),
+    headerBg = hexColor(AppColorTokens.darkHeaderBg),
+    rowAltBg = hexColor(AppColorTokens.darkRowAltBg),
+    navBar = hexColor(AppColorTokens.darkNavBar),
     isDark = true
 )
 
 val LightAppColors = AppColorScheme(
-    background = Color(0xFFF2F2F7),
-    card = Color(0xFFFFFFFF),
-    cardBorder = Color(0xFFE5E5EA),
-    mutedText = Color(0xFF6C6C70),
-    primaryText = Color(0xFF000000),
-    headerBg = Color(0xFFFFECEE),
-    rowAltBg = Color(0xFFFFF5F6),
-    navBar = Color(0xFFFFFFFF),
+    background = hexColor(AppColorTokens.lightBackground),
+    card = hexColor(AppColorTokens.lightCard),
+    cardBorder = hexColor(AppColorTokens.lightCardBorder),
+    mutedText = hexColor(AppColorTokens.lightMutedText),
+    primaryText = Color.Black,
+    headerBg = hexColor(AppColorTokens.lightHeaderBg),
+    rowAltBg = hexColor(AppColorTokens.lightRowAltBg),
+    navBar = hexColor(AppColorTokens.lightNavBar),
     isDark = false
 )
 
