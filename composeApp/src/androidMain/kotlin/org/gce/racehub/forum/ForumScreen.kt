@@ -3,6 +3,7 @@ package org.gce.racehub.forum
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -42,6 +44,20 @@ import org.gce.racehub.theme.AppColorScheme
 import org.gce.racehub.theme.LocalAppColors
 import org.koin.compose.viewmodel.koinViewModel
 
+private val SORT_TABS = listOf(
+    "Latest" to "latest",
+    "Most popular" to "top",
+    "Most commented" to "commented"
+)
+
+private val CATEGORY_TABS = listOf(
+    "All" to null,
+    "General Discussion" to "General Discussion",
+    "Race Weekends" to "Race Weekends",
+    "Teams & Drivers" to "Teams & Drivers",
+    "Technical / Cars" to "Technical / Cars"
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ForumScreen(
@@ -57,45 +73,55 @@ fun ForumScreen(
         onRefresh = { viewModel.onIntent(ForumIntent.Refresh) },
         modifier = Modifier.fillMaxSize().background(colors.background)
     ) {
-        when {
-            state.isLoading && state.threads.isEmpty() -> {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center),
-                        color = colors.racingRed
-                    )
-                }
-            }
+        Column(modifier = Modifier.fillMaxSize()) {
+            FilterRow(
+                selectedSort = state.selectedSort,
+                selectedCategory = state.selectedCategory,
+                onSortSelected = { viewModel.onIntent(ForumIntent.SelectSort(it)) },
+                onCategorySelected = { viewModel.onIntent(ForumIntent.SelectCategory(it)) },
+                colors = colors
+            )
 
-            state.threads.isEmpty() -> {
-                Column(
-                    modifier = Modifier.fillMaxSize().padding(24.dp),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "No threads yet",
-                        color = colors.primaryText,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Tap + to start the first conversation.",
-                        color = colors.mutedText,
-                        fontSize = 14.sp
-                    )
+            when {
+                state.isLoading && state.threads.isEmpty() -> {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.align(Alignment.Center),
+                            color = colors.racingRed
+                        )
+                    }
                 }
-            }
 
-            else -> {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(vertical = 16.dp)
-                ) {
-                    items(items = state.threads, key = { it.id }) { thread ->
-                        ThreadCard(thread = thread, colors = colors, onClick = { onThreadClick(thread) })
+                state.threads.isEmpty() -> {
+                    Column(
+                        modifier = Modifier.fillMaxSize().padding(24.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "No threads yet",
+                            color = colors.primaryText,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Tap + to start the first conversation.",
+                            color = colors.mutedText,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(vertical = 12.dp)
+                    ) {
+                        items(items = state.threads, key = { it.id }) { thread ->
+                            ThreadCard(thread = thread, colors = colors, onClick = { onThreadClick(thread) })
+                        }
                     }
                 }
             }
@@ -111,6 +137,72 @@ fun ForumScreen(
         ) {
             Icon(imageVector = Icons.Filled.Add, contentDescription = "Create thread")
         }
+    }
+}
+
+@Composable
+private fun FilterRow(
+    selectedSort: String,
+    selectedCategory: String?,
+    onSortSelected: (String) -> Unit,
+    onCategorySelected: (String?) -> Unit,
+    colors: AppColorScheme
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(colors.background)
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        SORT_TABS.forEach { (label, sort) ->
+            FilterPill(
+                label = label,
+                isSelected = selectedSort == sort,
+                onClick = { onSortSelected(sort) },
+                colors = colors
+            )
+        }
+        Spacer(modifier = Modifier.width(4.dp))
+        CATEGORY_TABS.forEach { (label, category) ->
+            FilterPill(
+                label = label,
+                isSelected = selectedCategory == category,
+                onClick = { onCategorySelected(category) },
+                colors = colors
+            )
+        }
+    }
+}
+
+@Composable
+private fun FilterPill(
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    colors: AppColorScheme
+) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(if (isSelected) colors.racingRed else Color.Transparent)
+            .border(
+                width = 1.dp,
+                color = if (isSelected) Color.Transparent else colors.cardBorder,
+                shape = RoundedCornerShape(50)
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            color = if (isSelected) Color.White else colors.primaryText,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }
 

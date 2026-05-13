@@ -1,16 +1,5 @@
 package org.gce.racehub.race
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -28,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -44,8 +34,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -53,17 +41,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.foundation.shape.CircleShape
 import org.gce.racehub.race.domain.model.ConstructorStanding
 import org.gce.racehub.race.domain.model.DriverStanding
 import org.gce.racehub.race.domain.model.Race
 import org.gce.racehub.race.domain.model.RaceDetail
 import org.gce.racehub.race.domain.model.RaceSession
-import org.gce.racehub.race.domain.model.TrackFacts
 import org.gce.racehub.race.domain.model.TrendingThread
 import org.gce.racehub.theme.AppColorScheme
+import org.gce.racehub.theme.AppColorTokens
 import org.gce.racehub.theme.LocalAppColors
+import org.gce.racehub.theme.hexColor
 import org.koin.compose.viewmodel.koinViewModel
+import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,7 +67,9 @@ fun RaceScreen(
     PullToRefreshBox(
         isRefreshing = state.isLoading,
         onRefresh = { viewModel.onIntent(RaceIntent.Refresh) },
-        modifier = Modifier.fillMaxSize().background(colors.background)
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colors.background)
     ) {
         if (state.isLoading && state.raceSchedule.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize()) {
@@ -102,23 +93,21 @@ fun RaceScreen(
 private fun RaceTabContent(
     state: RaceState,
     colors: AppColorScheme,
-    onViewAllSchedule: () -> Unit,
+    @Suppress("UNUSED_PARAMETER") onViewAllSchedule: () -> Unit,
     onViewAllStandings: () -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+        verticalArrangement = Arrangement.spacedBy(24.dp),
+        contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp)
     ) {
         item {
             NextRaceSection(
                 race = state.raceSchedule.firstOrNull { !it.isCompleted },
-                totalRounds = state.raceSchedule.size,
                 nextRaceDetail = state.nextRaceDetail,
-                isLoadingDetail = state.isLoadingDetail,
-                colors = colors,
-                onViewAll = onViewAllSchedule
+                colors = colors
             )
         }
         item {
@@ -135,236 +124,131 @@ private fun RaceTabContent(
                 colors = colors
             )
         }
-        item { Spacer(modifier = Modifier.height(16.dp)) }
     }
 }
+
+// ── Up Next Card ──────────────────────────────────────────────────────────────
 
 @Composable
 private fun NextRaceSection(
     race: Race?,
-    totalRounds: Int,
     nextRaceDetail: RaceDetail?,
-    isLoadingDetail: Boolean,
-    colors: AppColorScheme,
-    onViewAll: () -> Unit
+    colors: AppColorScheme
 ) {
-    val shimmer = shimmerBrush(colors)
-    var isExpanded by rememberSaveable { mutableStateOf(false) }
-
-    Column {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "NEXT RACE",
-                color = colors.mutedText,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.ExtraBold,
-                letterSpacing = 1.5.sp
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(colors.card)
+            .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
+    ) {
+        // Faded circuit image on the right
+        val resId = race?.let { circuitDrawable(it.circuit) ?: circuitDrawable(it.name) }
+        if (resId != null) {
+            androidx.compose.foundation.Image(
+                painter = painterResource(resId),
+                contentDescription = null,
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .size(170.dp)
+                    .padding(end = 4.dp)
+                    .alpha(0.10f),
+                contentScale = ContentScale.Fit
             )
-            TextButton(
-                onClick = onViewAll,
-                contentPadding = PaddingValues(0.dp),
-                modifier = Modifier.heightIn(min = 24.dp)
-            ) {
-                Text(
-                    text = "See Full Schedule",
-                    color = colors.racingRed,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(20.dp))
-                .background(colors.card)
-                .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
-        ) {
-            Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
-                // R9/24 · MAY 24  |  🇨🇦
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = buildRoundLabel(race, totalRounds),
-                        color = colors.mutedText,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold
+        Column(modifier = Modifier
+            .fillMaxWidth()
+            .padding(20.dp)) {
+            // Header: ● UP NEXT + days countdown
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(7.dp)
+                            .clip(CircleShape)
+                            .background(colors.racingRed)
                     )
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = countryFlag(race?.country ?: ""),
-                        fontSize = 30.sp
+                        text = "UP NEXT",
+                        color = colors.mutedText,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = 1.5.sp
                     )
                 }
+                val days = race?.let { daysUntilRace(it.dateTime) }
+                if (days != null) {
+                    Text(
+                        text = "$days DAYS",
+                        color = colors.racingRed,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+            }
 
-                Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-                // Country name — large title
+            // Race name (leave right 35% clear for circuit image)
+            Text(
+                text = race?.name ?: "No Upcoming Race",
+                color = colors.primaryText,
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Black,
+                lineHeight = 30.sp,
+                modifier = Modifier.fillMaxWidth(0.65f)
+            )
+
+            // R9 · Circuit Gilles Villeneuve
+            if (race != null) {
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = race?.country ?: "No Upcoming Race",
-                    color = colors.primaryText,
-                    fontSize = 34.sp,
-                    fontWeight = FontWeight.Black,
-                    lineHeight = 38.sp
-                )
-
-                // Circuit name
-                Text(
-                    text = race?.circuit ?: "—",
+                    text = "R${race.round} · ${race.circuit}",
                     color = colors.mutedText,
-                    fontSize = 13.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Medium
                 )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Track facts — always visible
-                if (isLoadingDetail) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        repeat(3) {
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(44.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(shimmer)
-                            )
-                        }
-                    }
-                } else {
-                    nextRaceDetail?.trackFacts?.let { facts ->
-                        TrackFactsRow(facts = facts, colors = colors)
-                    }
-                }
-
-                // Expanded: circuit map + session schedule
-                AnimatedVisibility(
-                    visible = isExpanded,
-                    enter = fadeIn(tween(300)) + expandVertically(tween(300)),
-                    exit = fadeOut(tween(200)) + shrinkVertically(tween(200))
-                ) {
-                    Column {
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        val resId = circuitDrawable(race?.circuit ?: "") ?: circuitDrawable(race?.name ?: "")
-                        if (resId != null) {
-                            androidx.compose.foundation.Image(
-                                painter = painterResource(resId),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(180.dp)
-                                    .alpha(0.75f),
-                                contentScale = ContentScale.Fit
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        if (isLoadingDetail) {
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    repeat(2) {
-                                        Box(
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .height(82.dp)
-                                                .clip(RoundedCornerShape(12.dp))
-                                                .background(shimmer)
-                                        )
-                                    }
-                                }
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    repeat(2) {
-                                        Box(
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .height(82.dp)
-                                                .clip(RoundedCornerShape(12.dp))
-                                                .background(shimmer)
-                                        )
-                                    }
-                                }
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(82.dp)
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(shimmer)
-                                )
-                            }
-                        } else {
-                            val sessions = if (nextRaceDetail?.sessions?.isNotEmpty() == true)
-                                sessionsFromDetail(nextRaceDetail.sessions)
-                            else
-                                sessionsFromRace(race)
-                            SessionGrid(sessions = sessions, colors = colors)
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Expand / collapse toggle
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable { isExpanded = !isExpanded }
-                        .padding(vertical = 4.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = if (isExpanded) "▲  Show less" else "▼  Show schedule",
-                        color = colors.mutedText,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Stats: LIGHTS OUT | LENGTH | LAPS
+            val lightsOut = race?.let { formatLightsOut(it.dateTime) } ?: "—"
+            val length = nextRaceDetail?.trackFacts?.let { "${it.distanceKm} km" } ?: "—"
+            val laps = nextRaceDetail?.trackFacts?.laps?.toString() ?: "—"
+
+            Row(modifier = Modifier.fillMaxWidth()) {
+                StatItem("LIGHTS OUT", lightsOut, colors, Modifier.weight(1f))
+                StatItem("LENGTH", length, colors, Modifier.weight(1f))
+                StatItem("LAPS", laps, colors, Modifier.weight(1f))
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Session strip: FP1 | FP2 | FP3 | QUAL | RACE
+            val sessions = if (nextRaceDetail?.sessions?.isNotEmpty() == true)
+                sessionsFromDetail(nextRaceDetail.sessions)
+            else
+                sessionsFromRace(race)
+            SessionStrip(sessions = sessions, colors = colors)
         }
     }
 }
 
 @Composable
-private fun TrackFactsRow(facts: TrackFacts, colors: AppColorScheme) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        TrackFactItem("LAPS", facts.laps.toString(), colors, Modifier.weight(1f))
-        TrackFactItem("DISTANCE", "${facts.distanceKm} km", colors, Modifier.weight(1f))
-        TrackFactItem("CORNERS", facts.corners.toString(), colors, Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun TrackFactItem(label: String, value: String, colors: AppColorScheme, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(colors.cardBorder.copy(alpha = 0.2f))
-            .padding(horizontal = 8.dp, vertical = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+private fun StatItem(
+    label: String,
+    value: String,
+    colors: AppColorScheme,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
         Text(
             text = label,
             color = colors.mutedText,
@@ -382,255 +266,46 @@ private fun TrackFactItem(label: String, value: String, colors: AppColorScheme, 
     }
 }
 
-@Composable
-private fun shimmerBrush(colors: AppColorScheme): Brush {
-    val transition = rememberInfiniteTransition(label = "shimmer")
-    val progress by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "shimmerProgress"
-    )
-    return Brush.linearGradient(
-        colors = listOf(
-            colors.cardBorder.copy(alpha = 0.25f),
-            colors.cardBorder.copy(alpha = 0.6f),
-            colors.cardBorder.copy(alpha = 0.25f)
-        ),
-        start = Offset(progress * 800f - 400f, 0f),
-        end = Offset(progress * 800f + 200f, 0f)
-    )
-}
+private data class SessionStripChip(val label: String, val month: String)
 
 @Composable
-private fun SessionGrid(sessions: List<RaceSessionChip>, colors: AppColorScheme) {
-    val pairs = sessions.chunked(2)
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        pairs.forEach { pair ->
-            if (pair.size == 2) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    SessionGridCard(session = pair[0], colors = colors, modifier = Modifier.weight(1f))
-                    SessionGridCard(session = pair[1], colors = colors, modifier = Modifier.weight(1f))
-                }
-            } else {
-                SessionGridCard(session = pair[0], colors = colors, modifier = Modifier.fillMaxWidth())
+private fun SessionStrip(sessions: List<RaceSessionChip>, colors: AppColorScheme) {
+    val chips = sessions.map { chip ->
+        val month = chip.fullDate.split(" ").firstOrNull()?.take(3) ?: "—"
+        SessionStripChip(label = stripLabel(chip.label), month = month)
+    }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        chips.forEach { chip ->
+            val isRace = chip.label == "RACE"
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(
+                        if (isRace) colors.racingRed
+                        else colors.cardBorder.copy(alpha = 0.4f)
+                    )
+                    .padding(vertical = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = chip.label,
+                    color = if (isRace) Color.White else colors.mutedText,
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 0.3.sp
+                )
+                Text(
+                    text = chip.month,
+                    color = if (isRace) Color.White.copy(alpha = 0.9f) else colors.primaryText,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
-    }
-}
-
-@Composable
-private fun SessionGridCard(session: RaceSessionChip, colors: AppColorScheme, modifier: Modifier = Modifier) {
-    val isRace = session.label == "RACE"
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(if (isRace) colors.racingRed.copy(alpha = 0.08f) else colors.cardBorder.copy(alpha = 0.3f))
-            .then(
-                if (isRace) Modifier.border(1.dp, colors.racingRed.copy(alpha = 0.25f), RoundedCornerShape(12.dp))
-                else Modifier
-            )
-            .padding(horizontal = 12.dp, vertical = 10.dp)
-    ) {
-        Text(
-            text = session.label,
-            color = colors.racingRed,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.ExtraBold,
-            letterSpacing = 0.5.sp
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            text = session.fullDate,
-            color = colors.primaryText,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
-            lineHeight = 18.sp
-        )
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = session.time,
-                color = colors.primaryText,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = " ${session.timezone}",
-                color = colors.mutedText,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Medium
-            )
-        }
-    }
-}
-
-
-// ── Next-race card helpers ────────────────────────────────────────────────────
-
-private data class RaceSessionChip(
-    val label: String,    // e.g. "PRACTICE 1", "QUALIFYING", "RACE"
-    val fullDate: String, // e.g. "May 22, 2026,"
-    val time: String,     // e.g. "10:00 PM"
-    val timezone: String  // e.g. "GMT+5:30"
-)
-
-private fun countryFlag(country: String): String {
-    val c = country.lowercase()
-    return when {
-        "australia" in c -> "🇦🇺"
-        "bahrain" in c -> "🇧🇭"
-        "saudi" in c -> "🇸🇦"
-        "japan" in c -> "🇯🇵"
-        "china" in c -> "🇨🇳"
-        "usa" in c || "united states" in c || "america" in c -> "🇺🇸"
-        "italy" in c -> "🇮🇹"
-        "monaco" in c -> "🇲🇨"
-        "spain" in c -> "🇪🇸"
-        "canada" in c -> "🇨🇦"
-        "austria" in c -> "🇦🇹"
-        "britain" in c || "united kingdom" in c -> "🇬🇧"
-        "hungary" in c -> "🇭🇺"
-        "belgium" in c -> "🇧🇪"
-        "netherlands" in c -> "🇳🇱"
-        "azerbaijan" in c -> "🇦🇿"
-        "singapore" in c -> "🇸🇬"
-        "mexico" in c -> "🇲🇽"
-        "brazil" in c -> "🇧🇷"
-        "qatar" in c -> "🇶🇦"
-        "abu dhabi" in c || "uae" in c -> "🇦🇪"
-        else -> "🏁"
-    }
-}
-
-private fun buildRoundLabel(race: Race?, totalRounds: Int): String {
-    if (race == null) return "— · —"
-    val total = if (totalRounds > 0) totalRounds.toString() else "—"
-    return "R${race.round}/$total · ${formatRaceHeaderDate(race.dateTime)}"
-}
-
-private fun formatRaceHeaderDate(dateTime: String): String {
-    val date = parseIsoToDate(dateTime) ?: return dateTime
-    return java.text.SimpleDateFormat("MMM dd", java.util.Locale.US)
-        .apply { timeZone = java.util.TimeZone.getTimeZone("UTC") }
-        .format(date).uppercase()
-}
-
-private fun deviceTimezoneLabel(): String {
-    val tz = java.util.TimeZone.getDefault()
-    val now = java.util.Date()
-    val offset = tz.getOffset(now.time)
-    val sign = if (offset >= 0) "+" else "-"
-    val absOffset = java.lang.Math.abs(offset)
-    val hours = absOffset / 3600000
-    val minutes = (absOffset % 3600000) / 60000
-    return if (minutes == 0) "GMT$sign$hours"
-    else "GMT$sign$hours:${String.format(java.util.Locale.US, "%02d", minutes)}"
-}
-
-private fun formatSessionDate(cal: java.util.Calendar): String =
-    java.text.SimpleDateFormat("MMM d, yyyy,", java.util.Locale.US)
-        .apply { timeZone = java.util.TimeZone.getDefault() }
-        .format(cal.time)
-
-private fun formatSessionTime(cal: java.util.Calendar): String =
-    java.text.SimpleDateFormat("h:mm a", java.util.Locale.US)
-        .apply { timeZone = java.util.TimeZone.getDefault() }
-        .format(cal.time)
-
-private fun displayLabel(raw: String): String = when (raw.uppercase().trim()) {
-    "FP1", "PRACTICE 1", "P1", "PRACTICE1" -> "PRACTICE 1"
-    "FP2", "PRACTICE 2", "P2", "PRACTICE2" -> "PRACTICE 2"
-    "FP3", "PRACTICE 3", "P3", "PRACTICE3" -> "PRACTICE 3"
-    "QUAL", "QUALIFYING", "Q" -> "QUALIFYING"
-    "RACE", "GRAND PRIX" -> "RACE"
-    "SPRINT QUALIFYING", "SPRINT QUAL", "SQ" -> "SPRINT QUAL"
-    "SPRINT" -> "SPRINT"
-    else -> raw.uppercase()
-}
-
-// Parses any common ISO 8601 variant: Z, .sssZ, +HH:MM, .sss+HH:MM, no-tz, date-only.
-private fun parseIsoToDate(dateTime: String): java.util.Date? {
-    if (dateTime.isBlank()) return null
-    // Convert colon-offset "+05:30" → "+0530" so SimpleDateFormat's 'Z' token accepts it
-    val s = dateTime.trim().replace(Regex("([+-]\\d{2}):(\\d{2})$"), "$1$2")
-    // Patterns where the string has no explicit offset (treat as UTC)
-    val utcPatterns = arrayOf(
-        "yyyy-MM-dd'T'HH:mm:ss'Z'",
-        "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-        "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'",
-        "yyyy-MM-dd'T'HH:mm:ss",
-        "yyyy-MM-dd HH:mm:ss",
-        "yyyy-MM-dd",
-    )
-    // Patterns where the string carries its own offset
-    val tzPatterns = arrayOf(
-        "yyyy-MM-dd'T'HH:mm:ssZ",
-        "yyyy-MM-dd'T'HH:mm:ss.SSSZ",
-        "yyyy-MM-dd'T'HH:mm:ss.SSSSSSZ",
-    )
-    val utc = java.util.TimeZone.getTimeZone("UTC")
-    for (fmt in utcPatterns) {
-        try {
-            val d = java.text.SimpleDateFormat(fmt, java.util.Locale.US).apply { timeZone = utc }.parse(s)
-            if (d != null) return d
-        } catch (_: Exception) {}
-    }
-    for (fmt in tzPatterns) {
-        try {
-            val d = java.text.SimpleDateFormat(fmt, java.util.Locale.US).parse(s)
-            if (d != null) return d
-        } catch (_: Exception) {}
-    }
-    return null
-}
-
-private fun sessionsFromRace(race: Race?): List<RaceSessionChip> {
-    if (race == null) return emptyList()
-    val raceDate = parseIsoToDate(race.dateTime) ?: return fallbackSessions(race)
-    val tzLabel = deviceTimezoneLabel()
-
-    fun calAt(days: Int, hours: Int = 0): java.util.Calendar =
-        java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC")).apply {
-            time = raceDate
-            add(java.util.Calendar.DATE, days)
-            if (hours != 0) add(java.util.Calendar.HOUR_OF_DAY, hours)
-        }
-
-    return listOf(
-        RaceSessionChip("PRACTICE 1", formatSessionDate(calAt(-2, -3)), formatSessionTime(calAt(-2, -3)), tzLabel),
-        RaceSessionChip("PRACTICE 2", formatSessionDate(calAt(-2)),     formatSessionTime(calAt(-2)),     tzLabel),
-        RaceSessionChip("PRACTICE 3", formatSessionDate(calAt(-1, -3)), formatSessionTime(calAt(-1, -3)), tzLabel),
-        RaceSessionChip("QUALIFYING", formatSessionDate(calAt(-1)),     formatSessionTime(calAt(-1)),     tzLabel),
-        RaceSessionChip("RACE",       formatSessionDate(calAt(0)),      formatSessionTime(calAt(0)),      tzLabel),
-    )
-}
-
-private fun fallbackSessions(race: Race): List<RaceSessionChip> {
-    val tz = deviceTimezoneLabel()
-    return listOf(
-        RaceSessionChip("PRACTICE 1", "—", "—", tz),
-        RaceSessionChip("PRACTICE 2", "—", "—", tz),
-        RaceSessionChip("PRACTICE 3", "—", "—", tz),
-        RaceSessionChip("QUALIFYING", "—", "—", tz),
-        RaceSessionChip("RACE",       "—", "—", tz),
-    )
-}
-
-private fun sessionsFromDetail(sessions: List<RaceSession>): List<RaceSessionChip> {
-    val tzLabel = deviceTimezoneLabel()
-    return sessions.map { session ->
-        val date = parseIsoToDate(session.dateTime)
-        val (fullDate, time) = if (date != null) {
-            val cal = java.util.Calendar.getInstance(java.util.TimeZone.getDefault()).also { it.time = date }
-            Pair(formatSessionDate(cal), formatSessionTime(cal))
-        } else Pair("—", "—")
-        RaceSessionChip(label = displayLabel(session.label), fullDate = fullDate, time = time, timezone = tzLabel)
     }
 }
 
@@ -689,6 +364,7 @@ private fun StandingsSection(
                     displayDrivers.forEach { DriverStandingCard(it, colors) }
                 }
             }
+
             StandingsTab.Constructors -> {
                 val displayConstructors = constructors.ifEmpty {
                     listOf(
@@ -743,103 +419,125 @@ private fun StandingsTabPills(
 
 @Composable
 private fun DriverStandingCard(standing: DriverStanding, colors: AppColorScheme) {
+    val tColor = teamColor(standing.team)
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
             .background(colors.card)
-            .border(1.dp, colors.cardBorder, RoundedCornerShape(14.dp))
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .border(1.dp, colors.cardBorder, RoundedCornerShape(14.dp)),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
-                .size(32.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(
-                    if (standing.position == 1) colors.racingRed.copy(alpha = 0.12f)
-                    else colors.cardBorder.copy(alpha = 0.5f)
-                ),
-            contentAlignment = Alignment.Center
+                .width(4.dp)
+                .height(56.dp)
+                .background(tColor)
+        )
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 14.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = standing.position.toString(),
-                color = if (standing.position == 1) colors.racingRed else colors.mutedText,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.ExtraBold
-            )
-        }
-        Spacer(modifier = Modifier.width(14.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = standing.driverName,
-                color = colors.primaryText,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = standing.team,
                 color = colors.mutedText,
-                fontSize = 12.sp
+                fontSize = 14.sp,
+                fontWeight = FontWeight.ExtraBold,
+                modifier = Modifier.width(20.dp)
             )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = standing.driverName,
+                    color = colors.primaryText,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = standing.team,
+                    color = colors.mutedText,
+                    fontSize = 12.sp
+                )
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = standing.points.toString(),
+                    color = colors.primaryText,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.ExtraBold
+                )
+                Text(
+                    text = "PTS",
+                    color = colors.mutedText,
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
-        Text(
-            text = standing.points.toString(),
-            color = colors.primaryText,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.ExtraBold
-        )
     }
 }
 
 @Composable
 private fun ConstructorStandingCard(standing: ConstructorStanding, colors: AppColorScheme) {
+    val tColor = teamColor(standing.name)
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
             .background(colors.card)
-            .border(1.dp, colors.cardBorder, RoundedCornerShape(14.dp))
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .border(1.dp, colors.cardBorder, RoundedCornerShape(14.dp)),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
-                .size(32.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(
-                    if (standing.position == 1) colors.racingRed.copy(alpha = 0.12f)
-                    else colors.cardBorder.copy(alpha = 0.5f)
-                ),
-            contentAlignment = Alignment.Center
+                .width(4.dp)
+                .height(56.dp)
+                .background(tColor)
+        )
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 14.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = standing.position.toString(),
-                color = if (standing.position == 1) colors.racingRed else colors.mutedText,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.ExtraBold
-            )
-        }
-        Spacer(modifier = Modifier.width(14.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = standing.name,
-                color = colors.primaryText,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "${standing.wins} wins",
                 color = colors.mutedText,
-                fontSize = 12.sp
+                fontSize = 14.sp,
+                fontWeight = FontWeight.ExtraBold,
+                modifier = Modifier.width(20.dp)
             )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = standing.name,
+                    color = colors.primaryText,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "${standing.wins} wins",
+                    color = colors.mutedText,
+                    fontSize = 12.sp
+                )
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = standing.points.toString(),
+                    color = colors.primaryText,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.ExtraBold
+                )
+                Text(
+                    text = "PTS",
+                    color = colors.mutedText,
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
-        Text(
-            text = standing.points.toString(),
-            color = colors.primaryText,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.ExtraBold
-        )
     }
 }
 
@@ -867,7 +565,7 @@ private fun FeaturedSection(thread: TrendingThread?, colors: AppColorScheme) {
                 fontWeight = FontWeight.Bold
             )
         }
-        
+
         if (thread == null) {
             Box(
                 modifier = Modifier
@@ -908,9 +606,9 @@ private fun FeaturedSection(thread: TrendingThread?, colors: AppColorScheme) {
                     }
                     Text(text = thread.createdAt, color = colors.mutedText, fontSize = 11.sp)
                 }
-                
+
                 Spacer(modifier = Modifier.height(12.dp))
-                
+
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
@@ -945,5 +643,196 @@ private fun FeaturedSection(thread: TrendingThread?, colors: AppColorScheme) {
                 }
             }
         }
+    }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+private data class RaceSessionChip(
+    val label: String,
+    val fullDate: String,
+    val time: String,
+    val timezone: String
+)
+
+private fun daysUntilRace(dateTime: String): Int? {
+    val raceDate = parseIsoToDate(dateTime) ?: return null
+    val now = java.util.Date()
+    if (raceDate.before(now)) return null
+    val diffMs = raceDate.time - now.time
+    val days = (diffMs / (1000L * 60 * 60 * 24)).toInt()
+    return if (days >= 0) days else null
+}
+
+private fun formatLightsOut(dateTime: String): String {
+    val date = parseIsoToDate(dateTime) ?: return "—"
+    return java.text.SimpleDateFormat("HH:mm", java.util.Locale.US)
+        .apply { timeZone = java.util.TimeZone.getTimeZone("UTC") }
+        .format(date) + " UTC"
+}
+
+private fun stripLabel(full: String): String = when (full.uppercase().trim()) {
+    "PRACTICE 1" -> "FP1"
+    "PRACTICE 2" -> "FP2"
+    "PRACTICE 3" -> "FP3"
+    "QUALIFYING" -> "QUAL"
+    "RACE" -> "RACE"
+    "SPRINT" -> "SPR"
+    "SPRINT QUAL" -> "SQ"
+    else -> full.take(4)
+}
+
+private fun teamColor(team: String): Color {
+    val t = team.lowercase()
+    return when {
+        "mercedes" in t -> hexColor(AppColorTokens.teamMercedes)
+        "mclaren" in t -> hexColor(AppColorTokens.teamMcLaren)
+        "red bull" in t -> hexColor(AppColorTokens.teamRedBull)
+        "ferrari" in t -> hexColor(AppColorTokens.teamFerrari)
+        "aston" in t -> hexColor(AppColorTokens.teamAston)
+        "alpine" in t -> hexColor(AppColorTokens.teamAlpine)
+        "williams" in t -> hexColor(AppColorTokens.teamWilliams)
+        "rb" in t || "racing bulls" in t -> hexColor(AppColorTokens.teamRb)
+        "haas" in t -> hexColor(AppColorTokens.teamHaas)
+        "sauber" in t || "kick" in t -> hexColor(AppColorTokens.teamSauber)
+        else -> hexColor(AppColorTokens.teamDefault)
+    }
+}
+
+private fun deviceTimezoneLabel(): String {
+    val tz = java.util.TimeZone.getDefault()
+    val now = java.util.Date()
+    val offset = tz.getOffset(now.time)
+    val sign = if (offset >= 0) "+" else "-"
+    val absOffset = if (offset < 0) -offset else offset
+    val hours = absOffset / 3600000
+    val minutes = (absOffset % 3600000) / 60000
+    return if (minutes == 0) "GMT$sign$hours"
+    else "GMT$sign$hours:${String.format(java.util.Locale.US, "%02d", minutes)}"
+}
+
+private fun formatSessionDate(cal: Calendar): String =
+    java.text.SimpleDateFormat("MMM d, yyyy,", java.util.Locale.US)
+        .apply { timeZone = java.util.TimeZone.getDefault() }
+        .format(cal.time)
+
+private fun formatSessionTime(cal: Calendar): String =
+    java.text.SimpleDateFormat("h:mm a", java.util.Locale.US)
+        .apply { timeZone = java.util.TimeZone.getDefault() }
+        .format(cal.time)
+
+private fun displayLabel(raw: String): String = when (raw.uppercase().trim()) {
+    "FP1", "PRACTICE 1", "P1", "PRACTICE1" -> "PRACTICE 1"
+    "FP2", "PRACTICE 2", "P2", "PRACTICE2" -> "PRACTICE 2"
+    "FP3", "PRACTICE 3", "P3", "PRACTICE3" -> "PRACTICE 3"
+    "QUAL", "QUALIFYING", "Q" -> "QUALIFYING"
+    "RACE", "GRAND PRIX" -> "RACE"
+    "SPRINT QUALIFYING", "SPRINT QUAL", "SQ" -> "SPRINT QUAL"
+    "SPRINT" -> "SPRINT"
+    else -> raw.uppercase()
+}
+
+private fun parseIsoToDate(dateTime: String): java.util.Date? {
+    if (dateTime.isBlank()) return null
+    val s = dateTime.trim().replace(Regex("([+-]\\d{2}):(\\d{2})$"), "$1$2")
+    val utcPatterns = arrayOf(
+        "yyyy-MM-dd'T'HH:mm:ss'Z'",
+        "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+        "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'",
+        "yyyy-MM-dd'T'HH:mm:ss",
+        "yyyy-MM-dd HH:mm:ss",
+        "yyyy-MM-dd",
+    )
+    val tzPatterns = arrayOf(
+        "yyyy-MM-dd'T'HH:mm:ssZ",
+        "yyyy-MM-dd'T'HH:mm:ss.SSSZ",
+        "yyyy-MM-dd'T'HH:mm:ss.SSSSSSZ",
+    )
+    val utc = java.util.TimeZone.getTimeZone("UTC")
+    for (fmt in utcPatterns) {
+        try {
+            val d = java.text.SimpleDateFormat(fmt, java.util.Locale.US).apply { timeZone = utc }
+                .parse(s)
+            if (d != null) return d
+        } catch (_: Exception) {
+        }
+    }
+    for (fmt in tzPatterns) {
+        try {
+            val d = java.text.SimpleDateFormat(fmt, java.util.Locale.US).parse(s)
+            if (d != null) return d
+        } catch (_: Exception) {
+        }
+    }
+    return null
+}
+
+private fun sessionsFromRace(race: Race?): List<RaceSessionChip> {
+    if (race == null) return emptyList()
+    val raceDate = parseIsoToDate(race.dateTime) ?: return fallbackSessions(race)
+    val tzLabel = deviceTimezoneLabel()
+
+    fun calAt(days: Int, hours: Int = 0): Calendar =
+        Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC")).apply {
+            time = raceDate
+            add(Calendar.DATE, days)
+            if (hours != 0) add(Calendar.HOUR_OF_DAY, hours)
+        }
+
+    return listOf(
+        RaceSessionChip(
+            "PRACTICE 1",
+            formatSessionDate(calAt(-2, -3)),
+            formatSessionTime(calAt(-2, -3)),
+            tzLabel
+        ),
+        RaceSessionChip(
+            "PRACTICE 2",
+            formatSessionDate(calAt(-2)),
+            formatSessionTime(calAt(-2)),
+            tzLabel
+        ),
+        RaceSessionChip(
+            "PRACTICE 3",
+            formatSessionDate(calAt(-1, -3)),
+            formatSessionTime(calAt(-1, -3)),
+            tzLabel
+        ),
+        RaceSessionChip(
+            "QUALIFYING",
+            formatSessionDate(calAt(-1)),
+            formatSessionTime(calAt(-1)),
+            tzLabel
+        ),
+        RaceSessionChip("RACE", formatSessionDate(calAt(0)), formatSessionTime(calAt(0)), tzLabel),
+    )
+}
+
+private fun fallbackSessions(@Suppress("UNUSED_PARAMETER") race: Race): List<RaceSessionChip> {
+    val tz = deviceTimezoneLabel()
+    return listOf(
+        RaceSessionChip("PRACTICE 1", "—", "—", tz),
+        RaceSessionChip("PRACTICE 2", "—", "—", tz),
+        RaceSessionChip("PRACTICE 3", "—", "—", tz),
+        RaceSessionChip("QUALIFYING", "—", "—", tz),
+        RaceSessionChip("RACE", "—", "—", tz),
+    )
+}
+
+private fun sessionsFromDetail(sessions: List<RaceSession>): List<RaceSessionChip> {
+    val tzLabel = deviceTimezoneLabel()
+    return sessions.map { session ->
+        val date = parseIsoToDate(session.dateTime)
+        val (fullDate, time) = if (date != null) {
+            val cal = Calendar.getInstance(java.util.TimeZone.getDefault())
+                .also { it.time = date }
+            Pair(formatSessionDate(cal), formatSessionTime(cal))
+        } else Pair("—", "—")
+        RaceSessionChip(
+            label = displayLabel(session.label),
+            fullDate = fullDate,
+            time = time,
+            timezone = tzLabel
+        )
     }
 }
