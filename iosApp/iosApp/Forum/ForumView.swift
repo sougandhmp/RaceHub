@@ -1,6 +1,20 @@
 import SwiftUI
 import Shared
 
+private let sortTabs: [(label: String, value: String)] = [
+    ("Latest", "latest"),
+    ("Most popular", "top"),
+    ("Most commented", "commented")
+]
+
+private let categoryTabs: [(label: String, value: String?)] = [
+    ("All", nil),
+    ("General Discussion", "General Discussion"),
+    ("Race Weekends", "Race Weekends"),
+    ("Teams & Drivers", "Teams & Drivers"),
+    ("Technical / Cars", "Technical / Cars")
+]
+
 struct ForumView: View {
 
     @ObservedObject var viewModel: ForumViewModel
@@ -11,13 +25,23 @@ struct ForumView: View {
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
-            ScrollView {
+            VStack(spacing: 0) {
+                FilterRow(
+                    selectedSort: viewModel.state.selectedSort,
+                    selectedCategory: viewModel.state.selectedCategory,
+                    onSortSelected: { viewModel.send(.selectSort($0)) },
+                    onCategorySelected: { viewModel.send(.selectCategory($0)) },
+                    colors: colors
+                )
+
                 if viewModel.state.isLoading && viewModel.state.threads.isEmpty {
+                    Spacer()
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: AppColors.racingRed))
                         .frame(maxWidth: .infinity)
-                        .padding(.top, 40)
+                    Spacer()
                 } else if viewModel.state.threads.isEmpty {
+                    Spacer()
                     VStack(spacing: 12) {
                         Text("No threads yet")
                             .font(.system(size: 18, weight: .bold))
@@ -28,23 +52,26 @@ struct ForumView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.horizontal, 24)
-                    .padding(.top, 100)
+                    Spacer()
                 } else {
-                    VStack(spacing: 12) {
-                        ForEach(viewModel.state.threads, id: \.id) { thread in
-                            ThreadCard(thread: thread, colors: colors)
-                                .contentShape(Rectangle())
-                                .onTapGesture { onThreadTap(thread) }
+                    ScrollView {
+                        VStack(spacing: 12) {
+                            ForEach(viewModel.state.threads, id: \.id) { thread in
+                                ThreadCard(thread: thread, colors: colors)
+                                    .contentShape(Rectangle())
+                                    .onTapGesture { onThreadTap(thread) }
+                            }
                         }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 12)
+                        .padding(.bottom, 100)
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 16)
-                    .padding(.bottom, 100)
+                    .refreshable {
+                        await viewModel.refresh()
+                    }
                 }
             }
-            .refreshable {
-                await viewModel.refresh()
-            }
+            .background(colors.background)
 
             Button(action: onCreateThread) {
                 Image(systemName: "plus")
@@ -60,6 +87,73 @@ struct ForumView: View {
         }
     }
 }
+
+// MARK: - Filter Row
+
+private struct FilterRow: View {
+    let selectedSort: String
+    let selectedCategory: String?
+    let onSortSelected: (String) -> Void
+    let onCategorySelected: (String?) -> Void
+    let colors: AppColors
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(sortTabs, id: \.value) { tab in
+                    FilterPill(
+                        label: tab.label,
+                        isSelected: selectedSort == tab.value,
+                        colors: colors
+                    ) {
+                        onSortSelected(tab.value)
+                    }
+                }
+                Spacer().frame(width: 4)
+                ForEach(0..<categoryTabs.count, id: \.self) { i in
+                    let tab = categoryTabs[i]
+                    FilterPill(
+                        label: tab.label,
+                        isSelected: selectedCategory == tab.value,
+                        colors: colors
+                    ) {
+                        onCategorySelected(tab.value)
+                    }
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+        }
+        .background(colors.background)
+    }
+}
+
+private struct FilterPill: View {
+    let label: String
+    let isSelected: Bool
+    let colors: AppColors
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(label)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(isSelected ? .white : colors.primaryText)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(
+                    Capsule()
+                        .fill(isSelected ? AppColors.racingRed : Color.clear)
+                )
+                .overlay(
+                    Capsule()
+                        .stroke(isSelected ? Color.clear : colors.cardBorder, lineWidth: 1)
+                )
+        }
+    }
+}
+
+// MARK: - Thread Card
 
 private struct ThreadCard: View {
     let thread: Shared.Thread

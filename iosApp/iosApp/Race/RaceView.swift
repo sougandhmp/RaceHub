@@ -21,8 +21,7 @@ struct RaceView: View {
                 VStack(spacing: 24) {
                     NextRaceSection(
                         race: viewModel.state.raceSchedule.first { !$0.isCompleted },
-                        colors: colors,
-                        onViewAll: onViewAllSchedule
+                        colors: colors
                     )
                     StandingsSection(
                         drivers: Array(viewModel.state.driverStandings.prefix(3)),
@@ -36,7 +35,7 @@ struct RaceView: View {
                     )
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 16)
+                .padding(.top, 8)
                 .padding(.bottom, 100)
             }
         }
@@ -51,110 +50,142 @@ struct RaceView: View {
 private struct NextRaceSection: View {
     let race: Race?
     let colors: AppColors
-    let onViewAll: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Section header
-            HStack {
-                Text("NEXT RACE")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(colors.mutedText)
-                    .kerning(1)
-                Spacer()
-                if let race = race {
-                    Text("ROUND \(Int(race.round))")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(AppColors.racingRed)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(AppColors.racingRed.opacity(0.1))
-                        .cornerRadius(6)
-                }
-            }
-
-            // Card
-            VStack(alignment: .leading, spacing: 0) {
-                // Name + Flag
-                HStack(alignment: .center) {
-                    Text(race?.name ?? "No Upcoming Race")
-                        .font(.system(size: 26, weight: .heavy))
-                        .foregroundColor(colors.primaryText)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Spacer()
-                    Text(race?.countryFlag ?? "🏁")
-                        .font(.system(size: 22))
-                }
-
-                // Country
-                Text(race?.country ?? "—")
-                    .font(.system(size: 13))
-                    .foregroundColor(colors.mutedText)
-                    .padding(.top, 2)
-
-                Spacer().frame(height: 16)
-
-                RaceDetailRow(label: "Circuit", value: race?.circuit ?? "—", colors: colors)
-                Spacer().frame(height: 8)
-                RaceDetailRow(label: "Date", value: race?.date ?? "—", colors: colors)
-
-                Spacer().frame(height: 12)
-
-                CircuitImageView(
-                    circuitName: race?.circuit ?? "",
-                    grandPrixName: race?.name ?? "",
-                    colors: colors,
-                    height: 140
+        ZStack(alignment: .trailing) {
+            // Card background
+            RoundedRectangle(cornerRadius: 20)
+                .fill(colors.card)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(colors.cardBorder, lineWidth: 1)
                 )
 
-                Spacer().frame(height: 16)
+            // Faded circuit image on the right
+            if let race = race,
+               let imageName = circuitImageName(circuit: race.circuit, grandPrix: race.name) {
+                Image(imageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 160, height: 160)
+                    .opacity(0.10)
+                    .padding(.trailing, 4)
+            }
 
-                // Countdown chip + See all
+            // Content
+            VStack(alignment: .leading, spacing: 0) {
+                // Header: ● UP NEXT + days
                 HStack {
-                    if let days = race?.daysRemaining {
-                        Text("\(Int(truncating: days)) DAYS TO RACE")
-                            .font(.system(size: 12, weight: .heavy))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(AppColors.racingRed)
-                            .cornerRadius(8)
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(AppColors.racingRed)
+                            .frame(width: 7, height: 7)
+                        Text("UP NEXT")
+                            .font(.system(size: 11, weight: .heavy))
+                            .foregroundColor(colors.mutedText)
+                            .kerning(1.5)
                     }
                     Spacer()
-                    Button(action: onViewAll) {
-                        Text("See all →")
-                            .font(.system(size: 13, weight: .semibold))
+                    if let days = race?.daysRemaining {
+                        Text("\(Int(truncating: days)) DAYS")
+                            .font(.system(size: 12, weight: .heavy))
                             .foregroundColor(AppColors.racingRed)
                     }
                 }
+
+                Spacer().frame(height: 12)
+
+                // Race name
+                Text(race?.name ?? "No Upcoming Race")
+                    .font(.system(size: 26, weight: .black))
+                    .foregroundColor(colors.primaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                if let race = race {
+                    Spacer().frame(height: 2)
+                    Text("R\(Int(race.round)) · \(race.circuit)")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(colors.mutedText)
+                }
+
+                Spacer().frame(height: 16)
+
+                // Stats row: LIGHTS OUT | LENGTH | LAPS
+                HStack(spacing: 0) {
+                    StatItem(label: "LIGHTS OUT", value: race.map { lightsOutLabel($0.date) } ?? "—", colors: colors)
+                    StatItem(label: "LENGTH", value: "—", colors: colors)
+                    StatItem(label: "LAPS", value: "—", colors: colors)
+                }
+
+                Spacer().frame(height: 16)
+
+                // Session strip: FP1 | FP2 | FP3 | QUAL | RACE
+                SessionStrip(raceDate: race?.date, colors: colors)
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(colors.card)
-            .cornerRadius(20)
-            .overlay(
-                RoundedRectangle(cornerRadius: 20)
-                    .stroke(colors.cardBorder, lineWidth: 1)
-            )
         }
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+    }
+
+    private func lightsOutLabel(_ date: String) -> String {
+        // date is like "May 25, 2025" — show just the date as LIGHTS OUT value
+        let parts = date.split(separator: ",")
+        return parts.first.map(String.init) ?? date
     }
 }
 
-private struct RaceDetailRow: View {
+private struct StatItem: View {
     let label: String
     let value: String
     let colors: AppColors
 
     var body: some View {
-        HStack(alignment: .top, spacing: 0) {
+        VStack(alignment: .leading, spacing: 2) {
             Text(label)
-                .font(.system(size: 13))
+                .font(.system(size: 9, weight: .heavy))
                 .foregroundColor(colors.mutedText)
-                .frame(width: 60, alignment: .leading)
+                .kerning(0.5)
             Text(value)
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: 13, weight: .bold))
                 .foregroundColor(colors.primaryText)
-                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+private struct SessionStrip: View {
+    let raceDate: String?
+    let colors: AppColors
+
+    private var month: String {
+        guard let date = raceDate else { return "—" }
+        return String(date.split(separator: " ").first ?? "—")
+    }
+
+    private let labels = ["FP1", "FP2", "FP3", "QUAL", "RACE"]
+
+    var body: some View {
+        HStack(spacing: 6) {
+            ForEach(labels, id: \.self) { label in
+                let isRace = label == "RACE"
+                VStack(spacing: 2) {
+                    Text(label)
+                        .font(.system(size: 9, weight: .heavy))
+                        .foregroundColor(isRace ? .white : colors.mutedText)
+                        .kerning(0.3)
+                    Text(month)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(isRace ? Color.white.opacity(0.9) : colors.primaryText)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(isRace ? AppColors.racingRed : colors.cardBorder.opacity(0.4))
+                )
+            }
         }
     }
 }
@@ -255,36 +286,42 @@ private struct DriverStandingCard: View {
     let colors: AppColors
 
     var body: some View {
-        HStack(spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(standing.position == 1
-                          ? AppColors.racingRed.opacity(0.12)
-                          : colors.cardBorder.opacity(0.5))
+        HStack(spacing: 0) {
+            // Team color bar (clipped by the outer cornerRadius)
+            AppColors.teamColor(standing.team)
+                .frame(width: 4)
+
+            HStack(spacing: 12) {
                 Text("\(Int(standing.position))")
                     .font(.system(size: 14, weight: .heavy))
-                    .foregroundColor(standing.position == 1 ? AppColors.racingRed : colors.mutedText)
-            }
-            .frame(width: 32, height: 32)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(standing.driverName)
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(colors.primaryText)
-                Text(standing.team)
-                    .font(.system(size: 12))
                     .foregroundColor(colors.mutedText)
+                    .frame(width: 20, alignment: .leading)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(standing.driverName)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(colors.primaryText)
+                    Text(standing.team)
+                        .font(.system(size: 12))
+                        .foregroundColor(colors.mutedText)
+                }
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: 0) {
+                    Text("\(Int(standing.points))")
+                        .font(.system(size: 20, weight: .heavy))
+                        .foregroundColor(colors.primaryText)
+                    Text("PTS")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(colors.mutedText)
+                }
             }
-
-            Spacer()
-
-            Text("\(Int(standing.points))")
-                .font(.system(size: 20, weight: .heavy))
-                .foregroundColor(colors.primaryText)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 14)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
         .frame(maxWidth: .infinity)
+        .frame(height: 56)
         .background(colors.card)
         .cornerRadius(14)
         .overlay(
@@ -299,36 +336,42 @@ private struct ConstructorStandingCard: View {
     let colors: AppColors
 
     var body: some View {
-        HStack(spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(standing.position == 1
-                          ? AppColors.racingRed.opacity(0.12)
-                          : colors.cardBorder.opacity(0.5))
+        HStack(spacing: 0) {
+            // Team color bar (clipped by the outer cornerRadius)
+            AppColors.teamColor(standing.name)
+                .frame(width: 4)
+
+            HStack(spacing: 12) {
                 Text("\(Int(standing.position))")
                     .font(.system(size: 14, weight: .heavy))
-                    .foregroundColor(standing.position == 1 ? AppColors.racingRed : colors.mutedText)
-            }
-            .frame(width: 32, height: 32)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(standing.name)
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(colors.primaryText)
-                Text("\(Int(standing.wins)) wins")
-                    .font(.system(size: 12))
                     .foregroundColor(colors.mutedText)
+                    .frame(width: 20, alignment: .leading)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(standing.name)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(colors.primaryText)
+                    Text("\(Int(standing.wins)) wins")
+                        .font(.system(size: 12))
+                        .foregroundColor(colors.mutedText)
+                }
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: 0) {
+                    Text("\(Int(standing.points))")
+                        .font(.system(size: 20, weight: .heavy))
+                        .foregroundColor(colors.primaryText)
+                    Text("PTS")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(colors.mutedText)
+                }
             }
-
-            Spacer()
-
-            Text("\(Int(standing.points))")
-                .font(.system(size: 20, weight: .heavy))
-                .foregroundColor(colors.primaryText)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 14)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
         .frame(maxWidth: .infinity)
+        .frame(height: 56)
         .background(colors.card)
         .cornerRadius(14)
         .overlay(

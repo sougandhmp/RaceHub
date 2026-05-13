@@ -1,6 +1,9 @@
 package org.gce.racehub.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
@@ -94,15 +98,12 @@ fun CreateThreadScreen(
             )
 
             Spacer(modifier = Modifier.height(16.dp))
-            FieldLabel("CATEGORY", colors)
-            OutlinedTextField(
-                value = state.category,
-                onValueChange = { viewModel.onIntent(CreateThreadIntent.CategoryChanged(it)) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
+            FieldLabel("TAG", colors)
+            CategoryPicker(
+                selected = state.category,
                 enabled = !state.isSubmitting,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                colors = fieldColors(colors)
+                onSelect = { viewModel.onIntent(CreateThreadIntent.CategoryChanged(it)) },
+                colors = colors
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -148,6 +149,68 @@ fun CreateThreadScreen(
                 }
             }
         }
+    }
+}
+
+private val THREAD_TAGS = listOf(
+    "General Discussion",
+    "Race Weekends",
+    "Teams & Drivers",
+    "Technical / Cars"
+)
+
+@Composable
+private fun CategoryPicker(
+    selected: String,
+    enabled: Boolean,
+    onSelect: (String) -> Unit,
+    colors: AppColorScheme
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        THREAD_TAGS.forEach { tag ->
+            TagChip(
+                label = tag,
+                isSelected = selected == tag,
+                enabled = enabled,
+                onClick = { onSelect(tag) },
+                colors = colors
+            )
+        }
+    }
+}
+
+@Composable
+private fun TagChip(
+    label: String,
+    isSelected: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    colors: AppColorScheme
+) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(if (isSelected) colors.racingRed else colors.card)
+            .border(
+                width = 1.dp,
+                color = if (isSelected) colors.racingRed else colors.cardBorder,
+                shape = RoundedCornerShape(50)
+            )
+            .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(horizontal = 16.dp, vertical = 9.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            color = if (isSelected) Color.White else colors.primaryText,
+            fontSize = 14.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+        )
     }
 }
 

@@ -27,11 +27,16 @@ class ForumViewModel(
 
     fun onIntent(intent: ForumIntent) {
         when (intent) {
-            is ForumIntent.Refresh ->
+            is ForumIntent.Refresh -> loadThreads()
+            is ForumIntent.DismissError -> _state.update { it.copy(errorMessage = null) }
+            is ForumIntent.SelectSort -> {
+                _state.update { it.copy(selectedSort = intent.sort) }
                 loadThreads()
-
-            is ForumIntent.DismissError ->
-                _state.update { it.copy(errorMessage = null) }
+            }
+            is ForumIntent.SelectCategory -> {
+                _state.update { it.copy(selectedCategory = intent.category) }
+                loadThreads()
+            }
         }
     }
 
@@ -39,7 +44,11 @@ class ForumViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
             try {
-                val threads = getThreadsUseCase.execute("latest", null, null)
+                val threads = getThreadsUseCase.execute(
+                    sort = _state.value.selectedSort,
+                    category = _state.value.selectedCategory,
+                    userId = null
+                )
                 _state.update { it.copy(isLoading = false, threads = threads) }
             } catch (e: Exception) {
                 _state.update {

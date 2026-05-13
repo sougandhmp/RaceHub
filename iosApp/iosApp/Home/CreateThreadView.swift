@@ -1,6 +1,13 @@
 import SwiftUI
 import Combine
 
+private let threadTags = [
+    "General Discussion",
+    "Race Weekends",
+    "Teams & Drivers",
+    "Technical / Cars"
+]
+
 struct CreateThreadView: View {
 
     let onThreadCreated: () -> Void
@@ -30,14 +37,8 @@ struct CreateThreadView: View {
                             )
                         )
 
-                        fieldLabel("CATEGORY")
-                        textField(
-                            placeholder: "Category",
-                            text: Binding(
-                                get: { viewModel.state.category },
-                                set: { viewModel.send(.categoryChanged($0)) }
-                            )
-                        )
+                        fieldLabel("TAG")
+                        categoryPicker
 
                         fieldLabel("CONTENT")
                         contentEditor
@@ -109,6 +110,35 @@ struct CreateThreadView: View {
                     .stroke(colors.cardBorder, lineWidth: 1)
             )
             .disabled(viewModel.state.isSubmitting)
+    }
+
+    private var categoryPicker: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(threadTags, id: \.self) { tag in
+                    let isSelected = viewModel.state.category == tag
+                    Button(action: { viewModel.send(.categoryChanged(tag)) }) {
+                        Text(tag)
+                            .font(.system(size: 14, weight: isSelected ? .bold : .medium))
+                            .foregroundColor(isSelected ? .white : colors.primaryText)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 9)
+                            .background(
+                                Capsule()
+                                    .fill(isSelected ? AppColors.racingRed : colors.card)
+                            )
+                            .overlay(
+                                Capsule()
+                                    .stroke(
+                                        isSelected ? AppColors.racingRed : colors.cardBorder,
+                                        lineWidth: 1
+                                    )
+                            )
+                    }
+                    .disabled(viewModel.state.isSubmitting)
+                }
+            }
+        }
     }
 
     private var contentEditor: some View {

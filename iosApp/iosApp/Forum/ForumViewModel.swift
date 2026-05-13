@@ -25,6 +25,12 @@ final class ForumViewModel: ObservableObject {
             loadThreads()
         case .dismissError:
             state.errorMessage = nil
+        case .selectSort(let sort):
+            state.selectedSort = sort
+            loadThreads()
+        case .selectCategory(let category):
+            state.selectedCategory = category
+            loadThreads()
         }
     }
 
@@ -41,7 +47,11 @@ final class ForumViewModel: ObservableObject {
         state.errorMessage = nil
 
         do {
-            let threads = try await repository.getThreads(sort: "latest", category: nil, userId: nil)
+            let threads = try await repository.getThreads(
+                sort: state.selectedSort,
+                category: state.selectedCategory,
+                userId: nil
+            )
             state.isLoading = false
             state.threads = threads
         } catch {
