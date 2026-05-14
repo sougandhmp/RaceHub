@@ -1,12 +1,6 @@
 package org.gce.racehub.forum
 
 import android.content.Intent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -30,11 +25,10 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -49,14 +43,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -78,13 +72,11 @@ fun ThreadDetailScreen(
     val colors = LocalAppColors.current
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val commentFocusRequester = remember { FocusRequester() }
 
     val allComments = thread.comments + state.postedComments
-    var showComments by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        viewModel.initLikes(thread.likes)
-    }
+    LaunchedEffect(Unit) { viewModel.initLikes(thread.likes) }
 
     LaunchedEffect(state.errorMessage) {
         val msg = state.errorMessage
@@ -92,6 +84,18 @@ fun ThreadDetailScreen(
             snackbarHostState.showSnackbar(msg)
             viewModel.onIntent(ThreadDetailIntent.DismissError)
         }
+    }
+
+    val onShare = {
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_SUBJECT, thread.title)
+            putExtra(
+                Intent.EXTRA_TEXT,
+                "${thread.title}\n\n${thread.content}\n\n— shared from RaceHub"
+            )
+        }
+        context.startActivity(Intent.createChooser(shareIntent, "Share thread"))
     }
 
     Scaffold(
@@ -109,10 +113,10 @@ fun ThreadDetailScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "THREAD",
+                        text = "Thread",
                         color = colors.primaryText,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 2.sp
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
                     )
                 },
                 navigationIcon = {
@@ -120,25 +124,6 @@ fun ThreadDetailScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = colors.primaryText
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = {
-                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                            type = "text/plain"
-                            putExtra(Intent.EXTRA_SUBJECT, thread.title)
-                            putExtra(
-                                Intent.EXTRA_TEXT,
-                                "${thread.title}\n\n${thread.content}\n\n— shared from RaceHub"
-                            )
-                        }
-                        context.startActivity(Intent.createChooser(shareIntent, "Share thread"))
-                    }) {
-                        Icon(
-                            imageVector = Icons.Filled.Share,
-                            contentDescription = "Share",
                             tint = colors.primaryText
                         )
                     }
@@ -153,6 +138,7 @@ fun ThreadDetailScreen(
                 canSubmit = state.canSubmit,
                 isSubmitting = state.isSubmitting,
                 onSubmit = { viewModel.onIntent(ThreadDetailIntent.SubmitComment(thread.id)) },
+                focusRequester = commentFocusRequester,
                 colors = colors
             )
         },
@@ -162,71 +148,45 @@ fun ThreadDetailScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(vertical = 16.dp)
+            contentPadding = PaddingValues(top = 16.dp, bottom = 24.dp)
         ) {
             item {
-                ThreadHeader(
+                ThreadPostCard(
                     thread = thread,
                     likes = state.likes,
                     isLiked = state.isLiked,
                     isLiking = state.isLiking,
-                    showComments = showComments,
                     colors = colors,
                     onLikeClick = { viewModel.onIntent(ThreadDetailIntent.ToggleLike(thread.id)) },
-                    onToggleComments = { showComments = !showComments }
+                    onReplyClick = { commentFocusRequester.requestFocus() },
+                    onShareClick = onShare
                 )
             }
 
             item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable { showComments = !showComments }
-                        .padding(top = 8.dp, bottom = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "COMMENTS · ${allComments.size}",
-                        color = colors.mutedText,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
-                    Icon(
-                        imageVector = if (showComments) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                        contentDescription = if (showComments) "Hide comments" else "Show comments",
-                        tint = colors.mutedText,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
+                Text(
+                    text = if (allComments.size == 1) "1 Reply" else "${allComments.size} Replies",
+                    color = colors.mutedText,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 4.dp, bottom = 4.dp)
+                )
             }
 
-            item {
-                AnimatedVisibility(
-                    visible = showComments,
-                    enter = expandVertically(expandFrom = Alignment.Top, animationSpec = tween(300)) +
-                            fadeIn(animationSpec = tween(300)),
-                    exit = shrinkVertically(shrinkTowards = Alignment.Top, animationSpec = tween(300)) +
-                            fadeOut(animationSpec = tween(300))
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        if (allComments.isEmpty()) {
-                            Text(
-                                text = "No comments yet. Be the first to reply.",
-                                color = colors.mutedText,
-                                fontSize = 13.sp,
-                                modifier = Modifier.padding(vertical = 12.dp)
-                            )
-                        } else {
-                            allComments.forEach { comment ->
-                                CommentCard(comment = comment, colors = colors)
-                            }
-                        }
-                    }
+            if (allComments.isEmpty()) {
+                item {
+                    Text(
+                        text = "No replies yet. Be the first!",
+                        color = colors.mutedText,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+            } else {
+                items(allComments) { comment ->
+                    CommentCard(comment = comment, colors = colors)
                 }
             }
         }
@@ -234,15 +194,15 @@ fun ThreadDetailScreen(
 }
 
 @Composable
-private fun ThreadHeader(
+private fun ThreadPostCard(
     thread: Thread,
     likes: Int,
     isLiked: Boolean,
     isLiking: Boolean,
-    showComments: Boolean,
     colors: AppColorScheme,
     onLikeClick: () -> Unit,
-    onToggleComments: () -> Unit
+    onReplyClick: () -> Unit,
+    onShareClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -252,29 +212,16 @@ private fun ThreadHeader(
             .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
             .padding(20.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            AuthorBadge(
-                initials = thread.author.avatar.ifBlank { thread.author.username },
-                colors = colors
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = thread.author.username.ifBlank { "Anonymous" },
-                    color = colors.primaryText,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = formatTimestamp(thread.createdAt),
-                    color = colors.mutedText,
-                    fontSize = 12.sp
-                )
-            }
-            CategoryPill(category = thread.category, colors = colors)
-        }
+        // Category · date
+        Text(
+            text = "${thread.category} · ${formatTimestamp(thread.createdAt)}",
+            color = colors.mutedText,
+            fontSize = 12.sp
+        )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Title
         Text(
             text = thread.title,
             color = colors.primaryText,
@@ -283,8 +230,32 @@ private fun ThreadHeader(
             lineHeight = 28.sp
         )
 
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // Author
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            AuthorBadge(
+                initials = thread.author.avatar.ifBlank { thread.author.username },
+                colors = colors
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Column {
+                Text(
+                    text = thread.author.username.ifBlank { "Anonymous" },
+                    color = colors.primaryText,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Original poster",
+                    color = colors.mutedText,
+                    fontSize = 12.sp
+                )
+            }
+        }
+
         if (thread.content.isNotBlank()) {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
             Text(
                 text = thread.content,
                 color = colors.primaryText,
@@ -294,42 +265,82 @@ private fun ThreadHeader(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            LikeButton(
-                likes = likes,
-                isLiked = isLiked,
-                isLiking = isLiking,
-                colors = colors,
+
+        HorizontalDivider(color = colors.cardBorder, thickness = 0.5.dp)
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Action row
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ActionPill(
+                icon = if (isLiked) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                label = likes.toString(),
+                active = isLiked,
+                activeColor = colors.racingRed,
+                borderColor = colors.cardBorder,
+                mutedColor = colors.mutedText,
+                enabled = !isLiking,
                 onClick = onLikeClick
             )
-            Spacer(modifier = Modifier.width(16.dp))
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable(onClick = onToggleComments)
-                    .background(if (showComments) colors.racingRed.copy(alpha = 0.10f) else Color.Transparent)
-                    .padding(horizontal = 6.dp, vertical = 4.dp)
-            ) {
-                Text(text = "💬", fontSize = 14.sp)
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = thread.comments.size.toString(),
-                    color = if (showComments) colors.racingRed else colors.mutedText,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-            Spacer(modifier = Modifier.weight(1f))
-            if (thread.bookmarked) {
-                Text(
-                    text = "★ Saved",
-                    color = colors.racingRed,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+            ActionPill(
+                icon = Icons.AutoMirrored.Filled.Send,
+                label = "Reply",
+                active = false,
+                activeColor = colors.racingRed,
+                borderColor = colors.cardBorder,
+                mutedColor = colors.mutedText,
+                onClick = onReplyClick
+            )
+            ActionPill(
+                icon = Icons.Filled.Share,
+                label = "Share",
+                active = false,
+                activeColor = colors.racingRed,
+                borderColor = colors.cardBorder,
+                mutedColor = colors.mutedText,
+                onClick = onShareClick
+            )
         }
+    }
+}
+
+@Composable
+private fun ActionPill(
+    icon: ImageVector,
+    label: String,
+    active: Boolean,
+    activeColor: Color,
+    borderColor: Color,
+    mutedColor: Color,
+    enabled: Boolean = true,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(if (active) activeColor.copy(alpha = 0.10f) else Color.Transparent)
+            .border(
+                1.dp,
+                if (active) activeColor.copy(alpha = 0.4f) else borderColor,
+                RoundedCornerShape(20.dp)
+            )
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(5.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = if (active) activeColor else mutedColor,
+            modifier = Modifier.size(14.dp)
+        )
+        Text(
+            text = label,
+            color = if (active) activeColor else mutedColor,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }
 
@@ -347,18 +358,19 @@ private fun CommentCard(comment: ThreadComment, colors: AppColorScheme) {
             AuthorBadge(
                 initials = comment.authorUsername.ifBlank { "?" },
                 colors = colors,
-                sizeDp = 28
+                sizeDp = 30
             )
             Spacer(modifier = Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = comment.authorUsername.ifBlank { "Anonymous" },
+                    color = colors.primaryText,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
             Text(
-                text = comment.authorUsername.ifBlank { "Anonymous" },
-                color = colors.primaryText,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            Text(
-                text = "just now", // Placeholder for actual time if available
+                text = "just now",
                 color = colors.mutedText,
                 fontSize = 11.sp
             )
@@ -368,8 +380,7 @@ private fun CommentCard(comment: ThreadComment, colors: AppColorScheme) {
             text = comment.content,
             color = colors.primaryText,
             fontSize = 14.sp,
-            lineHeight = 20.sp,
-            modifier = Modifier.padding(start = 38.dp) // Align with text start
+            lineHeight = 20.sp
         )
     }
 }
@@ -381,6 +392,7 @@ private fun CommentInputBar(
     canSubmit: Boolean,
     isSubmitting: Boolean,
     onSubmit: () -> Unit,
+    focusRequester: FocusRequester,
     colors: AppColorScheme
 ) {
     Row(
@@ -393,9 +405,11 @@ private fun CommentInputBar(
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .focusRequester(focusRequester),
             enabled = !isSubmitting,
-            placeholder = { Text("Add a comment…", color = colors.mutedText) },
+            placeholder = { Text("Add a reply…", color = colors.mutedText) },
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = colors.primaryText,
                 unfocusedTextColor = colors.primaryText,
@@ -410,7 +424,7 @@ private fun CommentInputBar(
         IconButton(onClick = onSubmit, enabled = canSubmit) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.Send,
-                contentDescription = "Post comment",
+                contentDescription = "Post reply",
                 tint = if (canSubmit) colors.racingRed else colors.mutedText
             )
         }
@@ -431,56 +445,6 @@ private fun AuthorBadge(initials: String, colors: AppColorScheme, sizeDp: Int = 
             color = Color.White,
             fontSize = (sizeDp / 3).sp,
             fontWeight = FontWeight.Bold
-        )
-    }
-}
-
-@Composable
-private fun CategoryPill(category: String, colors: AppColorScheme) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(6.dp))
-            .background(colors.racingRed.copy(alpha = 0.12f))
-            .padding(horizontal = 8.dp, vertical = 4.dp)
-    ) {
-        Text(
-            text = category.uppercase(),
-            color = colors.racingRed,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 0.5.sp
-        )
-    }
-}
-
-@Composable
-private fun LikeButton(
-    likes: Int,
-    isLiked: Boolean,
-    isLiking: Boolean,
-    colors: AppColorScheme,
-    onClick: () -> Unit
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
-            .clickable(enabled = !isLiking, onClick = onClick)
-            .background(if (isLiked) colors.racingRed.copy(alpha = 0.10f) else Color.Transparent)
-            .padding(horizontal = 6.dp, vertical = 4.dp)
-    ) {
-        Icon(
-            imageVector = if (isLiked) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-            contentDescription = if (isLiked) "Unlike" else "Like",
-            tint = if (isLiked) colors.racingRed else colors.mutedText,
-            modifier = Modifier.size(16.dp)
-        )
-        Spacer(modifier = Modifier.width(4.dp))
-        Text(
-            text = likes.toString(),
-            color = if (isLiked) colors.racingRed else colors.mutedText,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold
         )
     }
 }

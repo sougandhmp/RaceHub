@@ -3,7 +3,6 @@ import Shared
 
 struct ScheduleView: View {
     let schedule: [Race]
-    let latestThread: TrendingThread?
     @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) private var colorScheme
     private var colors: AppColors { AppColors.forScheme(colorScheme) }
@@ -35,12 +34,6 @@ struct ScheduleView: View {
 
                 ScrollView {
                     VStack(spacing: 16) {
-                        if let thread = latestThread {
-                            ScheduleLatestThreadCard(thread: thread, colors: colors)
-                            Divider()
-                                .background(colors.cardBorder)
-                                .padding(.vertical, 8)
-                        }
                         ForEach(schedule, id: \.id) { race in
                             RaceRow(race: race, isNextRace: race.id == nextRace?.id, colors: colors)
                         }
@@ -54,62 +47,6 @@ struct ScheduleView: View {
     }
 }
 
-private struct ScheduleLatestThreadCard: View {
-    let thread: TrendingThread
-    let colors: AppColors
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("LATEST DISCUSSION")
-                    .font(.system(size: 11, weight: .heavy))
-                    .kerning(1)
-                    .foregroundColor(AppColors.racingRed)
-                Spacer()
-                Text("TRENDING")
-                    .font(.system(size: 9, weight: .black))
-                    .foregroundColor(AppColors.racingRed)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(AppColors.racingRed.opacity(0.1))
-                    .cornerRadius(4)
-            }
-
-            HStack(spacing: 12) {
-                ZStack {
-                    Circle()
-                        .fill(AppColors.racingRed)
-                        .frame(width: 28, height: 28)
-                    Text("💬")
-                        .font(.system(size: 14))
-                }
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(thread.title)
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(colors.primaryText)
-                        .lineLimit(2)
-                    HStack(spacing: 4) {
-                        Text("❤️")
-                            .font(.system(size: 12))
-                        Text("\(Int(thread.likes)) likes")
-                            .font(.system(size: 11))
-                            .foregroundColor(colors.mutedText)
-                    }
-                }
-                Spacer()
-            }
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(colors.card)
-        .cornerRadius(16)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(colors.cardBorder, lineWidth: 1)
-        )
-    }
-}
 
 struct RaceRow: View {
     let race: Race

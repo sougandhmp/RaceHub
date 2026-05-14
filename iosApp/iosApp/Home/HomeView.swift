@@ -53,8 +53,7 @@ struct HomeView: View {
             .navigationDestination(for: String.self) { destination in
                 if destination == "schedule" {
                     ScheduleView(
-                        schedule: raceViewModel.state.raceSchedule,
-                        latestThread: raceViewModel.state.trendingThreads.first
+                        schedule: raceViewModel.state.raceSchedule
                     )
                 } else if destination == "standings" {
                     StandingsView(

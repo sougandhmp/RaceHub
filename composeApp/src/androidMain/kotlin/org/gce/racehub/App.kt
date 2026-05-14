@@ -109,7 +109,6 @@ fun App() {
 
                 Screen.Schedule -> ScheduleScreen(
                     schedule = raceState.raceSchedule,
-                    latestThread = raceState.trendingThreads.firstOrNull(),
                     onBack = { screen = Screen.Home }
                 )
 
