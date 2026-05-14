@@ -19,8 +19,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -82,6 +86,7 @@ fun RaceScreen(
             RaceTabContent(
                 state = state,
                 colors = colors,
+                onViewAllSchedule = onViewAllSchedule,
                 onViewAllStandings = onViewAllStandings
             )
         }
@@ -92,6 +97,7 @@ fun RaceScreen(
 private fun RaceTabContent(
     state: RaceState,
     colors: AppColorScheme,
+    onViewAllSchedule: () -> Unit,
     onViewAllStandings: () -> Unit
 ) {
     LazyColumn(
@@ -105,7 +111,8 @@ private fun RaceTabContent(
             NextRaceSection(
                 race = state.raceSchedule.firstOrNull { !it.isCompleted },
                 nextRaceDetail = state.nextRaceDetail,
-                colors = colors
+                colors = colors,
+                onViewAllSchedule = onViewAllSchedule
             )
         }
         item {
@@ -131,7 +138,8 @@ private fun RaceTabContent(
 private fun NextRaceSection(
     race: Race?,
     nextRaceDetail: RaceDetail?,
-    colors: AppColorScheme
+    colors: AppColorScheme,
+    onViewAllSchedule: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -235,6 +243,35 @@ private fun NextRaceSection(
             else
                 sessionsFromRace(race)
             SessionStrip(sessions = sessions, colors = colors)
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            HorizontalDivider(
+                color = colors.cardBorder,
+                thickness = 0.5.dp
+            )
+
+            TextButton(
+                onClick = onViewAllSchedule,
+                contentPadding = PaddingValues(0.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 36.dp)
+            ) {
+                Text(
+                    text = "Full schedule",
+                    color = colors.racingRed,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = null,
+                    tint = colors.racingRed,
+                    modifier = Modifier.size(14.dp)
+                )
+            }
         }
     }
 }

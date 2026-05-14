@@ -21,7 +21,8 @@ struct RaceView: View {
                 VStack(spacing: 24) {
                     NextRaceSection(
                         race: viewModel.state.raceSchedule.first { !$0.isCompleted },
-                        colors: colors
+                        colors: colors,
+                        onViewAllSchedule: onViewAllSchedule
                     )
                     StandingsSection(
                         drivers: Array(viewModel.state.driverStandings.prefix(3)),
@@ -50,6 +51,7 @@ struct RaceView: View {
 private struct NextRaceSection: View {
     let race: Race?
     let colors: AppColors
+    let onViewAllSchedule: () -> Void
 
     var body: some View {
         ZStack(alignment: .trailing) {
@@ -122,6 +124,24 @@ private struct NextRaceSection: View {
 
                 // Session strip: FP1 | FP2 | FP3 | QUAL | RACE
                 SessionStrip(raceDate: race?.date, colors: colors)
+
+                Spacer().frame(height: 12)
+
+                Divider()
+                    .background(colors.cardBorder)
+
+                Button(action: onViewAllSchedule) {
+                    HStack(spacing: 4) {
+                        Text("Full schedule")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(AppColors.racingRed)
+                        Image(systemName: "arrow.forward")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(AppColors.racingRed)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 36)
+                }
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
