@@ -44,7 +44,7 @@ class ForumViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
             try {
-                val threads = getThreadsUseCase.execute(
+                val threads = getThreadsUseCase(
                     sort = _state.value.selectedSort,
                     category = _state.value.selectedCategory,
                     userId = null

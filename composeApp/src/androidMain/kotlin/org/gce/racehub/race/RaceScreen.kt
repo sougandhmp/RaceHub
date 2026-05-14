@@ -82,7 +82,6 @@ fun RaceScreen(
             RaceTabContent(
                 state = state,
                 colors = colors,
-                onViewAllSchedule = onViewAllSchedule,
                 onViewAllStandings = onViewAllStandings
             )
         }
@@ -93,7 +92,6 @@ fun RaceScreen(
 private fun RaceTabContent(
     state: RaceState,
     colors: AppColorScheme,
-    @Suppress("UNUSED_PARAMETER") onViewAllSchedule: () -> Unit,
     onViewAllStandings: () -> Unit
 ) {
     LazyColumn(
@@ -769,7 +767,7 @@ private fun parseIsoToDate(dateTime: String): java.util.Date? {
 
 private fun sessionsFromRace(race: Race?): List<RaceSessionChip> {
     if (race == null) return emptyList()
-    val raceDate = parseIsoToDate(race.dateTime) ?: return fallbackSessions(race)
+    val raceDate = parseIsoToDate(race.dateTime) ?: return fallbackSessions()
     val tzLabel = deviceTimezoneLabel()
 
     fun calAt(days: Int, hours: Int = 0): Calendar =
@@ -808,7 +806,7 @@ private fun sessionsFromRace(race: Race?): List<RaceSessionChip> {
     )
 }
 
-private fun fallbackSessions(@Suppress("UNUSED_PARAMETER") race: Race): List<RaceSessionChip> {
+private fun fallbackSessions(): List<RaceSessionChip> {
     val tz = deviceTimezoneLabel()
     return listOf(
         RaceSessionChip("PRACTICE 1", "—", "—", tz),

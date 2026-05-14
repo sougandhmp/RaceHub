@@ -38,7 +38,7 @@ import org.gce.racehub.di.appModule
 import org.gce.racehub.forum.ForumScreen
 import org.gce.racehub.profile.ProfileScreen
 import org.gce.racehub.race.RaceScreen
-import org.gce.racehub.race.di.raceModule
+import org.gce.racehub.race.di.createRaceModule
 import org.gce.racehub.race.domain.model.Thread
 import org.gce.racehub.theme.LocalAppColors
 import org.koin.compose.KoinApplication
@@ -173,7 +173,7 @@ fun HomeScreenPreview() {
     KoinApplication(configuration = koinConfiguration {
         modules(
             createProductionAuthModule("https://api.example.com"),
-            raceModule,
+            createRaceModule("https://api.example.com"),
             appModule
         )
     }) {

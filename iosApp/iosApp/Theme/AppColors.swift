@@ -21,6 +21,7 @@ struct AppColors {
     let background: Color
     let card: Color
     let cardBorder: Color
+    let surface: Color
     let mutedText: Color
     let primaryText: Color
     let navBar: Color
@@ -38,6 +39,7 @@ struct AppColors {
                 background: Color(hex: t.darkBackground),
                 card:        Color(hex: t.darkCard),
                 cardBorder:  Color(hex: t.darkCardBorder),
+                surface:     Color(hex: t.darkSurface),
                 mutedText:   Color(hex: t.darkMutedText),
                 primaryText: .white,
                 navBar:      Color(hex: t.darkNavBar),
@@ -50,6 +52,7 @@ struct AppColors {
                 background: Color(hex: t.lightBackground),
                 card:        Color(hex: t.lightCard),
                 cardBorder:  Color(hex: t.lightCardBorder),
+                surface:     Color(hex: t.lightSurface),
                 mutedText:   Color(hex: t.lightMutedText),
                 primaryText: .black,
                 navBar:      Color(hex: t.lightNavBar),
@@ -77,12 +80,12 @@ struct AppColors {
     }
 
     // MARK: - Podium accents (sourced from AppColorTokens)
-    static func podiumAccent(position: Int) -> Color {
+    static func podiumAccent(position: Int, fallback: Color) -> Color {
         switch position {
         case 1:  return Color(hex: t.gold)
         case 2:  return Color(hex: t.silver)
         case 3:  return Color(hex: t.bronze)
-        default: return Color(hex: t.teamDefault)
+        default: return fallback
         }
     }
 }
