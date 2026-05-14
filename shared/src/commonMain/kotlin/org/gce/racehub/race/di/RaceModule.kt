@@ -15,10 +15,10 @@ import org.gce.racehub.race.domain.usecase.GetThreadsUseCase
 import org.gce.racehub.race.domain.usecase.GetTrendingThreadsUseCase
 import org.koin.dsl.module
 
-val raceModule = module {
+fun createRaceModule(baseUrl: String) = module {
     single { LocalDataSource(get()) }
     single<HomeRepository> {
-        HomeRepositoryNetworkImpl(get(), "http://140.245.233.203:30018", get())
+        HomeRepositoryNetworkImpl(get(), baseUrl, get())
     }
     factory { GetRaceScheduleUseCase(get()) }
     factory { GetDriverStandingsUseCase(get()) }
@@ -31,5 +31,4 @@ val raceModule = module {
     factory { LikeThreadUseCase(get()) }
     factory { GetRaceDetailUseCase(get()) }
 }
-
 

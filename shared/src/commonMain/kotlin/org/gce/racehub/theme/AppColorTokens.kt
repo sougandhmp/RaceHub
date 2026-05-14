@@ -20,6 +20,7 @@ object AppColorTokens {
     val lightBackground = "F2F2F7"
     val lightCard = "FFFFFF"
     val lightCardBorder = "E5E5EA"
+    val lightSurface = "EBEBF0"
     val lightMutedText = "6C6C70"
     val lightHeaderBg = "FFECEE"
     val lightRowAltBg = "FFF5F6"

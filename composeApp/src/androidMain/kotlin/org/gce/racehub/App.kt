@@ -26,7 +26,7 @@ import org.gce.racehub.home.StandingsScreen
 import org.gce.racehub.login.LoginScreen
 import org.gce.racehub.race.RaceIntent
 import org.gce.racehub.race.RaceViewModel
-import org.gce.racehub.race.di.raceModule
+import org.gce.racehub.race.di.createRaceModule
 import org.gce.racehub.race.domain.model.Thread
 import org.gce.racehub.signup.SignUpScreen
 import org.gce.racehub.theme.DarkAppColors
@@ -149,7 +149,7 @@ fun AppPreview() {
     KoinApplication(configuration = koinConfiguration(declaration = {
         modules(
             createProductionAuthModule("https://api.example.com"),
-            raceModule,
+            createRaceModule("https://api.example.com"),
             appModule
         )
     }), content = {

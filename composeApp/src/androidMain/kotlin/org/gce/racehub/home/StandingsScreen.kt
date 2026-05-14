@@ -45,14 +45,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.gce.racehub.race.domain.model.ConstructorStanding
 import org.gce.racehub.race.domain.model.DriverStanding
+import org.gce.racehub.theme.AppColorScheme
 import org.gce.racehub.theme.AppColorTokens
+import org.gce.racehub.theme.LocalAppColors
 import org.gce.racehub.theme.hexColor
-
-private val DarkBg    = hexColor(AppColorTokens.darkBackground)
-private val CardBg    = hexColor(AppColorTokens.darkCard)
-private val CardBorder = hexColor(AppColorTokens.darkCardBorder)
-private val MutedGray = hexColor(AppColorTokens.darkMutedText)
-private val RacingRed = hexColor(AppColorTokens.f1Red)
 
 private val Gold   = hexColor(AppColorTokens.gold)
 private val Silver = hexColor(AppColorTokens.silver)
@@ -69,7 +65,7 @@ private val TeamRb       = hexColor(AppColorTokens.teamRb)
 private val TeamHaas     = hexColor(AppColorTokens.teamHaas)
 private val TeamSauber   = hexColor(AppColorTokens.teamSauber)
 
-private fun teamColorFor(team: String): Color = when {
+private fun teamColorFor(team: String, fallback: Color): Color = when {
     team.contains("Mercedes", ignoreCase = true) -> TeamMercedes
     team.contains("McLaren",  ignoreCase = true) -> TeamMcLaren
     team.contains("Red Bull", ignoreCase = true) -> TeamRedBull
@@ -80,14 +76,14 @@ private fun teamColorFor(team: String): Color = when {
     team.contains("RB",       ignoreCase = true) -> TeamRb
     team.contains("Haas",     ignoreCase = true) -> TeamHaas
     team.contains("Sauber",   ignoreCase = true) -> TeamSauber
-    else -> MutedGray
+    else -> fallback
 }
 
-private fun positionAccent(position: Int): Color = when (position) {
+private fun positionAccent(position: Int, fallback: Color): Color = when (position) {
     1 -> Gold
     2 -> Silver
     3 -> Bronze
-    else -> MutedGray
+    else -> fallback
 }
 
 private enum class StandingsCategory { Drivers, Teams }
@@ -99,6 +95,7 @@ fun StandingsScreen(
     constructors: List<ConstructorStanding>,
     onBack: () -> Unit
 ) {
+    val colors = LocalAppColors.current
     var selected by rememberSaveable { mutableStateOf(StandingsCategory.Drivers) }
 
     Scaffold(
@@ -109,7 +106,7 @@ fun StandingsScreen(
                         "STANDINGS",
                         fontWeight = FontWeight.Black,
                         letterSpacing = 2.sp,
-                        color = Color.White
+                        color = colors.primaryText
                     )
                 },
                 navigationIcon = {
@@ -117,12 +114,12 @@ fun StandingsScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = Color.White
+                            tint = colors.primaryText
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DarkBg,
+                    containerColor = colors.background,
                     scrolledContainerColor = Color.Unspecified,
                     navigationIconContentColor = Color.Unspecified,
                     titleContentColor = Color.Unspecified,
@@ -130,7 +127,7 @@ fun StandingsScreen(
                 )
             )
         },
-        containerColor = DarkBg
+        containerColor = colors.background
     ) { padding ->
         LazyColumn(
             modifier = Modifier
@@ -143,24 +140,27 @@ fun StandingsScreen(
             item {
                 StandingsToggle(
                     selected = selected,
-                    onSelected = { selected = it }
+                    onSelected = { selected = it },
+                    colors = colors
                 )
             }
             when (selected) {
                 StandingsCategory.Drivers -> itemsIndexed(drivers) { index, standing ->
                     DriverStandingCard(
                         standing = standing,
-                        accent = positionAccent(standing.position),
-                        teamColor = teamColorFor(standing.team),
-                        showLeader = index == 0
+                        accent = positionAccent(standing.position, colors.mutedText),
+                        teamColor = teamColorFor(standing.team, colors.mutedText),
+                        showLeader = index == 0,
+                        colors = colors
                     )
                 }
 
                 StandingsCategory.Teams -> items(constructors) { standing ->
                     ConstructorStandingCard(
                         standing = standing,
-                        accent = positionAccent(standing.position),
-                        teamColor = teamColorFor(standing.name)
+                        accent = positionAccent(standing.position, colors.mutedText),
+                        teamColor = teamColorFor(standing.name, colors.mutedText),
+                        colors = colors
                     )
                 }
             }
@@ -171,14 +171,15 @@ fun StandingsScreen(
 @Composable
 private fun StandingsToggle(
     selected: StandingsCategory,
-    onSelected: (StandingsCategory) -> Unit
+    onSelected: (StandingsCategory) -> Unit,
+    colors: AppColorScheme
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(CardBg)
-            .border(1.dp, CardBorder, RoundedCornerShape(12.dp))
+            .background(colors.card)
+            .border(1.dp, colors.cardBorder, RoundedCornerShape(12.dp))
             .padding(4.dp)
     ) {
         StandingsCategory.entries.forEach { tab ->
@@ -187,14 +188,14 @@ private fun StandingsToggle(
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(if (isSelected) RacingRed else Color.Transparent)
+                    .background(if (isSelected) colors.racingRed else Color.Transparent)
                     .clickable { onSelected(tab) }
                     .padding(vertical = 10.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = if (tab == StandingsCategory.Drivers) "DRIVERS" else "CONSTRUCTORS",
-                    color = if (isSelected) Color.White else MutedGray,
+                    color = if (isSelected) Color.White else colors.mutedText,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp
@@ -209,17 +210,18 @@ private fun DriverStandingCard(
     standing: DriverStanding,
     accent: Color,
     teamColor: Color,
-    showLeader: Boolean
+    showLeader: Boolean,
+    colors: AppColorScheme
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(IntrinsicSize.Min)
             .clip(RoundedCornerShape(16.dp))
-            .background(CardBg)
+            .background(colors.card)
             .border(
                 width = if (showLeader) 1.5.dp else 1.dp,
-                color = if (showLeader) accent.copy(alpha = 0.5f) else CardBorder,
+                color = if (showLeader) accent.copy(alpha = 0.5f) else colors.cardBorder,
                 shape = RoundedCornerShape(16.dp)
             ),
         verticalAlignment = Alignment.CenterVertically
@@ -236,12 +238,12 @@ private fun DriverStandingCard(
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            PositionBadge(position = standing.position, accent = accent)
+            PositionBadge(position = standing.position, accent = accent, colors = colors)
             Spacer(modifier = Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = standing.driverName,
-                    color = Color.White,
+                    color = colors.primaryText,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -256,13 +258,13 @@ private fun DriverStandingCard(
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = standing.team,
-                        color = MutedGray,
+                        color = colors.mutedText,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
                     )
                 }
             }
-            PointsBlock(points = standing.points, wins = standing.wins)
+            PointsBlock(points = standing.points, wins = standing.wins, colors = colors)
         }
     }
 }
@@ -271,15 +273,16 @@ private fun DriverStandingCard(
 private fun ConstructorStandingCard(
     standing: ConstructorStanding,
     accent: Color,
-    teamColor: Color
+    teamColor: Color,
+    colors: AppColorScheme
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(IntrinsicSize.Min)
             .clip(RoundedCornerShape(16.dp))
-            .background(CardBg)
-            .border(1.dp, CardBorder, RoundedCornerShape(16.dp)),
+            .background(colors.card)
+            .border(1.dp, colors.cardBorder, RoundedCornerShape(16.dp)),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
@@ -294,12 +297,12 @@ private fun ConstructorStandingCard(
                 .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            PositionBadge(position = standing.position, accent = accent)
+            PositionBadge(position = standing.position, accent = accent, colors = colors)
             Spacer(modifier = Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = standing.name,
-                    color = Color.White,
+                    color = colors.primaryText,
                     fontSize = 17.sp,
                     fontWeight = FontWeight.ExtraBold
                 )
@@ -312,29 +315,29 @@ private fun ConstructorStandingCard(
                     letterSpacing = 1.sp
                 )
             }
-            PointsBlock(points = standing.points, wins = standing.wins)
+            PointsBlock(points = standing.points, wins = standing.wins, colors = colors)
         }
     }
 }
 
 @Composable
-private fun PositionBadge(position: Int, accent: Color) {
+private fun PositionBadge(position: Int, accent: Color, colors: AppColorScheme) {
     val isPodium = position in 1..3
     Box(
         modifier = Modifier
             .size(40.dp)
             .clip(CircleShape)
-            .background(if (isPodium) accent.copy(alpha = 0.15f) else hexColor(AppColorTokens.darkSurface))
+            .background(if (isPodium) accent.copy(alpha = 0.15f) else colors.surface)
             .border(
                 width = 1.dp,
-                color = if (isPodium) accent else CardBorder,
+                color = if (isPodium) accent else colors.cardBorder,
                 shape = CircleShape
             ),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = position.toString(),
-            color = if (isPodium) accent else Color.White,
+            color = if (isPodium) accent else colors.primaryText,
             fontSize = 16.sp,
             fontWeight = FontWeight.Black
         )
@@ -342,19 +345,19 @@ private fun PositionBadge(position: Int, accent: Color) {
 }
 
 @Composable
-private fun PointsBlock(points: Int, wins: Int) {
+private fun PointsBlock(points: Int, wins: Int, colors: AppColorScheme) {
     Column(horizontalAlignment = Alignment.End) {
         Row(verticalAlignment = Alignment.Bottom) {
             Text(
                 text = points.toString(),
-                color = Color.White,
+                color = colors.primaryText,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.ExtraBold
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
                 text = "PTS",
-                color = MutedGray,
+                color = colors.mutedText,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 4.dp)
@@ -362,7 +365,7 @@ private fun PointsBlock(points: Int, wins: Int) {
         }
         Text(
             text = if (wins == 1) "1 WIN" else "$wins WINS",
-            color = if (wins > 0) RacingRed else MutedGray,
+            color = if (wins > 0) colors.racingRed else colors.mutedText,
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.5.sp

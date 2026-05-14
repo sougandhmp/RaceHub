@@ -11,23 +11,13 @@ import org.gce.racehub.auth.domain.repository.AuthRepository
  * Ktor/Retrofit implementation when the API is ready — nothing outside
  * this class needs to change because the rest of the code depends on the
  * [AuthRepository] interface, not this concrete class.
- *
- * Hard-coded test credentials (temporary):
- * 1. driver@racehub.com / race123
- * 2. sougandhmp@gmail.com / Sylasree*#0#
  */
 class AuthRepositoryImpl : AuthRepository {
 
-    /**
-     * Accepts hard-coded credential pairs; rejects everything else.
-     * In production this would make an authenticated HTTP request.
-     */
     override suspend fun login(email: String, password: String): AuthResult {
         return when {
             email == "driver@racehub.com" && password == "race123" ->
                 AuthResult.success(User(id = "1", email = email, name = "Race Driver"))
-            email == "sougandhmp@gmail.com" && password == "Sylasree*#0#" ->
-                AuthResult.success(User(id = "2", email = email, name = "Sougandhmp"))
             else ->
                 AuthResult.failure("Invalid email or password")
         }
