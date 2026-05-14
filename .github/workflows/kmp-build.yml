@@ -52,11 +52,9 @@ jobs:
           path: composeApp/build/outputs/apk/debug/*.apk
 
       - name: Decode Firebase Service Account
-        if: false
         run: echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" | base64 --decode > ${{ github.workspace }}/firebase-service-account.json
 
       - name: Upload to Firebase App Distribution
-        if: false
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
           appId: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
@@ -134,6 +132,7 @@ jobs:
             -scheme iosApp \
             -configuration Debug \
             -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath ../build/ios \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
@@ -171,12 +170,11 @@ jobs:
             -exportOptionsPlist /tmp/ExportOptions.plist \
             -exportPath $RUNNER_TEMP/ipa
 
-      - name: Upload iOS IPA Artifact
-        if: false
+      - name: Upload iOS Simulator App Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ios-ipa
-          path: ${{ runner.temp }}/ipa/*.ipa
+          name: ios-simulator-app
+          path: build/ios/Build/Products/Debug-iphonesimulator/iosApp.app
 
       - name: Decode Firebase Service Account
         if: false
