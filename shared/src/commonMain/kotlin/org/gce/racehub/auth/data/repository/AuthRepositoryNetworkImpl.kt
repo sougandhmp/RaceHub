@@ -48,20 +48,17 @@ class AuthRepositoryNetworkImpl(private val authService: AuthService) : AuthRepo
         }
     }
 
-    /**
-     * Creates a new user account via the sign-up API endpoint.
-     *
-     * Note: This method is a placeholder. The actual endpoint needs to be
-     * implemented once the backend sign-up API is ready.
-     *
-     * @param name The user's chosen display name
-     * @param email The email address to register
-     * @param password The chosen password
-     * @return [AuthResult] with success or failure
-     */
-    override suspend fun signUp(name: String, email: String, password: String): AuthResult {
-        // TODO: Implement sign-up API call once endpoint is available
-        return AuthResult.failure("Sign-up is not yet implemented")
+    override suspend fun signUp(username: String, email: String, password: String, country: String): AuthResult {
+        return try {
+            val response = authService.signUp(username, email, password, country)
+            if (response.success && response.data != null) {
+                AuthResult.success(response.data.user.toDomainModel(response.data.token))
+            } else {
+                AuthResult.failure(response.message)
+            }
+        } catch (_: Exception) {
+            AuthResult.failure("Could not create account. Check your connection and try again.")
+        }
     }
 
     override suspend fun logout(token: String): Boolean {

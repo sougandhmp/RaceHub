@@ -27,13 +27,14 @@ interface AuthRepository {
     /**
      * Creates a new user account.
      *
-     * @param name     The user's chosen display name.
+     * @param username The user's chosen display name / handle.
      * @param email    The email address to register.
      * @param password The chosen plain-text password (pre-validated by use case).
+     * @param country  ISO 3166-1 alpha-2 country code, e.g. "AU".
      * @return [AuthResult.success] with the new user profile, or
      *         [AuthResult.failure] with an error message.
      */
-    suspend fun signUp(name: String, email: String, password: String): AuthResult
+    suspend fun signUp(username: String, email: String, password: String, country: String): AuthResult
 
     /**
      * Invalidates the session on the server.

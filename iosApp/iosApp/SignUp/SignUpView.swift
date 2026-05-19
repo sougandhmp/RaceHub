@@ -42,13 +42,13 @@ struct SignUpView: View {
 
                     Spacer(minLength: 40)
 
-                    // Name
+                    // Username
                     inputField(
-                        label: "Full Name",
-                        placeholder: "John Doe",
+                        label: "Username",
+                        placeholder: "RaceFan",
                         text: Binding(
-                            get: { viewModel.state.name },
-                            set: { viewModel.send(.nameChanged($0)) }
+                            get: { viewModel.state.username },
+                            set: { viewModel.send(.usernameChanged($0)) }
                         ),
                         keyboardType: .default
                     )
@@ -91,6 +91,11 @@ struct SignUpView: View {
                         isVisible: viewModel.state.isConfirmPasswordVisible,
                         onToggle: { viewModel.send(.toggleConfirmPasswordVisibility) }
                     )
+
+                    Spacer(minLength: 14)
+
+                    // Country
+                    countryDropdown()
 
                     // Error
                     if let error = viewModel.state.errorMessage {
@@ -222,6 +227,56 @@ struct SignUpView: View {
             )
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
+    }
+
+    @ViewBuilder
+    private func countryDropdown() -> some View {
+        let code = viewModel.state.country
+        let displayName = Locale.current.localizedString(forRegionCode: code) ?? code
+        let hasSelection = !code.isEmpty
+
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Country")
+                .font(.caption)
+                .foregroundColor(Color(hex: t.authMuted))
+
+            Menu {
+                ForEach(isoCountries, id: \.code) { item in
+                    Button(action: { viewModel.send(.countryChanged(item.code)) }) {
+                        if item.code == code {
+                            Label(item.name, systemImage: "checkmark")
+                        } else {
+                            Text(item.name)
+                        }
+                    }
+                }
+            } label: {
+                HStack {
+                    Text(hasSelection ? displayName : "Select country")
+                        .foregroundColor(hasSelection ? .white : Color(hex: t.authMuted).opacity(0.6))
+                    Spacer()
+                    Image(systemName: "chevron.down")
+                        .font(.caption)
+                        .foregroundColor(Color(hex: t.authMuted))
+                }
+                .padding()
+                .background(Color.white.opacity(0.05))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(hasSelection ? AppColors.racingRed : Color(hex: t.authDimBorder), lineWidth: 1.5)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+        }
+    }
+
+    private var isoCountries: [(name: String, code: String)] {
+        Locale.isoRegionCodes
+            .compactMap { code -> (name: String, code: String)? in
+                guard let name = Locale.current.localizedString(forRegionCode: code), !name.isEmpty else { return nil }
+                return (name: name, code: code)
+            }
+            .sorted { $0.name < $1.name }
     }
 }
 

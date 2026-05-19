@@ -14,6 +14,7 @@ import org.gce.racehub.auth.data.dto.LogoutResponseDto
 import org.gce.racehub.auth.data.dto.PasswordResetConfirmDto
 import org.gce.racehub.auth.data.dto.PasswordResetRequestDto
 import org.gce.racehub.auth.data.dto.PasswordResetResponseDto
+import org.gce.racehub.auth.data.dto.SignUpRequestDto
 
 /**
  * Network service for authentication API calls.
@@ -38,6 +39,13 @@ class AuthService(private val httpClient: HttpClient, private val baseUrl: Strin
         return httpClient.post("$baseUrl/api/v1/auth/login") {
             contentType(ContentType.Application.Json)
             setBody(request)
+        }.body()
+    }
+
+    suspend fun signUp(username: String, email: String, password: String, country: String): LoginResponseDto {
+        return httpClient.post("$baseUrl/api/v1/auth/signup") {
+            contentType(ContentType.Application.Json)
+            setBody(SignUpRequestDto(username, email, password, country))
         }.body()
     }
 

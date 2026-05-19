@@ -25,8 +25,8 @@ class SignUpViewModel(
 
     fun onIntent(intent: SignUpIntent) {
         when (intent) {
-            is SignUpIntent.NameChanged ->
-                _state.update { it.copy(name = intent.name) }
+            is SignUpIntent.UsernameChanged ->
+                _state.update { it.copy(username = intent.username) }
 
             is SignUpIntent.EmailChanged ->
                 _state.update { it.copy(email = intent.email) }
@@ -36,6 +36,9 @@ class SignUpViewModel(
 
             is SignUpIntent.ConfirmPasswordChanged ->
                 _state.update { it.copy(confirmPassword = intent.confirmPassword) }
+
+            is SignUpIntent.CountryChanged ->
+                _state.update { it.copy(country = intent.country) }
 
             is SignUpIntent.TogglePasswordVisibility ->
                 _state.update { it.copy(isPasswordVisible = !it.isPasswordVisible) }
@@ -56,7 +59,7 @@ class SignUpViewModel(
             _state.update { it.copy(isLoading = true, errorMessage = null) }
 
             val s = _state.value
-            val result = signUpUseCase(s.name, s.email, s.password, s.confirmPassword)
+            val result = signUpUseCase(s.username, s.email, s.password, s.country, s.confirmPassword)
 
             if (result.isSuccess) {
                 result.user?.let(userSession::setUser)

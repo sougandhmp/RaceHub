@@ -23,7 +23,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -113,6 +112,7 @@ private fun RaceTabContent(
             NextRaceSection(
                 race = state.raceSchedule.firstOrNull { !it.isCompleted },
                 nextRaceDetail = state.nextRaceDetail,
+                totalRaces = state.raceSchedule.size,
                 colors = colors,
                 onViewAllSchedule = onViewAllSchedule
             )
@@ -140,176 +140,145 @@ private fun RaceTabContent(
 private fun NextRaceSection(
     race: Race?,
     nextRaceDetail: RaceDetail?,
+    totalRaces: Int,
     colors: AppColorScheme,
     onViewAllSchedule: () -> Unit
 ) {
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(colors.card)
             .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
+            .padding(20.dp)
     ) {
-        // Faded circuit image on the right
+        // R9/24 · SUN MAY 24  +  🇨🇦
+        val roundLabel = race?.let { "R${it.round}/$totalRaces" } ?: ""
+        val dateLabel = race?.let { formatRaceHeaderDate(it.dateTime) } ?: ""
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = listOf(roundLabel, dateLabel).filter { it.isNotEmpty() }.joinToString("  ·  "),
+                color = colors.mutedText,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.5.sp
+            )
+            if (race != null) {
+                Text(text = countryFlag(race.country), fontSize = 22.sp)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Race name
+        Text(
+            text = race?.let { shortRaceName(it.name) } ?: "No Upcoming Race",
+            color = colors.primaryText,
+            fontSize = 26.sp,
+            fontWeight = FontWeight.Black,
+            lineHeight = 30.sp
+        )
+
+        // Circuit name
+        if (race != null) {
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = race.circuit,
+                color = colors.mutedText,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
+
+        // Circuit image — centered
         val resId = race?.let { circuitDrawable(it.circuit) ?: circuitDrawable(it.name) }
         if (resId != null) {
+            Spacer(modifier = Modifier.height(16.dp))
             androidx.compose.foundation.Image(
                 painter = painterResource(resId),
                 contentDescription = null,
                 modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .size(170.dp)
-                    .padding(end = 4.dp)
-                    .alpha(0.10f),
+                    .fillMaxWidth()
+                    .height(130.dp)
+                    .alpha(0.22f),
                 contentScale = ContentScale.Fit
             )
         }
 
-        Column(modifier = Modifier
-            .fillMaxWidth()
-            .padding(20.dp)) {
-            // Header: ● UP NEXT + days countdown
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(7.dp)
-                            .clip(CircleShape)
-                            .background(colors.racingRed)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "UP NEXT",
-                        color = colors.mutedText,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 1.5.sp
-                    )
-                }
-                val days = race?.let { daysUntilRace(it.dateTime) }
-                if (days != null) {
-                    Text(
-                        text = "$days DAYS",
-                        color = colors.racingRed,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-                }
-            }
+        Spacer(modifier = Modifier.height(16.dp))
 
-            Spacer(modifier = Modifier.height(12.dp))
+        // Session strip: FP1 | FP2 | FP3 | QUAL | RACE
+        val sessions = if (nextRaceDetail?.sessions?.isNotEmpty() == true)
+            sessionsFromDetail(nextRaceDetail.sessions)
+        else
+            sessionsFromRace(race)
+        SessionStrip(sessions = sessions, colors = colors)
 
-            // Race name (leave right 35% clear for circuit image)
-            Text(
-                text = race?.name ?: "No Upcoming Race",
-                color = colors.primaryText,
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Black,
-                lineHeight = 30.sp,
-                modifier = Modifier.fillMaxWidth(0.65f)
-            )
+        Spacer(modifier = Modifier.height(16.dp))
 
-            // R9 · Circuit Gilles Villeneuve
-            if (race != null) {
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "R${race.round} · ${race.circuit}",
-                    color = colors.mutedText,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Stats: LIGHTS OUT | LENGTH | LAPS
-            val lightsOut = race?.let { formatLightsOut(it.dateTime) } ?: "—"
-            val length = nextRaceDetail?.trackFacts?.let { "${it.distanceKm} km" } ?: "—"
-            val laps = nextRaceDetail?.trackFacts?.laps?.toString() ?: "—"
-
-            Row(modifier = Modifier.fillMaxWidth()) {
-                StatItem("LIGHTS OUT", lightsOut, colors, Modifier.weight(1f))
-                StatItem("LENGTH", length, colors, Modifier.weight(1f))
-                StatItem("LAPS", laps, colors, Modifier.weight(1f))
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Session strip: FP1 | FP2 | FP3 | QUAL | RACE
-            val sessions = if (nextRaceDetail?.sessions?.isNotEmpty() == true)
-                sessionsFromDetail(nextRaceDetail.sessions)
-            else
-                sessionsFromRace(race)
-            SessionStrip(sessions = sessions, colors = colors)
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            HorizontalDivider(
-                color = colors.cardBorder,
-                thickness = 0.5.dp
-            )
-
-            TextButton(
-                onClick = onViewAllSchedule,
-                contentPadding = PaddingValues(0.dp),
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 36.dp)
+                    .weight(1f)
+                    .height(44.dp)
+                    .clip(RoundedCornerShape(22.dp))
+                    .border(1.dp, colors.cardBorder, RoundedCornerShape(22.dp))
+                    .clickable { },
+                contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Full schedule",
-                    color = colors.racingRed,
+                    text = "Weekend detail",
+                    color = colors.primaryText,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold
                 )
-                Spacer(modifier = Modifier.width(4.dp))
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                    contentDescription = null,
-                    tint = colors.racingRed,
-                    modifier = Modifier.size(14.dp)
-                )
+            }
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(44.dp)
+                    .clip(RoundedCornerShape(22.dp))
+                    .background(colors.racingRed)
+                    .clickable(onClick = onViewAllSchedule),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Full calendar",
+                        color = Color.White,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(13.dp)
+                    )
+                }
             }
         }
     }
 }
 
-@Composable
-private fun StatItem(
-    label: String,
-    value: String,
-    colors: AppColorScheme,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier) {
-        Text(
-            text = label,
-            color = colors.mutedText,
-            fontSize = 9.sp,
-            fontWeight = FontWeight.ExtraBold,
-            letterSpacing = 0.5.sp
-        )
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = value,
-            color = colors.primaryText,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}
-
-private data class SessionStripChip(val label: String, val month: String)
+private data class SessionStripChip(val label: String, val date: String, val time: String)
 
 @Composable
 private fun SessionStrip(sessions: List<RaceSessionChip>, colors: AppColorScheme) {
     val chips = sessions.map { chip ->
-        val month = chip.fullDate.split(" ").firstOrNull()?.take(3) ?: "—"
-        SessionStripChip(label = stripLabel(chip.label), month = month)
+        SessionStripChip(
+            label = stripLabel(chip.label),
+            date = chip.fullDate,
+            time = chip.time
+        )
     }
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -320,12 +289,12 @@ private fun SessionStrip(sessions: List<RaceSessionChip>, colors: AppColorScheme
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(10.dp))
                     .background(
                         if (isRace) colors.racingRed
                         else colors.cardBorder.copy(alpha = 0.4f)
                     )
-                    .padding(vertical = 8.dp),
+                    .padding(vertical = 10.dp, horizontal = 2.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
@@ -335,11 +304,17 @@ private fun SessionStrip(sessions: List<RaceSessionChip>, colors: AppColorScheme
                     fontWeight = FontWeight.ExtraBold,
                     letterSpacing = 0.3.sp
                 )
+                Spacer(modifier = Modifier.height(3.dp))
                 Text(
-                    text = chip.month,
-                    color = if (isRace) Color.White.copy(alpha = 0.9f) else colors.primaryText,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold
+                    text = chip.date,
+                    color = if (isRace) Color.White else colors.primaryText,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = chip.time,
+                    color = if (isRace) Color.White.copy(alpha = 0.85f) else colors.mutedText,
+                    fontSize = 9.sp
                 )
             }
         }
@@ -696,20 +671,39 @@ private data class RaceSessionChip(
     val timezone: String
 )
 
-private fun daysUntilRace(dateTime: String): Int? {
-    val raceDate = parseIsoToDate(dateTime) ?: return null
-    val now = java.util.Date()
-    if (raceDate.before(now)) return null
-    val diffMs = raceDate.time - now.time
-    val days = (diffMs / (1000L * 60 * 60 * 24)).toInt()
-    return if (days >= 0) days else null
+private fun shortRaceName(name: String): String =
+    name.replace("Grand Prix", "GP", ignoreCase = true).trim()
+
+private fun countryFlag(country: String): String = when {
+    country.contains("bahrain", true)                                          -> "🇧🇭"
+    country.contains("saudi", true)                                            -> "🇸🇦"
+    country.contains("australia", true)                                        -> "🇦🇺"
+    country.contains("japan", true)                                            -> "🇯🇵"
+    country.contains("china", true)                                            -> "🇨🇳"
+    country.contains("monaco", true)                                           -> "🇲🇨"
+    country.contains("canada", true)                                           -> "🇨🇦"
+    country.contains("spain", true)                                            -> "🇪🇸"
+    country.contains("austria", true)                                          -> "🇦🇹"
+    country.contains("britain", true) || country.contains("kingdom", true)    -> "🇬🇧"
+    country.contains("hungary", true)                                          -> "🇭🇺"
+    country.contains("belgium", true)                                          -> "🇧🇪"
+    country.contains("netherlands", true)                                      -> "🇳🇱"
+    country.contains("singapore", true)                                        -> "🇸🇬"
+    country.contains("azerbaijan", true)                                       -> "🇦🇿"
+    country.contains("qatar", true)                                            -> "🇶🇦"
+    country.contains("mexico", true)                                           -> "🇲🇽"
+    country.contains("brazil", true)                                           -> "🇧🇷"
+    country.contains("abu dhabi", true) || country.contains("emirates", true) -> "🇦🇪"
+    country.contains("united states", true) || country.contains("usa", true)  -> "🇺🇸"
+    country.contains("italy", true)                                            -> "🇮🇹"
+    else                                                                       -> "🏁"
 }
 
-private fun formatLightsOut(dateTime: String): String {
-    val date = parseIsoToDate(dateTime) ?: return "—"
-    return java.text.SimpleDateFormat("HH:mm", java.util.Locale.US)
+private fun formatRaceHeaderDate(dateTime: String): String {
+    val date = parseIsoToDate(dateTime) ?: return ""
+    return java.text.SimpleDateFormat("EEE MMM d", java.util.Locale.US)
         .apply { timeZone = java.util.TimeZone.getTimeZone("UTC") }
-        .format(date) + " UTC"
+        .format(date).uppercase()
 }
 
 private fun stripLabel(full: String): String = when (full.uppercase().trim()) {
@@ -737,12 +731,12 @@ private fun deviceTimezoneLabel(): String {
 }
 
 private fun formatSessionDate(cal: Calendar): String =
-    java.text.SimpleDateFormat("MMM d, yyyy,", java.util.Locale.US)
+    java.text.SimpleDateFormat("MMM d", java.util.Locale.US)
         .apply { timeZone = java.util.TimeZone.getDefault() }
         .format(cal.time)
 
 private fun formatSessionTime(cal: Calendar): String =
-    java.text.SimpleDateFormat("h:mm a", java.util.Locale.US)
+    java.text.SimpleDateFormat("HH:mm", java.util.Locale.US)
         .apply { timeZone = java.util.TimeZone.getDefault() }
         .format(cal.time)
 
