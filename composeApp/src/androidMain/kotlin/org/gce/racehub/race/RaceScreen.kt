@@ -54,10 +54,9 @@ import org.gce.racehub.race.domain.model.RaceDetail
 import org.gce.racehub.race.domain.model.RaceSession
 import org.gce.racehub.race.domain.model.TrendingThread
 import org.gce.racehub.theme.AppColorScheme
-import org.gce.racehub.theme.AppColorTokens
 import org.gce.racehub.theme.DarkAppColors
 import org.gce.racehub.theme.LocalAppColors
-import org.gce.racehub.theme.hexColor
+import org.gce.racehub.theme.teamColorOf
 import org.koin.compose.viewmodel.koinViewModel
 import java.util.Calendar
 
@@ -390,32 +389,36 @@ private fun StandingsSection(
         StandingsTabPills(selected = selected, onSelected = { selected = it }, colors = colors)
         Spacer(modifier = Modifier.height(12.dp))
         when (selected) {
-            StandingsTab.Drivers -> {
-                val displayDrivers = drivers.ifEmpty {
-                    listOf(
-                        DriverStanding(1, "George Russell", "Mercedes", 142, 3),
-                        DriverStanding(2, "Max Verstappen", "Red Bull", 134, 2),
-                        DriverStanding(3, "Lando Norris", "McLaren", 121, 1)
-                    )
+            StandingsTab.Drivers ->
+                if (drivers.isEmpty()) {
+                    StandingsLoadingPlaceholder(colors)
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        drivers.forEach { DriverStandingCard(it, colors) }
+                    }
                 }
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    displayDrivers.forEach { DriverStandingCard(it, colors) }
-                }
-            }
 
-            StandingsTab.Constructors -> {
-                val displayConstructors = constructors.ifEmpty {
-                    listOf(
-                        ConstructorStanding(1, "Mercedes", 276, 4),
-                        ConstructorStanding(2, "Red Bull", 207, 2),
-                        ConstructorStanding(3, "McLaren", 170, 1)
-                    )
+            StandingsTab.Constructors ->
+                if (constructors.isEmpty()) {
+                    StandingsLoadingPlaceholder(colors)
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        constructors.forEach { ConstructorStandingCard(it, colors) }
+                    }
                 }
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    displayConstructors.forEach { ConstructorStandingCard(it, colors) }
-                }
-            }
         }
+    }
+}
+
+@Composable
+private fun StandingsLoadingPlaceholder(colors: AppColorScheme) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text("Standings loading…", color = colors.mutedText, fontSize = 13.sp)
     }
 }
 
@@ -457,7 +460,7 @@ private fun StandingsTabPills(
 
 @Composable
 private fun DriverStandingCard(standing: DriverStanding, colors: AppColorScheme) {
-    val tColor = teamColor(standing.team)
+    val tColor = teamColorOf(standing.team)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -519,7 +522,7 @@ private fun DriverStandingCard(standing: DriverStanding, colors: AppColorScheme)
 
 @Composable
 private fun ConstructorStandingCard(standing: ConstructorStanding, colors: AppColorScheme) {
-    val tColor = teamColor(standing.name)
+    val tColor = teamColorOf(standing.name)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -720,22 +723,6 @@ private fun stripLabel(full: String): String = when (full.uppercase().trim()) {
     else -> full.take(4)
 }
 
-private fun teamColor(team: String): Color {
-    val t = team.lowercase()
-    return when {
-        "mercedes" in t -> hexColor(AppColorTokens.teamMercedes)
-        "mclaren" in t -> hexColor(AppColorTokens.teamMcLaren)
-        "red bull" in t -> hexColor(AppColorTokens.teamRedBull)
-        "ferrari" in t -> hexColor(AppColorTokens.teamFerrari)
-        "aston" in t -> hexColor(AppColorTokens.teamAston)
-        "alpine" in t -> hexColor(AppColorTokens.teamAlpine)
-        "williams" in t -> hexColor(AppColorTokens.teamWilliams)
-        "rb" in t || "racing bulls" in t -> hexColor(AppColorTokens.teamRb)
-        "haas" in t -> hexColor(AppColorTokens.teamHaas)
-        "sauber" in t || "kick" in t -> hexColor(AppColorTokens.teamSauber)
-        else -> hexColor(AppColorTokens.teamDefault)
-    }
-}
 
 private fun deviceTimezoneLabel(): String {
     val tz = java.util.TimeZone.getDefault()
@@ -770,40 +757,6 @@ private fun displayLabel(raw: String): String = when (raw.uppercase().trim()) {
     else -> raw.uppercase()
 }
 
-private fun parseIsoToDate(dateTime: String): java.util.Date? {
-    if (dateTime.isBlank()) return null
-    val s = dateTime.trim().replace(Regex("([+-]\\d{2}):(\\d{2})$"), "$1$2")
-    val utcPatterns = arrayOf(
-        "yyyy-MM-dd'T'HH:mm:ss'Z'",
-        "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-        "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'",
-        "yyyy-MM-dd'T'HH:mm:ss",
-        "yyyy-MM-dd HH:mm:ss",
-        "yyyy-MM-dd",
-    )
-    val tzPatterns = arrayOf(
-        "yyyy-MM-dd'T'HH:mm:ssZ",
-        "yyyy-MM-dd'T'HH:mm:ss.SSSZ",
-        "yyyy-MM-dd'T'HH:mm:ss.SSSSSSZ",
-    )
-    val utc = java.util.TimeZone.getTimeZone("UTC")
-    for (fmt in utcPatterns) {
-        try {
-            val d = java.text.SimpleDateFormat(fmt, java.util.Locale.US).apply { timeZone = utc }
-                .parse(s)
-            if (d != null) return d
-        } catch (_: Exception) {
-        }
-    }
-    for (fmt in tzPatterns) {
-        try {
-            val d = java.text.SimpleDateFormat(fmt, java.util.Locale.US).parse(s)
-            if (d != null) return d
-        } catch (_: Exception) {
-        }
-    }
-    return null
-}
 
 private fun sessionsFromRace(race: Race?): List<RaceSessionChip> {
     if (race == null) return emptyList()

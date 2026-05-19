@@ -250,33 +250,39 @@ private struct StandingsSection: View {
 
             switch selected {
             case .drivers:
-                let displayDrivers: [DriverStanding] = drivers.isEmpty
-                    ? [
-                        DriverStanding(position: 1, driverName: "George Russell", team: "Mercedes", points: 142, wins: 3),
-                        DriverStanding(position: 2, driverName: "Max Verstappen", team: "Red Bull", points: 134, wins: 2),
-                        DriverStanding(position: 3, driverName: "Lando Norris", team: "McLaren", points: 121, wins: 1)
-                      ]
-                    : drivers
-                VStack(spacing: 8) {
-                    ForEach(displayDrivers, id: \.position) { standing in
-                        DriverStandingCard(standing: standing, colors: colors)
+                if drivers.isEmpty {
+                    StandingsPlaceholder(colors: colors)
+                } else {
+                    VStack(spacing: 8) {
+                        ForEach(drivers, id: \.position) { standing in
+                            DriverStandingCard(standing: standing, colors: colors)
+                        }
                     }
                 }
             case .constructors:
-                let displayConstructors: [ConstructorStanding] = constructors.isEmpty
-                    ? [
-                        ConstructorStanding(position: 1, name: "Mercedes", points: 276, wins: 4),
-                        ConstructorStanding(position: 2, name: "Red Bull", points: 207, wins: 2),
-                        ConstructorStanding(position: 3, name: "McLaren", points: 170, wins: 1)
-                      ]
-                    : constructors
-                VStack(spacing: 8) {
-                    ForEach(displayConstructors, id: \.position) { standing in
-                        ConstructorStandingCard(standing: standing, colors: colors)
+                if constructors.isEmpty {
+                    StandingsPlaceholder(colors: colors)
+                } else {
+                    VStack(spacing: 8) {
+                        ForEach(constructors, id: \.position) { standing in
+                            ConstructorStandingCard(standing: standing, colors: colors)
+                        }
                     }
                 }
             }
         }
+    }
+}
+
+private struct StandingsPlaceholder: View {
+    let colors: AppColors
+
+    var body: some View {
+        Text("Standings loading…")
+            .font(.system(size: 13))
+            .foregroundColor(colors.mutedText)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
     }
 }
 

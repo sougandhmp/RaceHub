@@ -43,7 +43,7 @@ class RaceViewModel(
         }
     }
 
-    fun loadData() {
+    private fun loadData() {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
             try {
@@ -65,12 +65,9 @@ class RaceViewModel(
                 if (nextRace != null) {
                     fetchRaceDetail(nextRace.id)
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 _state.update {
-                    it.copy(
-                        isLoading = false,
-                        errorMessage = e.message ?: "Failed to load data. Pull to refresh."
-                    )
+                    it.copy(isLoading = false, errorMessage = "Failed to load data. Pull to refresh.")
                 }
             }
         }
@@ -82,7 +79,7 @@ class RaceViewModel(
             try {
                 val detail = getRaceDetailUseCase(slug)
                 _state.update { it.copy(isLoadingDetail = false, nextRaceDetail = detail) }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 _state.update { it.copy(isLoadingDetail = false) }
             }
         }

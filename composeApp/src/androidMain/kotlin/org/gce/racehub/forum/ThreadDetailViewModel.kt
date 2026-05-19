@@ -73,14 +73,14 @@ class ThreadDetailViewModel(
             try {
                 val updatedLikes = likeThreadUseCase(threadId)
                 _state.update { it.copy(likes = updatedLikes, isLiking = false) }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // Revert optimistic update on failure
                 _state.update {
                     it.copy(
                         isLiked = current.isLiked,
                         likes = current.likes,
                         isLiking = false,
-                        errorMessage = e.message ?: "Failed to update like."
+                        errorMessage = "Failed to update like."
                     )
                 }
             }
@@ -114,13 +114,8 @@ class ThreadDetailViewModel(
                         )
                     )
                 }
-            } catch (e: Exception) {
-                _state.update {
-                    it.copy(
-                        isSubmitting = false,
-                        errorMessage = e.message ?: "Failed to post comment."
-                    )
-                }
+            } catch (_: Exception) {
+                _state.update { it.copy(isSubmitting = false, errorMessage = "Failed to post comment.") }
             }
         }
     }

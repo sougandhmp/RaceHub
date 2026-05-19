@@ -9,6 +9,7 @@ import org.gce.racehub.db.LocalDataSource
 import org.gce.racehub.race.data.dto.*
 import org.gce.racehub.race.domain.model.*
 import org.gce.racehub.race.domain.repository.HomeRepository
+import org.gce.racehub.util.logError
 
 /**
  * Network-based implementation of [HomeRepository].
@@ -26,6 +27,14 @@ class HomeRepositoryNetworkImpl(
     private val baseUrl: String,
     private val localDataSource: LocalDataSource
 ) : HomeRepository {
+
+    companion object {
+        private const val TAG = "HomeRepository"
+        private const val SYNC_TIMEOUT_MS = 5_000L
+    }
+
+    private fun List<GraphQLError>?.toErrorMessage(fallback: String): String =
+        this?.joinToString { it.message }?.takeIf { it.isNotBlank() } ?: fallback
 
     // GraphQL query to fetch the signed-in user's profile
     private val profileQuery = $$"""
@@ -193,7 +202,7 @@ class HomeRepositoryNetworkImpl(
 
             val races = response.data?.races
             if (races == null) {
-                println("🚀 NETWORK LOG | Failed to sync races: ${response.errors?.joinToString { it.message } ?: "no data"}")
+                logError(TAG, "Failed to sync races: ${response.errors.toErrorMessage("no data")}")
                 return
             }
 
@@ -211,7 +220,7 @@ class HomeRepositoryNetworkImpl(
                 )
             })
         } catch (e: Exception) {
-            println("🚀 NETWORK LOG | Failed to sync races: ${e.message}")
+            logError(TAG, "Failed to sync races", e)
         }
     }
 
@@ -228,12 +237,12 @@ class HomeRepositoryNetworkImpl(
 
             val dashboard = response.data?.dashboard
             if (dashboard == null) {
-                println("🚀 NETWORK LOG | Failed to sync dashboard: ${response.errors?.joinToString { it.message } ?: "no data"}")
+                logError(TAG, "Failed to sync dashboard: ${response.errors.toErrorMessage("no data")}")
                 return
             }
             saveDashboardData(dashboard)
         } catch (e: Exception) {
-            println("🚀 NETWORK LOG | Failed to sync dashboard: ${e.message}")
+            logError(TAG, "Failed to sync dashboard", e)
         }
     }
 
@@ -325,7 +334,7 @@ class HomeRepositoryNetworkImpl(
             syncRaceSchedule()
         } else {
             try {
-                withTimeoutOrNull(5000) { syncRaceSchedule() }
+                withTimeoutOrNull(SYNC_TIMEOUT_MS) { syncRaceSchedule() }
             } catch (_: CancellationException) {}
         }
         return localDataSource.getAllRaces()
@@ -395,7 +404,7 @@ class HomeRepositoryNetworkImpl(
             }.body()
 
             val data = response.data
-                ?: error(response.errors?.joinToString { it.message } ?: "Empty GraphQL response")
+                ?: error(response.errors.toErrorMessage("Empty GraphQL response"))
 
             data.threads.map { dto ->
                 Thread(
@@ -414,7 +423,7 @@ class HomeRepositoryNetworkImpl(
                 )
             }
         } catch (e: Exception) {
-            println("🚀 NETWORK LOG | Failed to fetch threads: ${e.message}")
+            logError(TAG, "Failed to fetch threads", e)
             emptyList()
         }
     }
@@ -442,7 +451,7 @@ class HomeRepositoryNetworkImpl(
         }.body()
 
         val created = response.data?.createThread
-            ?: error(response.errors?.joinToString { it.message } ?: "Failed to create thread")
+            ?: error(response.errors.toErrorMessage("Failed to create thread"))
         return Thread(
             id = created.id,
             title = created.title,
@@ -474,7 +483,7 @@ class HomeRepositoryNetworkImpl(
         }.body()
 
         val me = response.data?.me
-            ?: error(response.errors?.joinToString { it.message } ?: "Failed to load profile")
+            ?: error(response.errors.toErrorMessage("Failed to load profile"))
         return UserProfile(
             username = me.username,
             email = me.email,
@@ -505,7 +514,7 @@ class HomeRepositoryNetworkImpl(
         }.body()
 
         val added = response.data?.addComment
-            ?: error(response.errors?.joinToString { it.message } ?: "Failed to add comment")
+            ?: error(response.errors.toErrorMessage("Failed to add comment"))
         return ThreadComment(content = added.content, authorUsername = userId)
     }
 
@@ -519,7 +528,7 @@ class HomeRepositoryNetworkImpl(
         }.body()
 
         val dto = response.data?.race
-            ?: error(response.errors?.joinToString { it.message } ?: "Failed to load race detail")
+            ?: error(response.errors.toErrorMessage("Failed to load race detail"))
         return RaceDetail(
             grandPrix = dto.grandPrix,
             circuit = dto.circuit,
@@ -550,7 +559,7 @@ class HomeRepositoryNetworkImpl(
         }.body()
 
         val result = response.data?.likeThread
-            ?: error(response.errors?.joinToString { it.message } ?: "Failed to like thread")
+            ?: error(response.errors.toErrorMessage("Failed to like thread"))
         return result.likes
     }
 
@@ -560,12 +569,10 @@ class HomeRepositoryNetworkImpl(
      */
     private suspend fun backgroundSync() {
         try {
-            withTimeoutOrNull(5000) {
+            withTimeoutOrNull(SYNC_TIMEOUT_MS) {
                 syncDashboard()
             }
-        } catch (_: CancellationException) {
-            // Timeout or cancellation - gracefully ignore
-        }
+        } catch (_: CancellationException) {}
     }
 
     /**
