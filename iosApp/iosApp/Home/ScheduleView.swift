@@ -67,8 +67,9 @@ struct RaceRow: View {
                         .font(.system(size: 12, weight: .bold))
                         .foregroundColor(colors.mutedText)
                 } else {
-                    if let days = race.daysRemaining {
-                        Text("\(Int(truncating: days)) DAYS")
+                    let days = daysUntil(race.dateTime)
+                    if let days, days > 0 {
+                        Text("\(days) DAYS")
                             .font(.system(size: 12, weight: .bold))
                             .foregroundColor(AppColors.racingRed)
                             .padding(.trailing, isNextRace ? 4 : 0)
@@ -89,7 +90,7 @@ struct RaceRow: View {
                 Text(race.name)
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(colors.primaryText)
-                Text(race.countryFlag)
+                Text(countryFlag(race.country))
                     .font(.system(size: 18))
             }
 
@@ -97,7 +98,7 @@ struct RaceRow: View {
                 .font(.system(size: 12))
                 .foregroundColor(colors.mutedText)
 
-            Text(race.date)
+            Text(formattedDate(race.dateTime))
                 .font(.system(size: 14))
                 .foregroundColor(colors.mutedText)
 
@@ -117,4 +118,32 @@ struct RaceRow: View {
                         lineWidth: isNextRace ? 2 : 1)
         )
     }
+}
+
+private func daysUntil(_ dateTime: String) -> Int? {
+    guard let date = ISO8601DateFormatter().date(from: dateTime) else { return nil }
+    return Calendar.current.dateComponents([.day], from: Date(), to: date).day
+}
+
+private func formattedDate(_ dateTime: String) -> String {
+    guard let date = ISO8601DateFormatter().date(from: dateTime) else { return dateTime }
+    let formatter = DateFormatter()
+    formatter.dateStyle = .medium
+    formatter.timeStyle = .none
+    return formatter.string(from: date)
+}
+
+private func countryFlag(_ country: String) -> String {
+    let codes: [String: String] = [
+        "australia": "AU", "bahrain": "BH", "saudi arabia": "SA",
+        "japan": "JP", "china": "CN", "united states": "US",
+        "monaco": "MC", "canada": "CA", "spain": "ES",
+        "austria": "AT", "great britain": "GB", "hungary": "HU",
+        "belgium": "BE", "netherlands": "NL", "italy": "IT",
+        "azerbaijan": "AZ", "singapore": "SG", "mexico": "MX",
+        "brazil": "BR", "qatar": "QA", "abu dhabi": "AE",
+        "united arab emirates": "AE"
+    ]
+    guard let code = codes[country.lowercased()] else { return "" }
+    return code.unicodeScalars.reduce("") { $0 + String(UnicodeScalar(127397 + $1.value)!) }
 }
