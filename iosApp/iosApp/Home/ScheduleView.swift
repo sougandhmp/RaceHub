@@ -147,3 +147,30 @@ private func countryFlag(_ country: String) -> String {
     guard let code = codes[country.lowercased()] else { return "" }
     return code.unicodeScalars.reduce("") { $0 + String(UnicodeScalar(127397 + $1.value)!) }
 }
+
+#Preview {
+    ScheduleView(schedule: [
+        Race(
+            id: "bahrain-2025",
+            name: "Bahrain Grand Prix",
+            circuit: "Bahrain International Circuit",
+            country: "Bahrain",
+            city: "Sakhir",
+            dateTime: "2025-03-02T15:00:00Z",
+            round: 1,
+            status: "COMPLETED",
+            weather: nil
+        ),
+        Race(
+            id: "australia-2025",
+            name: "Australian Grand Prix",
+            circuit: "Albert Park Circuit",
+            country: "Australia",
+            city: "Melbourne",
+            dateTime: "2025-03-16T05:00:00Z",
+            round: 2,
+            status: "UPCOMING",
+            weather: nil
+        )
+    ])
+}

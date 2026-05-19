@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
@@ -59,7 +60,6 @@ fun SignUpScreen(
     onNavigateToLogin: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val focusManager = LocalFocusManager.current
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
@@ -68,6 +68,21 @@ fun SignUpScreen(
             }
         }
     }
+
+    SignUpScreenContent(
+        state = state,
+        onIntent = viewModel::onIntent,
+        onNavigateToLogin = onNavigateToLogin
+    )
+}
+
+@Composable
+private fun SignUpScreenContent(
+    state: SignUpState,
+    onIntent: (SignUpIntent) -> Unit,
+    onNavigateToLogin: () -> Unit
+) {
+    val focusManager = LocalFocusManager.current
 
     Box(
         modifier = Modifier
@@ -111,7 +126,7 @@ fun SignUpScreen(
             // Name
             OutlinedTextField(
                 value = state.name,
-                onValueChange = { viewModel.onIntent(SignUpIntent.NameChanged(it)) },
+                onValueChange = { onIntent(SignUpIntent.NameChanged(it)) },
                 label = { Text("Full Name") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
@@ -131,7 +146,7 @@ fun SignUpScreen(
             // Email
             OutlinedTextField(
                 value = state.email,
-                onValueChange = { viewModel.onIntent(SignUpIntent.EmailChanged(it)) },
+                onValueChange = { onIntent(SignUpIntent.EmailChanged(it)) },
                 label = { Text("Email") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
@@ -151,7 +166,7 @@ fun SignUpScreen(
             // Password
             OutlinedTextField(
                 value = state.password,
-                onValueChange = { viewModel.onIntent(SignUpIntent.PasswordChanged(it)) },
+                onValueChange = { onIntent(SignUpIntent.PasswordChanged(it)) },
                 label = { Text("Password") },
                 singleLine = true,
                 visualTransformation = if (state.isPasswordVisible)
@@ -166,7 +181,7 @@ fun SignUpScreen(
                     onNext = { focusManager.moveFocus(FocusDirection.Down) }
                 ),
                 trailingIcon = {
-                    TextButton(onClick = { viewModel.onIntent(SignUpIntent.TogglePasswordVisibility) }) {
+                    TextButton(onClick = { onIntent(SignUpIntent.TogglePasswordVisibility) }) {
                         Text(
                             text = if (state.isPasswordVisible) "Hide" else "Show",
                             color = MutedGray,
@@ -184,7 +199,7 @@ fun SignUpScreen(
             // Confirm Password
             OutlinedTextField(
                 value = state.confirmPassword,
-                onValueChange = { viewModel.onIntent(SignUpIntent.ConfirmPasswordChanged(it)) },
+                onValueChange = { onIntent(SignUpIntent.ConfirmPasswordChanged(it)) },
                 label = { Text("Confirm Password") },
                 singleLine = true,
                 visualTransformation = if (state.isConfirmPasswordVisible)
@@ -198,11 +213,11 @@ fun SignUpScreen(
                 keyboardActions = KeyboardActions(
                     onDone = {
                         focusManager.clearFocus()
-                        viewModel.onIntent(SignUpIntent.SignUp)
+                        onIntent(SignUpIntent.SignUp)
                     }
                 ),
                 trailingIcon = {
-                    TextButton(onClick = { viewModel.onIntent(SignUpIntent.ToggleConfirmPasswordVisibility) }) {
+                    TextButton(onClick = { onIntent(SignUpIntent.ToggleConfirmPasswordVisibility) }) {
                         Text(
                             text = if (state.isConfirmPasswordVisible) "Hide" else "Show",
                             color = MutedGray,
@@ -227,7 +242,7 @@ fun SignUpScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             Button(
-                onClick = { viewModel.onIntent(SignUpIntent.SignUp) },
+                onClick = { onIntent(SignUpIntent.SignUp) },
                 enabled = !state.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -289,3 +304,13 @@ private fun textFieldColors() = OutlinedTextFieldDefaults.colors(
     focusedContainerColor = Color.Transparent,
     unfocusedContainerColor = Color.Transparent
 )
+
+@Preview(showBackground = true)
+@Composable
+private fun SignUpScreenPreview() {
+    SignUpScreenContent(
+        state = SignUpState(name = "Max Verstappen", email = "max@redbull.com"),
+        onIntent = {},
+        onNavigateToLogin = {}
+    )
+}

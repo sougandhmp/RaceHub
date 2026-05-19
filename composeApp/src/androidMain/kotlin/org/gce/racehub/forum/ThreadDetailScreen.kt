@@ -40,6 +40,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -56,9 +57,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.gce.racehub.race.domain.model.Thread
+import org.gce.racehub.race.domain.model.ThreadAuthor
 import org.gce.racehub.race.domain.model.ThreadComment
 import org.gce.racehub.theme.AppColorScheme
+import org.gce.racehub.theme.DarkAppColors
 import org.gce.racehub.theme.LocalAppColors
+import androidx.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -71,20 +75,8 @@ fun ThreadDetailScreen(
     val state by viewModel.state.collectAsState()
     val colors = LocalAppColors.current
     val context = LocalContext.current
-    val snackbarHostState = remember { SnackbarHostState() }
-    val commentFocusRequester = remember { FocusRequester() }
-
-    val allComments = thread.comments + state.postedComments
 
     LaunchedEffect(Unit) { viewModel.initLikes(thread.likes) }
-
-    LaunchedEffect(state.errorMessage) {
-        val msg = state.errorMessage
-        if (msg != null) {
-            snackbarHostState.showSnackbar(msg)
-            viewModel.onIntent(ThreadDetailIntent.DismissError)
-        }
-    }
 
     val onShare = {
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
@@ -96,6 +88,38 @@ fun ThreadDetailScreen(
             )
         }
         context.startActivity(Intent.createChooser(shareIntent, "Share thread"))
+    }
+
+    ThreadDetailContent(
+        thread = thread,
+        state = state,
+        colors = colors,
+        onIntent = viewModel::onIntent,
+        onBack = onBack,
+        onShare = onShare
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ThreadDetailContent(
+    thread: Thread,
+    state: ThreadDetailState,
+    colors: AppColorScheme,
+    onIntent: (ThreadDetailIntent) -> Unit,
+    onBack: () -> Unit,
+    onShare: () -> Unit
+) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    val commentFocusRequester = remember { FocusRequester() }
+    val allComments = thread.comments + state.postedComments
+
+    LaunchedEffect(state.errorMessage) {
+        val msg = state.errorMessage
+        if (msg != null) {
+            snackbarHostState.showSnackbar(msg)
+            onIntent(ThreadDetailIntent.DismissError)
+        }
     }
 
     Scaffold(
@@ -134,10 +158,10 @@ fun ThreadDetailScreen(
         bottomBar = {
             CommentInputBar(
                 value = state.commentInput,
-                onValueChange = { viewModel.onIntent(ThreadDetailIntent.CommentInputChanged(it)) },
+                onValueChange = { onIntent(ThreadDetailIntent.CommentInputChanged(it)) },
                 canSubmit = state.canSubmit,
                 isSubmitting = state.isSubmitting,
-                onSubmit = { viewModel.onIntent(ThreadDetailIntent.SubmitComment(thread.id)) },
+                onSubmit = { onIntent(ThreadDetailIntent.SubmitComment(thread.id)) },
                 focusRequester = commentFocusRequester,
                 colors = colors
             )
@@ -159,7 +183,7 @@ fun ThreadDetailScreen(
                     isLiked = state.isLiked,
                     isLiking = state.isLiking,
                     colors = colors,
-                    onLikeClick = { viewModel.onIntent(ThreadDetailIntent.ToggleLike(thread.id)) },
+                    onLikeClick = { onIntent(ThreadDetailIntent.ToggleLike(thread.id)) },
                     onReplyClick = { commentFocusRequester.requestFocus() },
                     onShareClick = onShare
                 )
@@ -453,4 +477,34 @@ private fun formatTimestamp(createdAt: String): String {
     val datePart = createdAt.substringBefore('T')
     val timePart = createdAt.substringAfter('T', "").substringBefore('.').take(5)
     return if (timePart.isNotEmpty()) "$datePart · $timePart" else datePart
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ThreadDetailScreenPreview() {
+    val thread = Thread(
+        id = "42",
+        title = "Verstappen vs Norris — who was faster in Monaco quali?",
+        category = "Race Weekends",
+        author = ThreadAuthor(username = "PaddockInsider", avatar = "PI"),
+        excerpt = null,
+        content = "Both drivers looked incredibly quick in the final sector. Let's break down the telemetry...",
+        createdAt = "2025-05-24T10:15:00Z",
+        likes = 89,
+        bookmarked = false,
+        comments = listOf(
+            ThreadComment("Norris had better exit speed in Rascasse.", "TechF1"),
+            ThreadComment("Max was on older tyres though.", "RedBullFanatic")
+        )
+    )
+    CompositionLocalProvider(LocalAppColors provides DarkAppColors) {
+        ThreadDetailContent(
+            thread = thread,
+            state = ThreadDetailState(likes = 89, commentInput = ""),
+            colors = DarkAppColors,
+            onIntent = {},
+            onBack = {},
+            onShare = {}
+        )
+    }
 }

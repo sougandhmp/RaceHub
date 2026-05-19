@@ -30,8 +30,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -40,7 +42,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.gce.racehub.race.domain.model.Thread
+import org.gce.racehub.race.domain.model.ThreadAuthor
+import org.gce.racehub.race.domain.model.ThreadComment
 import org.gce.racehub.theme.AppColorScheme
+import org.gce.racehub.theme.DarkAppColors
 import org.gce.racehub.theme.LocalAppColors
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -73,12 +78,33 @@ fun ForumScreen(
         onRefresh = { viewModel.onIntent(ForumIntent.Refresh) },
         modifier = Modifier.fillMaxSize().background(colors.background)
     ) {
+        ForumScreenContent(
+            state = state,
+            colors = colors,
+            onSortSelected = { viewModel.onIntent(ForumIntent.SelectSort(it)) },
+            onCategorySelected = { viewModel.onIntent(ForumIntent.SelectCategory(it)) },
+            onCreateThread = onCreateThread,
+            onThreadClick = onThreadClick
+        )
+    }
+}
+
+@Composable
+private fun ForumScreenContent(
+    state: ForumState,
+    colors: AppColorScheme,
+    onSortSelected: (String) -> Unit,
+    onCategorySelected: (String?) -> Unit,
+    onCreateThread: () -> Unit,
+    onThreadClick: (Thread) -> Unit
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             FilterRow(
                 selectedSort = state.selectedSort,
                 selectedCategory = state.selectedCategory,
-                onSortSelected = { viewModel.onIntent(ForumIntent.SelectSort(it)) },
-                onCategorySelected = { viewModel.onIntent(ForumIntent.SelectCategory(it)) },
+                onSortSelected = onSortSelected,
+                onCategorySelected = onCategorySelected,
                 colors = colors
             )
 
@@ -325,4 +351,46 @@ private fun formatRelative(createdAt: String): String {
     val datePart = createdAt.substringBefore('T')
     val timePart = createdAt.substringAfter('T', missingDelimiterValue = "").substringBefore('.').take(5)
     return if (timePart.isNotEmpty()) "$datePart · $timePart" else datePart
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ForumScreenPreview() {
+    val sampleThread = Thread(
+        id = "1",
+        title = "Was the Monaco GP race the most boring in years?",
+        category = "Race Weekends",
+        author = ThreadAuthor(username = "MaxFan33", avatar = "MF"),
+        excerpt = "The safety car periods ruined any chance of real racing. What do you think?",
+        content = "Full content here...",
+        createdAt = "2025-05-26T14:30:00Z",
+        likes = 42,
+        bookmarked = true,
+        comments = listOf(ThreadComment("Agreed, terrible race.", "LandoFan99"))
+    )
+    CompositionLocalProvider(LocalAppColors provides DarkAppColors) {
+        ForumScreenContent(
+            state = ForumState(threads = listOf(sampleThread, sampleThread.copy(id = "2", bookmarked = false, likes = 7))),
+            colors = DarkAppColors,
+            onSortSelected = {},
+            onCategorySelected = {},
+            onCreateThread = {},
+            onThreadClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Forum – empty state")
+@Composable
+private fun ForumScreenEmptyPreview() {
+    CompositionLocalProvider(LocalAppColors provides DarkAppColors) {
+        ForumScreenContent(
+            state = ForumState(threads = emptyList()),
+            colors = DarkAppColors,
+            onSortSelected = {},
+            onCategorySelected = {},
+            onCreateThread = {},
+            onThreadClick = {}
+        )
+    }
 }

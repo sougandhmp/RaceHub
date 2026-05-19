@@ -3,6 +3,8 @@ package org.gce.racehub.home
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,6 +49,7 @@ import org.gce.racehub.race.domain.model.ConstructorStanding
 import org.gce.racehub.race.domain.model.DriverStanding
 import org.gce.racehub.theme.AppColorScheme
 import org.gce.racehub.theme.AppColorTokens
+import org.gce.racehub.theme.DarkAppColors
 import org.gce.racehub.theme.LocalAppColors
 import org.gce.racehub.theme.hexColor
 
@@ -369,6 +372,27 @@ private fun PointsBlock(points: Int, wins: Int, colors: AppColorScheme) {
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.5.sp
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun StandingsScreenPreview() {
+    CompositionLocalProvider(LocalAppColors provides DarkAppColors) {
+        StandingsScreen(
+            drivers = listOf(
+                DriverStanding(1, "Max Verstappen", "Red Bull", 429, 15),
+                DriverStanding(2, "Lando Norris", "McLaren", 349, 3),
+                DriverStanding(3, "Charles Leclerc", "Ferrari", 341, 5),
+                DriverStanding(4, "George Russell", "Mercedes", 287, 2),
+            ),
+            constructors = listOf(
+                ConstructorStanding(1, "Red Bull", 860, 21),
+                ConstructorStanding(2, "Ferrari", 652, 5),
+                ConstructorStanding(3, "McLaren", 556, 3),
+            ),
+            onBack = {}
         )
     }
 }
