@@ -1,6 +1,7 @@
 package org.gce.racehub.auth.data.repository
 
 import org.gce.racehub.auth.domain.model.AuthResult
+import org.gce.racehub.auth.domain.model.PasswordResetResult
 import org.gce.racehub.auth.domain.model.User
 import org.gce.racehub.auth.domain.repository.AuthRepository
 
@@ -32,4 +33,11 @@ class AuthRepositoryImpl : AuthRepository {
     }
 
     override suspend fun logout(token: String): Boolean = true
+
+    override suspend fun requestPasswordReset(email: String): PasswordResetResult =
+        PasswordResetResult.success()
+
+    override suspend fun confirmPasswordReset(email: String, otp: String, newPassword: String): PasswordResetResult =
+        if (otp == "123456") PasswordResetResult.success()
+        else PasswordResetResult.failure("Invalid reset code")
 }

@@ -1,5 +1,6 @@
 package org.gce.racehub.di
 
+import org.gce.racehub.forgotpassword.ForgotPasswordViewModel
 import org.gce.racehub.forum.ForumViewModel
 import org.gce.racehub.forum.ThreadDetailViewModel
 import org.gce.racehub.home.CreateThreadViewModel
@@ -17,6 +18,7 @@ val appModule = module {
     single { ThemeManager(androidContext()) }
     viewModelOf(::LoginViewModel)
     viewModelOf(::SignUpViewModel)
+    viewModelOf(::ForgotPasswordViewModel)
     viewModelOf(::HomeViewModel)
     viewModelOf(::RaceViewModel)
     viewModelOf(::ForumViewModel)
