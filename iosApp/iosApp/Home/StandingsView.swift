@@ -233,3 +233,18 @@ private struct PointsBlock: View {
         }
     }
 }
+
+#Preview {
+    StandingsView(
+        drivers: [
+            DriverStanding(position: 1, driverName: "George Russell", team: "Mercedes", points: 142, wins: 3),
+            DriverStanding(position: 2, driverName: "Max Verstappen", team: "Red Bull", points: 134, wins: 2),
+            DriverStanding(position: 3, driverName: "Lando Norris", team: "McLaren", points: 121, wins: 1)
+        ],
+        constructors: [
+            ConstructorStanding(position: 1, name: "Mercedes", points: 276, wins: 4),
+            ConstructorStanding(position: 2, name: "Red Bull", points: 207, wins: 2),
+            ConstructorStanding(position: 3, name: "McLaren", points: 170, wins: 1)
+        ]
+    )
+}

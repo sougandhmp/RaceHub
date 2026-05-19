@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
@@ -57,7 +58,6 @@ fun LoginScreen(
     onNavigateToSignUp: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val focusManager = LocalFocusManager.current
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
@@ -66,6 +66,21 @@ fun LoginScreen(
             }
         }
     }
+
+    LoginScreenContent(
+        state = state,
+        onIntent = viewModel::onIntent,
+        onNavigateToSignUp = onNavigateToSignUp
+    )
+}
+
+@Composable
+private fun LoginScreenContent(
+    state: LoginState,
+    onIntent: (LoginIntent) -> Unit,
+    onNavigateToSignUp: () -> Unit
+) {
+    val focusManager = LocalFocusManager.current
 
     Box(
         modifier = Modifier
@@ -105,7 +120,7 @@ fun LoginScreen(
 
             OutlinedTextField(
                 value = state.email,
-                onValueChange = { viewModel.onIntent(LoginIntent.EmailChanged(it)) },
+                onValueChange = { onIntent(LoginIntent.EmailChanged(it)) },
                 label = { Text("Email") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
@@ -124,7 +139,7 @@ fun LoginScreen(
 
             OutlinedTextField(
                 value = state.password,
-                onValueChange = { viewModel.onIntent(LoginIntent.PasswordChanged(it)) },
+                onValueChange = { onIntent(LoginIntent.PasswordChanged(it)) },
                 label = { Text("Password") },
                 singleLine = true,
                 visualTransformation = if (state.isPasswordVisible)
@@ -138,11 +153,11 @@ fun LoginScreen(
                 keyboardActions = KeyboardActions(
                     onDone = {
                         focusManager.clearFocus()
-                        viewModel.onIntent(LoginIntent.Login)
+                        onIntent(LoginIntent.Login)
                     }
                 ),
                 trailingIcon = {
-                    TextButton(onClick = { viewModel.onIntent(LoginIntent.TogglePasswordVisibility) }) {
+                    TextButton(onClick = { onIntent(LoginIntent.TogglePasswordVisibility) }) {
                         Text(
                             text = if (state.isPasswordVisible) "Hide" else "Show",
                             color = MutedGray,
@@ -158,7 +173,7 @@ fun LoginScreen(
             if (state.errorMessage != null) {
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
-                    text = state.errorMessage!!,
+                    text = state.errorMessage,
                     color = RacingRed,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -167,7 +182,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(36.dp))
 
             Button(
-                onClick = { viewModel.onIntent(LoginIntent.Login) },
+                onClick = { onIntent(LoginIntent.Login) },
                 enabled = !state.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -211,9 +226,28 @@ fun LoginScreen(
                     )
                 }
             }
-
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun LoginScreenPreview() {
+    LoginScreenContent(
+        state = LoginState(email = "driver@f1.com"),
+        onIntent = {},
+        onNavigateToSignUp = {}
+    )
+}
+
+@Preview(showBackground = true, name = "Login – error state")
+@Composable
+private fun LoginScreenErrorPreview() {
+    LoginScreenContent(
+        state = LoginState(email = "bad@email", password = "wrong", errorMessage = "Invalid credentials"),
+        onIntent = {},
+        onNavigateToSignUp = {}
+    )
 }
 
 @Composable

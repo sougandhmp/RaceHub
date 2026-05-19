@@ -248,3 +248,11 @@ private func formatRelative(_ createdAt: String) -> String {
     let timePart = createdAt.split(separator: "T").last?.split(separator: ".").first?.prefix(5) ?? ""
     return timePart.isEmpty ? String(datePart) : "\(datePart) · \(timePart)"
 }
+
+#Preview {
+    ForumView(
+        viewModel: ForumViewModel(),
+        onCreateThread: {},
+        onThreadTap: { _ in }
+    )
+}

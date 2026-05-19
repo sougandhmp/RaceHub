@@ -27,9 +27,11 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -39,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.gce.racehub.theme.AppColorScheme
+import org.gce.racehub.theme.DarkAppColors
 import org.gce.racehub.theme.LocalAppColors
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -59,6 +62,21 @@ fun CreateThreadScreen(
         }
     }
 
+    CreateThreadContent(
+        state = state,
+        colors = colors,
+        onIntent = viewModel::onIntent,
+        onCancel = onCancel
+    )
+}
+
+@Composable
+private fun CreateThreadContent(
+    state: CreateThreadState,
+    colors: AppColorScheme,
+    onIntent: (CreateThreadIntent) -> Unit,
+    onCancel: () -> Unit
+) {
     Box(modifier = Modifier.fillMaxSize().background(colors.background)) {
         Column(
             modifier = Modifier
@@ -88,7 +106,7 @@ fun CreateThreadScreen(
             FieldLabel("TITLE", colors)
             OutlinedTextField(
                 value = state.title,
-                onValueChange = { viewModel.onIntent(CreateThreadIntent.TitleChanged(it)) },
+                onValueChange = { onIntent(CreateThreadIntent.TitleChanged(it)) },
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text("What's on your mind?", color = colors.mutedText) },
                 singleLine = true,
@@ -102,7 +120,7 @@ fun CreateThreadScreen(
             CategoryPicker(
                 selected = state.category,
                 enabled = !state.isSubmitting,
-                onSelect = { viewModel.onIntent(CreateThreadIntent.CategoryChanged(it)) },
+                onSelect = { onIntent(CreateThreadIntent.CategoryChanged(it)) },
                 colors = colors
             )
 
@@ -110,7 +128,7 @@ fun CreateThreadScreen(
             FieldLabel("CONTENT", colors)
             OutlinedTextField(
                 value = state.content,
-                onValueChange = { viewModel.onIntent(CreateThreadIntent.ContentChanged(it)) },
+                onValueChange = { onIntent(CreateThreadIntent.ContentChanged(it)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(220.dp),
@@ -126,7 +144,7 @@ fun CreateThreadScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
             Button(
-                onClick = { viewModel.onIntent(CreateThreadIntent.Submit) },
+                onClick = { onIntent(CreateThreadIntent.Submit) },
                 enabled = state.canSubmit,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -149,6 +167,23 @@ fun CreateThreadScreen(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun CreateThreadScreenPreview() {
+    CompositionLocalProvider(LocalAppColors provides DarkAppColors) {
+        CreateThreadContent(
+            state = CreateThreadState(
+                title = "Ferrari strategy blunder in Monaco?",
+                category = "Race Weekends",
+                content = "They undercut at the wrong time and ended up behind both McLarens..."
+            ),
+            colors = DarkAppColors,
+            onIntent = {},
+            onCancel = {}
+        )
     }
 }
 

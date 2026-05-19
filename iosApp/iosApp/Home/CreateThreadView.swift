@@ -189,3 +189,7 @@ struct CreateThreadView: View {
         .disabled(!viewModel.state.canSubmit)
     }
 }
+
+#Preview {
+    CreateThreadView(onThreadCreated: {})
+}

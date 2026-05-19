@@ -333,3 +333,21 @@ private func formatTimestamp(_ createdAt: String) -> String {
     let timePart = createdAt.split(separator: "T").last?.split(separator: ".").first?.prefix(5) ?? ""
     return timePart.isEmpty ? datePart : "\(datePart) · \(timePart)"
 }
+
+#Preview {
+    let sampleThread = Shared.Thread(
+        id: "t1",
+        title: "Max's pace looks incredible this weekend",
+        category: "Race Weekends",
+        author: ThreadAuthor(username: "f1fan", avatar: "F1"),
+        excerpt: "Did you catch Q2?",
+        content: "The car setup looks completely different from last race. The rear is much more planted.",
+        createdAt: "2025-03-16T10:00:00Z",
+        likes: 42,
+        bookmarked: false,
+        comments: [ThreadComment(content: "Totally agree!", authorUsername: "speedfreak")]
+    )
+    return NavigationStack {
+        ThreadDetailView(thread: sampleThread)
+    }
+}

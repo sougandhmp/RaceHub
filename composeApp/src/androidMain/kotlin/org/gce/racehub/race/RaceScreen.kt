@@ -34,6 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -42,6 +43,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -53,6 +55,7 @@ import org.gce.racehub.race.domain.model.RaceSession
 import org.gce.racehub.race.domain.model.TrendingThread
 import org.gce.racehub.theme.AppColorScheme
 import org.gce.racehub.theme.AppColorTokens
+import org.gce.racehub.theme.DarkAppColors
 import org.gce.racehub.theme.LocalAppColors
 import org.gce.racehub.theme.hexColor
 import org.koin.compose.viewmodel.koinViewModel
@@ -868,6 +871,36 @@ private fun sessionsFromDetail(sessions: List<RaceSession>): List<RaceSessionChi
             fullDate = fullDate,
             time = time,
             timezone = tzLabel
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun RaceScreenPreview() {
+    CompositionLocalProvider(LocalAppColors provides DarkAppColors) {
+        RaceTabContent(
+            state = RaceState(
+                raceSchedule = listOf(
+                    Race("1", "Monaco Grand Prix", "Circuit de Monaco", "Monaco", "Monte Carlo", "2025-06-01T13:00:00Z", 9, "UPCOMING", "Sunny")
+                ),
+                driverStandings = listOf(
+                    DriverStanding(1, "Max Verstappen", "Red Bull", 429, 15),
+                    DriverStanding(2, "Lando Norris", "McLaren", 349, 3),
+                    DriverStanding(3, "Charles Leclerc", "Ferrari", 341, 5),
+                ),
+                constructorStandings = listOf(
+                    ConstructorStanding(1, "Red Bull", 860, 21),
+                    ConstructorStanding(2, "McLaren", 556, 3),
+                    ConstructorStanding(3, "Ferrari", 652, 5),
+                ),
+                trendingThreads = listOf(
+                    TrendingThread("1", "Was the Monaco race boring? Discuss.", 124, "2025-05-26T12:00:00Z")
+                )
+            ),
+            colors = DarkAppColors,
+            onViewAllSchedule = {},
+            onViewAllStandings = {}
         )
     }
 }

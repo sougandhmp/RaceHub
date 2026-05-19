@@ -465,3 +465,11 @@ private struct FeaturedSection: View {
         }
     }
 }
+
+#Preview {
+    RaceView(
+        viewModel: RaceViewModel(),
+        onViewAllSchedule: {},
+        onViewAllStandings: {}
+    )
+}

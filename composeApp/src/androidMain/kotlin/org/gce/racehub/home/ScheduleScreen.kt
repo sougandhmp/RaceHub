@@ -15,7 +15,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.tooling.preview.Preview
 import org.gce.racehub.race.circuitDrawable
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -23,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.gce.racehub.race.domain.model.Race
 import org.gce.racehub.theme.AppColorScheme
+import org.gce.racehub.theme.DarkAppColors
 import org.gce.racehub.theme.LocalAppColors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -244,6 +247,21 @@ private fun weatherEmoji(weather: String): String {
         "wind" in w || "breez" in w -> "💨"
         "hot" in w || "humid" in w -> "🌡️"
         else -> "🌤️"
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ScheduleScreenPreview() {
+    CompositionLocalProvider(LocalAppColors provides DarkAppColors) {
+        ScheduleScreen(
+            schedule = listOf(
+                Race("1", "Bahrain Grand Prix", "Bahrain International Circuit", "Bahrain", "Sakhir", "2025-03-02T15:00:00Z", 1, "COMPLETED", "Sunny"),
+                Race("2", "Saudi Arabian Grand Prix", "Jeddah Corniche Circuit", "Saudi Arabia", "Jeddah", "2025-06-01T17:00:00Z", 8, "UPCOMING", "Clear"),
+                Race("3", "Monaco Grand Prix", "Circuit de Monaco", "Monaco", "Monte Carlo", "2025-05-25T13:00:00Z", 9, "UPCOMING"),
+            ),
+            onBack = {}
+        )
     }
 }
 

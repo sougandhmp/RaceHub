@@ -66,3 +66,12 @@ struct CircuitImageView: View {
         .frame(height: height)
     }
 }
+
+#Preview {
+    CircuitImageView(
+        circuitName: "Bahrain International Circuit",
+        grandPrixName: "Bahrain Grand Prix",
+        colors: AppColors.forScheme(.light)
+    )
+    .padding()
+}

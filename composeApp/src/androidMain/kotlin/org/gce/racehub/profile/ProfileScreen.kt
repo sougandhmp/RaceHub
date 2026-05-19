@@ -25,9 +25,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -38,6 +40,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.gce.racehub.auth.domain.model.User
 import org.gce.racehub.race.domain.model.UserProfile
 import org.gce.racehub.theme.AppColorScheme
+import org.gce.racehub.theme.DarkAppColors
 import org.gce.racehub.theme.LocalAppColors
 import org.gce.racehub.theme.ThemeManager
 import org.gce.racehub.theme.ThemeMode
@@ -63,9 +66,27 @@ fun ProfileScreen(
         }
     }
 
+    ProfileContent(
+        state = state,
+        themeMode = themeMode,
+        colors = colors,
+        onThemeSelect = { themeManager.setThemeMode(it) },
+        onIntent = viewModel::onIntent
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ProfileContent(
+    state: ProfileState,
+    themeMode: ThemeMode,
+    colors: AppColorScheme,
+    onThemeSelect: (ThemeMode) -> Unit,
+    onIntent: (ProfileIntent) -> Unit
+) {
     PullToRefreshBox(
         isRefreshing = state.isLoadingProfile,
-        onRefresh = { viewModel.onIntent(ProfileIntent.RefreshProfile) },
+        onRefresh = { onIntent(ProfileIntent.RefreshProfile) },
         modifier = Modifier.fillMaxSize()
     ) {
         Box(
@@ -97,7 +118,7 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(24.dp))
                     ThemeToggle(
                         themeMode = themeMode,
-                        onSelect = { themeManager.setThemeMode(it) },
+                        onSelect = onThemeSelect,
                         colors = colors
                     )
                     state.profile?.let { profile ->
@@ -134,12 +155,45 @@ fun ProfileScreen(
                     SignOutButton(
                         isSigningOut = state.isSigningOut,
                         colors = colors,
-                        onClick = { viewModel.onIntent(ProfileIntent.SignOut) }
+                        onClick = { onIntent(ProfileIntent.SignOut) }
                     )
                     Spacer(modifier = Modifier.height(24.dp))
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ProfileScreenPreview() {
+    val user = User(
+        id = "1",
+        email = "max@redbull.com",
+        name = "Max Verstappen",
+        username = "maxverstappen",
+        country = "NL",
+        role = "member",
+        joinedAt = "2023-03-01T00:00:00Z",
+        postsCount = 42
+    )
+    val profile = UserProfile(
+        username = "maxverstappen",
+        email = "max@redbull.com",
+        avatar = "MV",
+        postsCount = 42,
+        savedCount = 7,
+        recentThreadTitles = listOf("Monaco race was a masterclass", "Red Bull PU update thoughts"),
+        savedThreadTitles = listOf("Best F1 moments of the decade")
+    )
+    CompositionLocalProvider(LocalAppColors provides DarkAppColors) {
+        ProfileContent(
+            state = ProfileState(user = user, profile = profile),
+            themeMode = ThemeMode.DARK,
+            colors = DarkAppColors,
+            onThemeSelect = {},
+            onIntent = {}
+        )
     }
 }
 

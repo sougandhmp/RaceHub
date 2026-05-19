@@ -351,3 +351,8 @@ private func formatJoined(_ joinedAt: String?) -> String {
     guard month >= 1, month <= months.count else { return datePart }
     return "\(months[month - 1]) \(parts[0])"
 }
+
+#Preview {
+    ProfileView(onSignedOut: {})
+        .environmentObject(ThemeManager())
+}
