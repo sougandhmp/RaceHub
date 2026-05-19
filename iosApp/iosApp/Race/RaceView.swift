@@ -88,10 +88,14 @@ private struct NextRaceSection: View {
                             .kerning(1.5)
                     }
                     Spacer()
-                    if let days = race?.daysRemaining {
-                        Text("\(Int(truncating: days)) DAYS")
-                            .font(.system(size: 12, weight: .heavy))
-                            .foregroundColor(AppColors.racingRed)
+                    if let dateTimeStr = race?.dateTime,
+                       let raceDate = ISO8601DateFormatter().date(from: dateTimeStr) {
+                        let days = Calendar.current.dateComponents([.day], from: Date(), to: raceDate).day ?? 0
+                        if days > 0 {
+                            Text("\(days) DAYS")
+                                .font(.system(size: 12, weight: .heavy))
+                                .foregroundColor(AppColors.racingRed)
+                        }
                     }
                 }
 
@@ -115,7 +119,7 @@ private struct NextRaceSection: View {
 
                 // Stats row: LIGHTS OUT | LENGTH | LAPS
                 HStack(spacing: 0) {
-                    StatItem(label: "LIGHTS OUT", value: race.map { lightsOutLabel($0.date) } ?? "—", colors: colors)
+                    StatItem(label: "LIGHTS OUT", value: race.map { lightsOutLabel($0.dateTime) } ?? "—", colors: colors)
                     StatItem(label: "LENGTH", value: "—", colors: colors)
                     StatItem(label: "LAPS", value: "—", colors: colors)
                 }
@@ -123,7 +127,7 @@ private struct NextRaceSection: View {
                 Spacer().frame(height: 16)
 
                 // Session strip: FP1 | FP2 | FP3 | QUAL | RACE
-                SessionStrip(raceDate: race?.date, colors: colors)
+                SessionStrip(raceDate: race?.dateTime, colors: colors)
 
                 Spacer().frame(height: 12)
 
@@ -149,10 +153,11 @@ private struct NextRaceSection: View {
         .clipShape(RoundedRectangle(cornerRadius: 20))
     }
 
-    private func lightsOutLabel(_ date: String) -> String {
-        // date is like "May 25, 2025" — show just the date as LIGHTS OUT value
-        let parts = date.split(separator: ",")
-        return parts.first.map(String.init) ?? date
+    private func lightsOutLabel(_ dateTime: String) -> String {
+        guard let date = ISO8601DateFormatter().date(from: dateTime) else { return "—" }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d"
+        return formatter.string(from: date)
     }
 }
 
@@ -180,8 +185,11 @@ private struct SessionStrip: View {
     let colors: AppColors
 
     private var month: String {
-        guard let date = raceDate else { return "—" }
-        return String(date.split(separator: " ").first ?? "—")
+        guard let dateTime = raceDate,
+              let date = ISO8601DateFormatter().date(from: dateTime) else { return "—" }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM"
+        return formatter.string(from: date)
     }
 
     private let labels = ["FP1", "FP2", "FP3", "QUAL", "RACE"]

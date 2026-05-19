@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.sqldelight)
+    alias(libs.plugins.kover)
 }
 
 kotlin {
@@ -28,8 +29,8 @@ kotlin {
         }
     }
 
-    sourceSets.all {
-        languageSettings.optIn("kotlin.experimental.ExperimentalMultiplatformApi")
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
     }
 
     sourceSets {
@@ -55,6 +56,7 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }
@@ -63,6 +65,51 @@ sqldelight {
     databases {
         create("RaceHubDatabase") {
             packageName.set("org.gce.racehub.db")
+        }
+    }
+}
+
+kover {
+    reports {
+        filters {
+            excludes {
+                // Network clients and service classes (require live HTTP)
+                classes(
+                    "org.gce.racehub.auth.data.network.*",
+                    "org.gce.racehub.auth.data.repository.AuthRepositoryNetworkImpl*",
+                    "org.gce.racehub.race.data.repository.HomeRepositoryNetworkImpl*",
+                    // Database infrastructure (requires platform SQLite driver)
+                    "org.gce.racehub.db.DatabaseDriverFactory*",
+                    "org.gce.racehub.db.LocalDataSource*",
+                    // Generated SQLDelight code
+                    "org.gce.racehub.db.RaceHubDatabase*",
+                    "org.gce.racehub.db.shared.*",
+                    // DI wiring — pure configuration, no domain logic
+                    "org.gce.racehub.di.*",
+                    "org.gce.racehub.auth.di.*",
+                    "org.gce.racehub.race.di.*",
+                    // DTO data classes — serialization, no domain logic
+                    "org.gce.racehub.auth.data.dto.LoginRequestDto*",
+                    "org.gce.racehub.auth.data.dto.LoginResponseDto*",
+                    "org.gce.racehub.auth.data.dto.LoginDataDto*",
+                    "org.gce.racehub.auth.data.dto.UserResponseDto*",
+                    "org.gce.racehub.auth.data.dto.LogoutResponseDto*",
+                    "org.gce.racehub.race.data.dto.*",
+                    // Theme constants
+                    "org.gce.racehub.theme.*",
+                    // Interfaces (no executable code)
+                    "org.gce.racehub.auth.domain.repository.AuthRepository",
+                    "org.gce.racehub.auth.data.storage.SessionStorage",
+                    "org.gce.racehub.race.domain.repository.HomeRepository",
+                    // Android platform implementation (not exercised by JVM unit tests)
+                    "org.gce.racehub.auth.data.storage.AndroidSessionStorage",
+                    // Generated SQLDelight entity data classes
+                    "org.gce.racehub.db.RaceEntity*",
+                    "org.gce.racehub.db.DriverStandingEntity*",
+                    "org.gce.racehub.db.ConstructorStandingEntity*",
+                    "org.gce.racehub.db.TrendingThreadEntity*"
+                )
+            }
         }
     }
 }

@@ -61,8 +61,8 @@ final class ProfileViewModel: ObservableObject {
             state.isLoadingProfile = false
             state.postsCount = Int(profile.postsCount)
             state.savedCount = Int(profile.savedCount)
-            state.recentThreadTitles = profile.recentThreadTitles as? [String] ?? []
-            state.savedThreadTitles = profile.savedThreadTitles as? [String] ?? []
+            state.recentThreadTitles = profile.recentThreadTitles
+            state.savedThreadTitles = profile.savedThreadTitles
         } catch {
             state.isLoadingProfile = false
             state.errorMessage = error.localizedDescription
@@ -77,7 +77,7 @@ final class ProfileViewModel: ObservableObject {
             do {
                 let success = try await logoutUseCase.invoke()
                 state.isSigningOut = false
-                if success as? Bool == true || (success as? KotlinBoolean)?.boolValue == true {
+                if success.boolValue {
                     effectSubject.send(.signedOut)
                 } else {
                     state.errorMessage = "Sign out failed. Please try again."
