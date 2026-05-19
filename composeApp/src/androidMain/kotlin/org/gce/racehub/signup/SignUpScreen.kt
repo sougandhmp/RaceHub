@@ -19,6 +19,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -27,6 +31,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import java.util.Locale
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.Modifier
@@ -76,6 +84,7 @@ fun SignUpScreen(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SignUpScreenContent(
     state: SignUpState,
@@ -123,11 +132,11 @@ private fun SignUpScreenContent(
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            // Name
+            // Username
             OutlinedTextField(
-                value = state.name,
-                onValueChange = { onIntent(SignUpIntent.NameChanged(it)) },
-                label = { Text("Full Name") },
+                value = state.username,
+                onValueChange = { onIntent(SignUpIntent.UsernameChanged(it)) },
+                label = { Text("Username") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text,
@@ -208,13 +217,10 @@ private fun SignUpScreenContent(
                     PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Password,
-                    imeAction = ImeAction.Done
+                    imeAction = ImeAction.Next
                 ),
                 keyboardActions = KeyboardActions(
-                    onDone = {
-                        focusManager.clearFocus()
-                        onIntent(SignUpIntent.SignUp)
-                    }
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
                 ),
                 trailingIcon = {
                     TextButton(onClick = { onIntent(SignUpIntent.ToggleConfirmPasswordVisibility) }) {
@@ -230,10 +236,18 @@ private fun SignUpScreenContent(
                 colors = textFieldColors()
             )
 
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Country
+            CountryDropdown(
+                selectedCode = state.country,
+                onCountrySelected = { onIntent(SignUpIntent.CountryChanged(it)) }
+            )
+
             if (state.errorMessage != null) {
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
-                    text = state.errorMessage!!,
+                    text = state.errorMessage,
                     color = RacingRed,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -292,6 +306,57 @@ private fun SignUpScreenContent(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CountryDropdown(
+    selectedCode: String,
+    onCountrySelected: (String) -> Unit
+) {
+    val countries = remember {
+        Locale.getISOCountries()
+            .map { code -> Locale("", code).displayCountry to code }
+            .filter { it.first.isNotEmpty() }
+            .sortedBy { it.first }
+    }
+    var expanded by remember { mutableStateOf(false) }
+    val selectedName = remember(selectedCode) {
+        countries.find { it.second == selectedCode }?.first ?: ""
+    }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it }
+    ) {
+        OutlinedTextField(
+            value = selectedName,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Country") },
+            placeholder = { Text("Select country", color = MutedGray) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier.fillMaxWidth().menuAnchor(),
+            shape = RoundedCornerShape(12.dp),
+            colors = textFieldColors()
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.background(DarkBlue)
+        ) {
+            countries.forEach { (name, code) ->
+                DropdownMenuItem(
+                    text = { Text(name, color = Color.White) },
+                    onClick = {
+                        onCountrySelected(code)
+                        expanded = false
+                    },
+                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun textFieldColors() = OutlinedTextFieldDefaults.colors(
     focusedBorderColor = RacingRed,
@@ -309,7 +374,7 @@ private fun textFieldColors() = OutlinedTextFieldDefaults.colors(
 @Composable
 private fun SignUpScreenPreview() {
     SignUpScreenContent(
-        state = SignUpState(name = "Max Verstappen", email = "max@redbull.com"),
+        state = SignUpState(username = "MaxVerstappen", email = "max@redbull.com", country = "NL"),
         onIntent = {},
         onNavigateToLogin = {}
     )

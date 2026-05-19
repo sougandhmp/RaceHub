@@ -24,12 +24,8 @@ class AuthRepositoryImpl : AuthRepository {
         }
     }
 
-    /**
-     * Always succeeds for any validated input.
-     * In production this would POST to a registration endpoint.
-     */
-    override suspend fun signUp(name: String, email: String, password: String): AuthResult {
-        return AuthResult.success(User(id = "2", email = email, name = name))
+    override suspend fun signUp(username: String, email: String, password: String, country: String): AuthResult {
+        return AuthResult.success(User(id = "2", email = email, name = username))
     }
 
     override suspend fun logout(token: String): Boolean = true

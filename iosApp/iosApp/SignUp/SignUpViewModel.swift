@@ -42,8 +42,8 @@ final class SignUpViewModel: ObservableObject {
     /// Maps each `SignUpIntent` to a state mutation or a command.
     func send(_ intent: SignUpIntent) {
         switch intent {
-        case .nameChanged(let name):
-            state.name = name
+        case .usernameChanged(let username):
+            state.username = username
 
         case .emailChanged(let email):
             state.email = email
@@ -53,6 +53,9 @@ final class SignUpViewModel: ObservableObject {
 
         case .confirmPasswordChanged(let confirmPassword):
             state.confirmPassword = confirmPassword
+
+        case .countryChanged(let country):
+            state.country = country
 
         case .togglePasswordVisibility:
             state.isPasswordVisible.toggle()
@@ -75,9 +78,10 @@ final class SignUpViewModel: ObservableObject {
         Task {
             do {
                 let result = try await signUpUseCase.invoke(
-                    name: state.name,
+                    username: state.username,
                     email: state.email,
                     password: state.password,
+                    country: state.country,
                     confirmPassword: state.confirmPassword
                 )
                 state.isLoading = false

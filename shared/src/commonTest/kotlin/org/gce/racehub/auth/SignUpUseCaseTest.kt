@@ -15,17 +15,18 @@ class SignUpUseCaseTest {
     private val useCase = SignUpUseCase(repository)
 
     private suspend fun invoke(
-        name: String = "Alice",
+        username: String = "RaceFan",
         email: String = "alice@test.com",
         password: String = "secret1",
+        country: String = "AU",
         confirmPassword: String = "secret1"
-    ) = useCase(name, email, password, confirmPassword)
+    ) = useCase(username, email, password, country, confirmPassword)
 
     @Test
-    fun `blank name returns failure`() = runTest {
-        val result = invoke(name = "")
+    fun `blank username returns failure`() = runTest {
+        val result = invoke(username = "")
         assertFalse(result.isSuccess)
-        assertEquals("Name cannot be empty", result.error)
+        assertEquals("Username cannot be empty", result.error)
     }
 
     @Test
@@ -54,6 +55,13 @@ class SignUpUseCaseTest {
         val result = invoke(password = "secret1", confirmPassword = "secret2")
         assertFalse(result.isSuccess)
         assertEquals("Passwords do not match", result.error)
+    }
+
+    @Test
+    fun `blank country returns failure`() = runTest {
+        val result = invoke(country = "")
+        assertFalse(result.isSuccess)
+        assertEquals("Country cannot be empty", result.error)
     }
 
     @Test

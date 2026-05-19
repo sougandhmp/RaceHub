@@ -1,6 +1,7 @@
 package org.gce.racehub.fake
 
 import org.gce.racehub.auth.domain.model.AuthResult
+import org.gce.racehub.auth.domain.model.PasswordResetResult
 import org.gce.racehub.auth.domain.model.User
 import org.gce.racehub.auth.domain.repository.AuthRepository
 
@@ -18,11 +19,16 @@ class FakeAuthRepository : AuthRepository {
         return loginResult
     }
 
-    override suspend fun signUp(name: String, email: String, password: String): AuthResult = signUpResult
+    override suspend fun signUp(username: String, email: String, password: String, country: String): AuthResult = signUpResult
 
     override suspend fun logout(token: String): Boolean {
         logoutCallCount++
         lastLogoutToken = token
         return logoutResult
     }
+
+    override suspend fun requestPasswordReset(email: String): PasswordResetResult = PasswordResetResult.success()
+
+    override suspend fun confirmPasswordReset(email: String, otp: String, newPassword: String): PasswordResetResult =
+        PasswordResetResult.success()
 }
