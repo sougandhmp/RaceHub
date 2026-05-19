@@ -53,10 +53,8 @@ class ProfileViewModel(
             try {
                 val profile = getMyProfileUseCase(userId = userId, token = token)
                 _state.update { it.copy(isLoadingProfile = false, profile = profile) }
-            } catch (e: Exception) {
-                _state.update {
-                    it.copy(isLoadingProfile = false, errorMessage = e.message ?: "Failed to load profile.")
-                }
+            } catch (_: Exception) {
+                _state.update { it.copy(isLoadingProfile = false, errorMessage = "Failed to load profile.") }
             }
         }
     }

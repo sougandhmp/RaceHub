@@ -49,3 +49,20 @@ val LightAppColors = AppColorScheme(
 )
 
 val LocalAppColors = compositionLocalOf { DarkAppColors }
+
+fun teamColorOf(team: String): Color {
+    val t = team.lowercase()
+    return when {
+        "mercedes" in t -> hexColor(AppColorTokens.teamMercedes)
+        "mclaren" in t  -> hexColor(AppColorTokens.teamMcLaren)
+        "red bull" in t -> hexColor(AppColorTokens.teamRedBull)
+        "ferrari" in t  -> hexColor(AppColorTokens.teamFerrari)
+        "aston" in t    -> hexColor(AppColorTokens.teamAston)
+        "alpine" in t   -> hexColor(AppColorTokens.teamAlpine)
+        "williams" in t -> hexColor(AppColorTokens.teamWilliams)
+        "rb" in t || "racing bulls" in t -> hexColor(AppColorTokens.teamRb)
+        "haas" in t     -> hexColor(AppColorTokens.teamHaas)
+        "sauber" in t || "kick" in t -> hexColor(AppColorTokens.teamSauber)
+        else            -> hexColor(AppColorTokens.teamDefault)
+    }
+}

@@ -19,6 +19,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import org.gce.racehub.race.circuitDrawable
+import org.gce.racehub.race.formatRaceDate
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -163,7 +164,7 @@ private fun RaceItem(race: Race, isNextRace: Boolean, colors: AppColorScheme) {
             modifier = Modifier.padding(top = 4.dp)
         ) {
             Text(
-                text = race.dateTime,
+                text = formatRaceDate(race.dateTime),
                 color = colors.mutedText,
                 fontSize = 14.sp
             )

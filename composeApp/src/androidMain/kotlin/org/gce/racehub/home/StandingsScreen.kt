@@ -48,39 +48,13 @@ import androidx.compose.ui.unit.sp
 import org.gce.racehub.race.domain.model.ConstructorStanding
 import org.gce.racehub.race.domain.model.DriverStanding
 import org.gce.racehub.theme.AppColorScheme
-import org.gce.racehub.theme.AppColorTokens
 import org.gce.racehub.theme.DarkAppColors
 import org.gce.racehub.theme.LocalAppColors
-import org.gce.racehub.theme.hexColor
+import org.gce.racehub.theme.teamColorOf
 
-private val Gold   = hexColor(AppColorTokens.gold)
-private val Silver = hexColor(AppColorTokens.silver)
-private val Bronze = hexColor(AppColorTokens.bronze)
-
-private val TeamMercedes = hexColor(AppColorTokens.teamMercedes)
-private val TeamMcLaren  = hexColor(AppColorTokens.teamMcLaren)
-private val TeamRedBull  = hexColor(AppColorTokens.teamRedBull)
-private val TeamFerrari  = hexColor(AppColorTokens.teamFerrari)
-private val TeamAston    = hexColor(AppColorTokens.teamAston)
-private val TeamAlpine   = hexColor(AppColorTokens.teamAlpine)
-private val TeamWilliams = hexColor(AppColorTokens.teamWilliams)
-private val TeamRb       = hexColor(AppColorTokens.teamRb)
-private val TeamHaas     = hexColor(AppColorTokens.teamHaas)
-private val TeamSauber   = hexColor(AppColorTokens.teamSauber)
-
-private fun teamColorFor(team: String, fallback: Color): Color = when {
-    team.contains("Mercedes", ignoreCase = true) -> TeamMercedes
-    team.contains("McLaren",  ignoreCase = true) -> TeamMcLaren
-    team.contains("Red Bull", ignoreCase = true) -> TeamRedBull
-    team.contains("Ferrari",  ignoreCase = true) -> TeamFerrari
-    team.contains("Aston",    ignoreCase = true) -> TeamAston
-    team.contains("Alpine",   ignoreCase = true) -> TeamAlpine
-    team.contains("Williams", ignoreCase = true) -> TeamWilliams
-    team.contains("RB",       ignoreCase = true) -> TeamRb
-    team.contains("Haas",     ignoreCase = true) -> TeamHaas
-    team.contains("Sauber",   ignoreCase = true) -> TeamSauber
-    else -> fallback
-}
+private val Gold   = Color(0xFFFFD700)
+private val Silver = Color(0xFFC0C0C0)
+private val Bronze = Color(0xFFCD7F32)
 
 private fun positionAccent(position: Int, fallback: Color): Color = when (position) {
     1 -> Gold
@@ -121,13 +95,7 @@ fun StandingsScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = colors.background,
-                    scrolledContainerColor = Color.Unspecified,
-                    navigationIconContentColor = Color.Unspecified,
-                    titleContentColor = Color.Unspecified,
-                    actionIconContentColor = Color.Unspecified
-                )
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = colors.background)
             )
         },
         containerColor = colors.background
@@ -152,7 +120,7 @@ fun StandingsScreen(
                     DriverStandingCard(
                         standing = standing,
                         accent = positionAccent(standing.position, colors.mutedText),
-                        teamColor = teamColorFor(standing.team, colors.mutedText),
+                        teamColor = teamColorOf(standing.team),
                         showLeader = index == 0,
                         colors = colors
                     )
@@ -162,7 +130,7 @@ fun StandingsScreen(
                     ConstructorStandingCard(
                         standing = standing,
                         accent = positionAccent(standing.position, colors.mutedText),
-                        teamColor = teamColorFor(standing.name, colors.mutedText),
+                        teamColor = teamColorOf(standing.name),
                         colors = colors
                     )
                 }
