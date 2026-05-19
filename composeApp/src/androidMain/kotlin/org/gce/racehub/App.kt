@@ -16,6 +16,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import org.gce.racehub.auth.di.createProductionAuthModule
 import org.gce.racehub.auth.domain.session.UserSession
 import org.gce.racehub.di.appModule
+import org.gce.racehub.forgotpassword.ForgotPasswordScreen
 import org.gce.racehub.forum.ForumIntent
 import org.gce.racehub.forum.ForumViewModel
 import org.gce.racehub.forum.ThreadDetailScreen
@@ -40,7 +41,7 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.dsl.koinConfiguration
 
-private enum class Screen { Login, SignUp, Home, Schedule, Standings, CreateThread, ThreadDetail }
+private enum class Screen { Login, SignUp, ForgotPassword, Home, Schedule, Standings, CreateThread, ThreadDetail }
 
 @Composable
 fun App() {
@@ -84,7 +85,13 @@ fun App() {
                         forumViewModel.onIntent(ForumIntent.Refresh)
                         screen = Screen.Home
                     },
-                    onNavigateToSignUp = { screen = Screen.SignUp }
+                    onNavigateToSignUp = { screen = Screen.SignUp },
+                    onNavigateToForgotPassword = { screen = Screen.ForgotPassword }
+                )
+
+                Screen.ForgotPassword -> ForgotPasswordScreen(
+                    onBack = { screen = Screen.Login },
+                    onPasswordResetSuccess = { screen = Screen.Login }
                 )
 
                 Screen.SignUp -> SignUpScreen(

@@ -1,6 +1,7 @@
 package org.gce.racehub.auth.domain.repository
 
 import org.gce.racehub.auth.domain.model.AuthResult
+import org.gce.racehub.auth.domain.model.PasswordResetResult
 
 /**
  * Contract for authentication operations.
@@ -41,4 +42,23 @@ interface AuthRepository {
      * @return `true` if the server acknowledged the logout, `false` otherwise.
      */
     suspend fun logout(token: String): Boolean
+
+    /**
+     * Sends a one-time password to [email] for the password-reset flow.
+     *
+     * @return [PasswordResetResult.success] if the server accepted the request,
+     *         [PasswordResetResult.failure] with an error message otherwise.
+     */
+    suspend fun requestPasswordReset(email: String): PasswordResetResult
+
+    /**
+     * Confirms the password reset using the OTP the user received.
+     *
+     * @param email       The address the reset was requested for.
+     * @param otp         The one-time code from the email.
+     * @param newPassword The new plain-text password (pre-validated by the use case).
+     * @return [PasswordResetResult.success] on success,
+     *         [PasswordResetResult.failure] with an error message otherwise.
+     */
+    suspend fun confirmPasswordReset(email: String, otp: String, newPassword: String): PasswordResetResult
 }

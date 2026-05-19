@@ -3,6 +3,7 @@ package org.gce.racehub.auth.data.repository
 import org.gce.racehub.auth.data.dto.toDomainModel
 import org.gce.racehub.auth.data.network.AuthService
 import org.gce.racehub.auth.domain.model.AuthResult
+import org.gce.racehub.auth.domain.model.PasswordResetResult
 import org.gce.racehub.auth.domain.repository.AuthRepository
 
 /**
@@ -68,6 +69,30 @@ class AuthRepositoryNetworkImpl(private val authService: AuthService) : AuthRepo
             authService.logout(token).success
         } catch (e: Exception) {
             false
+        }
+    }
+
+    override suspend fun requestPasswordReset(email: String): PasswordResetResult {
+        return try {
+            val response = authService.requestPasswordReset(email)
+            if (response.success) PasswordResetResult.success()
+            else PasswordResetResult.failure(response.message)
+        } catch (e: Exception) {
+            PasswordResetResult.failure("Could not send reset code. Check your connection and try again.")
+        }
+    }
+
+    override suspend fun confirmPasswordReset(
+        email: String,
+        otp: String,
+        newPassword: String
+    ): PasswordResetResult {
+        return try {
+            val response = authService.confirmPasswordReset(email, otp, newPassword)
+            if (response.success) PasswordResetResult.success()
+            else PasswordResetResult.failure(response.message)
+        } catch (e: Exception) {
+            PasswordResetResult.failure("Could not reset password. Check your connection and try again.")
         }
     }
 }

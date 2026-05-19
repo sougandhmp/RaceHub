@@ -11,6 +11,9 @@ import io.ktor.http.contentType
 import org.gce.racehub.auth.data.dto.LoginRequestDto
 import org.gce.racehub.auth.data.dto.LoginResponseDto
 import org.gce.racehub.auth.data.dto.LogoutResponseDto
+import org.gce.racehub.auth.data.dto.PasswordResetConfirmDto
+import org.gce.racehub.auth.data.dto.PasswordResetRequestDto
+import org.gce.racehub.auth.data.dto.PasswordResetResponseDto
 
 /**
  * Network service for authentication API calls.
@@ -41,6 +44,24 @@ class AuthService(private val httpClient: HttpClient, private val baseUrl: Strin
     suspend fun logout(token: String): LogoutResponseDto {
         return httpClient.post("$baseUrl/api/v1/auth/logout") {
             header(HttpHeaders.Authorization, "Bearer $token")
+        }.body()
+    }
+
+    suspend fun requestPasswordReset(email: String): PasswordResetResponseDto {
+        return httpClient.post("$baseUrl/api/v1/auth/password-reset/request") {
+            contentType(ContentType.Application.Json)
+            setBody(PasswordResetRequestDto(email))
+        }.body()
+    }
+
+    suspend fun confirmPasswordReset(
+        email: String,
+        otp: String,
+        newPassword: String
+    ): PasswordResetResponseDto {
+        return httpClient.post("$baseUrl/api/v1/auth/password-reset/confirm") {
+            contentType(ContentType.Application.Json)
+            setBody(PasswordResetConfirmDto(email, otp, newPassword))
         }.body()
     }
 }

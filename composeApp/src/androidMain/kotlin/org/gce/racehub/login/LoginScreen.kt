@@ -55,7 +55,8 @@ private val DimBorder = hexColor(AppColorTokens.authDimBorder)
 fun LoginScreen(
     viewModel: LoginViewModel = koinViewModel(),
     onLoginSuccess: () -> Unit,
-    onNavigateToSignUp: () -> Unit
+    onNavigateToSignUp: () -> Unit,
+    onNavigateToForgotPassword: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -70,7 +71,8 @@ fun LoginScreen(
     LoginScreenContent(
         state = state,
         onIntent = viewModel::onIntent,
-        onNavigateToSignUp = onNavigateToSignUp
+        onNavigateToSignUp = onNavigateToSignUp,
+        onNavigateToForgotPassword = onNavigateToForgotPassword
     )
 }
 
@@ -78,7 +80,8 @@ fun LoginScreen(
 private fun LoginScreenContent(
     state: LoginState,
     onIntent: (LoginIntent) -> Unit,
-    onNavigateToSignUp: () -> Unit
+    onNavigateToSignUp: () -> Unit,
+    onNavigateToForgotPassword: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
 
@@ -209,7 +212,17 @@ private fun LoginScreenContent(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+
+            TextButton(onClick = onNavigateToForgotPassword) {
+                Text(
+                    text = "Forgot Password?",
+                    color = MutedGray,
+                    fontSize = 14.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
@@ -236,7 +249,8 @@ private fun LoginScreenPreview() {
     LoginScreenContent(
         state = LoginState(email = "driver@f1.com"),
         onIntent = {},
-        onNavigateToSignUp = {}
+        onNavigateToSignUp = {},
+        onNavigateToForgotPassword = {}
     )
 }
 
@@ -246,7 +260,8 @@ private fun LoginScreenErrorPreview() {
     LoginScreenContent(
         state = LoginState(email = "bad@email", password = "wrong", errorMessage = "Invalid credentials"),
         onIntent = {},
-        onNavigateToSignUp = {}
+        onNavigateToSignUp = {},
+        onNavigateToForgotPassword = {}
     )
 }
 

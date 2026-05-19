@@ -9,6 +9,7 @@ struct LoginView: View {
     @StateObject private var viewModel = LoginViewModel()
     let onLoginSuccess: () -> Void
     let onNavigateToSignUp: () -> Void
+    let onNavigateToForgotPassword: () -> Void
 
     var body: some View {
         ZStack {
@@ -148,7 +149,7 @@ struct LoginView: View {
                     )
                     .disabled(viewModel.state.isLoading)
 
-                    Button(action: {}) {
+                    Button(action: onNavigateToForgotPassword) {
                         Text("Forgot Password?")
                             .font(.footnote)
                             .foregroundColor(Color(hex: t.authMuted))
@@ -191,5 +192,5 @@ struct LoginView: View {
 
 
 #Preview {
-    LoginView(onLoginSuccess: {}, onNavigateToSignUp: {})
+    LoginView(onLoginSuccess: {}, onNavigateToSignUp: {}, onNavigateToForgotPassword: {})
 }

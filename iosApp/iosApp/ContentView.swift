@@ -2,7 +2,7 @@ import SwiftUI
 import Shared
 
 private enum Screen {
-    case login, signUp, home
+    case login, signUp, forgotPassword, home
 }
 
 struct ContentView: View {
@@ -20,13 +20,19 @@ struct ContentView: View {
             switch screen {
             case .login:
                 LoginView(
-                    onLoginSuccess:     { screen = .home   },
-                    onNavigateToSignUp: { screen = .signUp }
+                    onLoginSuccess:             { screen = .home          },
+                    onNavigateToSignUp:         { screen = .signUp        },
+                    onNavigateToForgotPassword: { screen = .forgotPassword }
                 )
             case .signUp:
                 SignUpView(
-                    onSignUpSuccess:    { screen = .home  },
-                    onNavigateToLogin: { screen = .login  }
+                    onSignUpSuccess:   { screen = .home  },
+                    onNavigateToLogin: { screen = .login }
+                )
+            case .forgotPassword:
+                ForgotPasswordView(
+                    onBack:                 { screen = .login },
+                    onPasswordResetSuccess: { screen = .login }
                 )
             case .home:
                 HomeView(onSignedOut: { screen = .login })
