@@ -28,8 +28,14 @@ data class RaceState(
     /** Detailed race info for the next race fetched via GraphQL. Null until loaded. */
     val nextRaceDetail: RaceDetail? = null,
 
-    /** True while race detail is being fetched; drives shimmer animation. */
+    /** True while the next-race detail is being fetched; drives shimmer animation. */
     val isLoadingDetail: Boolean = false,
+
+    /** Detail for the race the user tapped through to. Null until loaded. */
+    val selectedRaceDetail: RaceDetail? = null,
+
+    /** True while the selected race's detail is being fetched. */
+    val isLoadingSelectedDetail: Boolean = false,
 
     /** True while data is being fetched; drives the loading indicator. */
     val isLoading: Boolean = false,

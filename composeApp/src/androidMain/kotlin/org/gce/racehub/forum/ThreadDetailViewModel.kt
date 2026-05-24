@@ -65,7 +65,7 @@ class ThreadDetailViewModel(
         if (current.isLiking) return
 
         val optimisticLiked = !current.isLiked
-        val optimisticLikes = if (optimisticLiked) current.likes + 1 else current.likes - 1
+        val optimisticLikes = if (optimisticLiked) current.likes + 1 else (current.likes - 1).coerceAtLeast(0)
 
         _state.update { it.copy(isLiked = optimisticLiked, likes = optimisticLikes, isLiking = true) }
 

@@ -20,7 +20,7 @@ class AuthRepositoryImplTest {
         val result = repository.login("driver@racehub.com", "race123")
         assertTrue(result.isSuccess)
         assertNotNull(result.user)
-        assertEquals("driver@racehub.com", result.user!!.email)
+        assertEquals("driver@racehub.com", result.user.email)
     }
 
     @Test
@@ -56,13 +56,13 @@ class AuthRepositoryImplTest {
 
     @Test
     fun `signUp always returns success`() = runTest {
-        val result = repository.signUp("Alice", "alice@test.com", "secret1")
+        val result = repository.signUp("Alice", "alice@test.com", "secret1", "UK")
         assertTrue(result.isSuccess)
     }
 
     @Test
     fun `signUp result carries provided name and email`() = runTest {
-        val result = repository.signUp("Bob", "bob@test.com", "password")
+        val result = repository.signUp("Bob", "bob@test.com", "password", "UK")
         val user = result.user!!
         assertEquals("Bob", user.name)
         assertEquals("bob@test.com", user.email)
@@ -70,7 +70,7 @@ class AuthRepositoryImplTest {
 
     @Test
     fun `signUp result has non-blank id`() = runTest {
-        val result = repository.signUp("Alice", "a@b.com", "secret1")
+        val result = repository.signUp("Alice", "a@b.com", "secret1", "UK")
         assertTrue(result.user!!.id.isNotBlank())
     }
 

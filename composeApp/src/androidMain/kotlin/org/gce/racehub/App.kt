@@ -7,12 +7,12 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.gce.racehub.auth.di.createProductionAuthModule
 import org.gce.racehub.auth.domain.session.UserSession
 import org.gce.racehub.di.appModule
@@ -25,9 +25,11 @@ import org.gce.racehub.home.HomeScreen
 import org.gce.racehub.home.ScheduleScreen
 import org.gce.racehub.home.StandingsScreen
 import org.gce.racehub.login.LoginScreen
+import org.gce.racehub.race.RaceDetailScreen
 import org.gce.racehub.race.RaceIntent
 import org.gce.racehub.race.RaceViewModel
 import org.gce.racehub.race.di.createRaceModule
+import org.gce.racehub.race.domain.model.Race
 import org.gce.racehub.race.domain.model.Thread
 import org.gce.racehub.signup.SignUpScreen
 import org.gce.racehub.theme.DarkAppColors
@@ -41,12 +43,12 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.dsl.koinConfiguration
 
-private enum class Screen { Login, SignUp, ForgotPassword, Home, Schedule, Standings, CreateThread, ThreadDetail }
+private enum class Screen { Login, SignUp, ForgotPassword, Home, Schedule, Standings, CreateThread, ThreadDetail, RaceDetail }
 
 @Composable
 fun App() {
     val themeManager: ThemeManager = koinInject()
-    val themeMode by themeManager.themeMode.collectAsState()
+    val themeMode by themeManager.themeMode.collectAsStateWithLifecycle()
     val systemInDark = isSystemInDarkTheme()
     val isDark = when (themeMode) {
         ThemeMode.DARK -> true
@@ -69,7 +71,9 @@ fun App() {
 
             val raceViewModel: RaceViewModel = koinViewModel()
             val forumViewModel: ForumViewModel = koinViewModel()
-            val raceState by raceViewModel.state.collectAsState()
+            val raceState by raceViewModel.state.collectAsStateWithLifecycle()
+            var selectedRace by remember { mutableStateOf<Race?>(null) }
+            var raceDetailOrigin by remember { mutableStateOf(Screen.Home) }
 
             LaunchedEffect(Unit) {
                 if (userSession.currentUser.value != null) {
@@ -111,12 +115,24 @@ fun App() {
                         selectedThread = thread
                         screen = Screen.ThreadDetail
                     },
-                    onSignedOut = { screen = Screen.Login }
+                    onSignedOut = { screen = Screen.Login },
+                    onViewRaceDetail = { race ->
+                        selectedRace = race
+                        raceDetailOrigin = Screen.Home
+                        raceViewModel.onIntent(RaceIntent.SelectRace(race.id))
+                        screen = Screen.RaceDetail
+                    }
                 )
 
                 Screen.Schedule -> ScheduleScreen(
                     schedule = raceState.raceSchedule,
-                    onBack = { screen = Screen.Home }
+                    onBack = { screen = Screen.Home },
+                    onViewRaceDetail = { race ->
+                        selectedRace = race
+                        raceDetailOrigin = Screen.Schedule
+                        raceViewModel.onIntent(RaceIntent.SelectRace(race.id))
+                        screen = Screen.RaceDetail
+                    }
                 )
 
                 Screen.Standings -> StandingsScreen(
@@ -141,6 +157,19 @@ fun App() {
                         ThreadDetailScreen(
                             thread = thread,
                             onBack = { screen = Screen.Home }
+                        )
+                    }
+                }
+
+                Screen.RaceDetail -> {
+                    val race = selectedRace
+                    if (race == null) {
+                        screen = Screen.Home
+                    } else {
+                        RaceDetailScreen(
+                            race = race,
+                            raceDetail = raceState.selectedRaceDetail,
+                            onBack = { screen = raceDetailOrigin }
                         )
                     }
                 }

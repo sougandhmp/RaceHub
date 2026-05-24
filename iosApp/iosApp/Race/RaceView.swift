@@ -7,6 +7,7 @@ struct RaceView: View {
     @Environment(\.colorScheme) private var colorScheme
     let onViewAllSchedule: () -> Void
     let onViewAllStandings: () -> Void
+    let onViewRaceDetail: (Race) -> Void
 
     private var colors: AppColors { AppColors.forScheme(colorScheme) }
 
@@ -23,7 +24,8 @@ struct RaceView: View {
                         race: viewModel.state.raceSchedule.first { !$0.isCompleted },
                         totalRaces: viewModel.state.raceSchedule.count,
                         colors: colors,
-                        onViewAllSchedule: onViewAllSchedule
+                        onViewAllSchedule: onViewAllSchedule,
+                        onViewRaceDetail: onViewRaceDetail
                     )
                     StandingsSection(
                         drivers: Array(viewModel.state.driverStandings.prefix(3)),
@@ -49,7 +51,7 @@ struct RaceView: View {
 
 // MARK: - Next Race
 
-private struct SessionChipData {
+struct SessionChipData {
     let label: String
     let date: String
     let time: String
@@ -94,7 +96,7 @@ private func raceHeaderDate(from dateString: String) -> String {
     return fmt.string(from: date).uppercased()
 }
 
-private func buildSessionChips(from raceDateString: String?) -> [SessionChipData] {
+func buildSessionChips(from raceDateString: String?) -> [SessionChipData] {
     let placeholders = ["FP1", "FP2", "FP3", "QUAL", "RACE"].map {
         SessionChipData(label: $0, date: "—", time: "—")
     }
@@ -132,6 +134,7 @@ private struct NextRaceSection: View {
     let totalRaces: Int
     let colors: AppColors
     let onViewAllSchedule: () -> Void
+    let onViewRaceDetail: (Race) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -184,10 +187,10 @@ private struct NextRaceSection: View {
             Spacer().frame(height: 16)
 
             HStack(spacing: 10) {
-                Button(action: {}) {
+                Button(action: { if let race { onViewRaceDetail(race) } }) {
                     Text("Weekend detail")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(colors.primaryText)
+                        .foregroundColor(race == nil ? colors.mutedText : colors.primaryText)
                         .frame(maxWidth: .infinity)
                         .frame(height: 44)
                         .overlay(
@@ -195,6 +198,7 @@ private struct NextRaceSection: View {
                                 .stroke(colors.cardBorder, lineWidth: 1)
                         )
                 }
+                .disabled(race == nil)
 
                 Button(action: onViewAllSchedule) {
                     HStack(spacing: 4) {
@@ -510,6 +514,7 @@ private struct FeaturedSection: View {
     RaceView(
         viewModel: RaceViewModel(),
         onViewAllSchedule: {},
-        onViewAllStandings: {}
+        onViewAllStandings: {},
+        onViewRaceDetail: { _ in }
     )
 }

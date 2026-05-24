@@ -116,4 +116,30 @@
     <string name="theme_dark">Dark</string>
     <string name="theme_light">Light</string>
     <string name="heading_recent_posts">RECENT POSTS</string>
+
+    <!-- Race Detail screen -->
+    <string name="title_race_detail">RACE DETAIL</string>
+    <string name="heading_circuit_map">CIRCUIT MAP</string>
+    <string name="heading_weekend_schedule">WEEKEND SCHEDULE</string>
+    <string name="heading_race_info">RACE INFO</string>
+    <string name="heading_track_facts">TRACK FACTS</string>
+    <string name="heading_race_results">RACE RESULTS</string>
+    <string name="heading_fastest_lap">FASTEST LAP</string>
+    <string name="label_status">Status</string>
+    <string name="label_round_number">Round</string>
+    <string name="label_date">Date</string>
+    <string name="label_local_time">Local time</string>
+    <string name="label_circuit_name">Circuit</string>
+    <string name="label_location">Location</string>
+    <string name="label_weather">Weather</string>
+    <string name="label_laps">Laps</string>
+    <string name="label_distance_km">Distance</string>
+    <string name="label_corners">Corners</string>
+    <string name="label_lap_record">Lap Record</string>
+    <string name="label_driver">Driver</string>
+    <string name="label_team">Team</string>
+    <string name="label_time">Time</string>
+    <string name="label_points_abbr">PTS</string>
+    <string name="label_pos">POS</string>
+    <string name="label_race_starts">Race starts %1$s local</string>
 </resources>

@@ -101,6 +101,12 @@
 "Share your thoughts…" = "Share your thoughts…";
 "Post Thread" = "Post Thread";
 
+/* Race Detail */
+"RACE DETAIL" = "RACE DETAIL";
+"CIRCUIT MAP" = "CIRCUIT MAP";
+"WEEKEND SCHEDULE" = "WEEKEND SCHEDULE";
+"RACE INFO" = "RACE INFO";
+
 /* Profile */
 "Not signed in." = "Not signed in.";
 "APPEARANCE" = "APPEARANCE";
