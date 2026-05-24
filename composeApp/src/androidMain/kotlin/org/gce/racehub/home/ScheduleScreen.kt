@@ -2,6 +2,7 @@ package org.gce.racehub.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -41,7 +42,8 @@ import racehub.composeapp.generated.resources.title_schedule
 @Composable
 fun ScheduleScreen(
     schedule: List<Race>,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onViewRaceDetail: (Race) -> Unit = {}
 ) {
     val colors = LocalAppColors.current
 
@@ -81,14 +83,14 @@ fun ScheduleScreen(
             contentPadding = PaddingValues(bottom = 24.dp)
         ) {
             items(schedule) { race ->
-                RaceItem(race = race, isNextRace = race == nextRace, colors = colors)
+                RaceItem(race = race, isNextRace = race == nextRace, colors = colors, onClick = { onViewRaceDetail(race) })
             }
         }
     }
 }
 
 @Composable
-private fun RaceItem(race: Race, isNextRace: Boolean, colors: AppColorScheme) {
+private fun RaceItem(race: Race, isNextRace: Boolean, colors: AppColorScheme, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -99,6 +101,7 @@ private fun RaceItem(race: Race, isNextRace: Boolean, colors: AppColorScheme) {
                 color = if (isNextRace) colors.racingRed else colors.cardBorder,
                 shape = RoundedCornerShape(16.dp)
             )
+            .clickable(onClick = onClick)
             .padding(16.dp)
     ) {
         Row(
