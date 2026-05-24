@@ -37,7 +37,7 @@ struct ThreadDetailView: View {
                         )
                         .onAppear { viewModel.initLikes(thread.likes) }
 
-                        Text(allComments.count == 1 ? "1 Reply" : "\(allComments.count) Replies")
+                        Text(allComments.count == 1 ? String(localized: "1 Reply") : String(format: NSLocalizedString("thread_replies", comment: ""), allComments.count))
                             .font(.system(size: 13, weight: .bold))
                             .foregroundColor(colors.mutedText)
                             .padding(.top, 4)
@@ -122,7 +122,7 @@ private struct ThreadPostCard: View {
                     size: 40
                 )
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(thread.author.username.isEmpty ? "Anonymous" : thread.author.username)
+                    Text(thread.author.username.isEmpty ? String(localized: "Anonymous") : thread.author.username)
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(colors.primaryText)
                     Text("Original poster")
@@ -158,7 +158,7 @@ private struct ThreadPostCard: View {
                 )
                 ActionPill(
                     systemImage: "arrowshape.turn.up.left",
-                    label: "Reply",
+                    label: String(localized: "Reply"),
                     active: false,
                     enabled: true,
                     colors: colors,
@@ -240,7 +240,7 @@ private struct CommentCard: View {
                     size: 30
                 )
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(comment.authorUsername.isEmpty ? "Anonymous" : comment.authorUsername)
+                    Text(comment.authorUsername.isEmpty ? String(localized: "Anonymous") : comment.authorUsername)
                         .font(.system(size: 13, weight: .bold))
                         .foregroundColor(colors.primaryText)
                 }

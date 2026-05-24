@@ -52,7 +52,22 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.gce.racehub.theme.AppColorTokens
 import org.gce.racehub.theme.hexColor
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import racehub.composeapp.generated.resources.Res
+import racehub.composeapp.generated.resources.action_create_account
+import racehub.composeapp.generated.resources.action_hide
+import racehub.composeapp.generated.resources.action_show
+import racehub.composeapp.generated.resources.action_sign_in
+import racehub.composeapp.generated.resources.label_confirm_password
+import racehub.composeapp.generated.resources.label_country
+import racehub.composeapp.generated.resources.label_email
+import racehub.composeapp.generated.resources.label_password
+import racehub.composeapp.generated.resources.label_username
+import racehub.composeapp.generated.resources.signup_already_have_account
+import racehub.composeapp.generated.resources.signup_select_country_hint
+import racehub.composeapp.generated.resources.signup_tagline
+import racehub.composeapp.generated.resources.signup_title
 
 private val RacingRed = hexColor(AppColorTokens.racingRed)
 private val DarkBg    = hexColor(AppColorTokens.darkBackground)
@@ -117,7 +132,7 @@ private fun SignUpScreenContent(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Join RaceHub",
+                text = stringResource(Res.string.signup_title),
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.ExtraBold,
                 color = RacingRed,
@@ -125,7 +140,7 @@ private fun SignUpScreenContent(
             )
 
             Text(
-                text = "Start your racing journey",
+                text = stringResource(Res.string.signup_tagline),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MutedGray
             )
@@ -136,7 +151,7 @@ private fun SignUpScreenContent(
             OutlinedTextField(
                 value = state.username,
                 onValueChange = { onIntent(SignUpIntent.UsernameChanged(it)) },
-                label = { Text("Username") },
+                label = { Text(stringResource(Res.string.label_username)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text,
@@ -156,7 +171,7 @@ private fun SignUpScreenContent(
             OutlinedTextField(
                 value = state.email,
                 onValueChange = { onIntent(SignUpIntent.EmailChanged(it)) },
-                label = { Text("Email") },
+                label = { Text(stringResource(Res.string.label_email)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Email,
@@ -176,7 +191,7 @@ private fun SignUpScreenContent(
             OutlinedTextField(
                 value = state.password,
                 onValueChange = { onIntent(SignUpIntent.PasswordChanged(it)) },
-                label = { Text("Password") },
+                label = { Text(stringResource(Res.string.label_password)) },
                 singleLine = true,
                 visualTransformation = if (state.isPasswordVisible)
                     VisualTransformation.None
@@ -192,7 +207,7 @@ private fun SignUpScreenContent(
                 trailingIcon = {
                     TextButton(onClick = { onIntent(SignUpIntent.TogglePasswordVisibility) }) {
                         Text(
-                            text = if (state.isPasswordVisible) "Hide" else "Show",
+                            text = if (state.isPasswordVisible) stringResource(Res.string.action_hide) else stringResource(Res.string.action_show),
                             color = MutedGray,
                             fontSize = 12.sp
                         )
@@ -209,7 +224,7 @@ private fun SignUpScreenContent(
             OutlinedTextField(
                 value = state.confirmPassword,
                 onValueChange = { onIntent(SignUpIntent.ConfirmPasswordChanged(it)) },
-                label = { Text("Confirm Password") },
+                label = { Text(stringResource(Res.string.label_confirm_password)) },
                 singleLine = true,
                 visualTransformation = if (state.isConfirmPasswordVisible)
                     VisualTransformation.None
@@ -225,7 +240,7 @@ private fun SignUpScreenContent(
                 trailingIcon = {
                     TextButton(onClick = { onIntent(SignUpIntent.ToggleConfirmPasswordVisibility) }) {
                         Text(
-                            text = if (state.isConfirmPasswordVisible) "Hide" else "Show",
+                            text = if (state.isConfirmPasswordVisible) stringResource(Res.string.action_hide) else stringResource(Res.string.action_show),
                             color = MutedGray,
                             fontSize = 12.sp
                         )
@@ -275,7 +290,7 @@ private fun SignUpScreenContent(
                     )
                 } else {
                     Text(
-                        text = "Create Account",
+                        text = stringResource(Res.string.action_create_account),
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 16.sp,
                         color = Color.White
@@ -287,13 +302,13 @@ private fun SignUpScreenContent(
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "Already have an account?",
+                    text = stringResource(Res.string.signup_already_have_account),
                     color = MutedGray,
                     fontSize = 14.sp
                 )
                 TextButton(onClick = onNavigateToLogin) {
                     Text(
-                        text = "Sign In",
+                        text = stringResource(Res.string.action_sign_in),
                         color = RacingRed,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 14.sp
@@ -331,8 +346,8 @@ private fun CountryDropdown(
             value = selectedName,
             onValueChange = {},
             readOnly = true,
-            label = { Text("Country") },
-            placeholder = { Text("Select country", color = MutedGray) },
+            label = { Text(stringResource(Res.string.label_country)) },
+            placeholder = { Text(stringResource(Res.string.signup_select_country_hint), color = MutedGray) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier.fillMaxWidth().menuAnchor(),
             shape = RoundedCornerShape(12.dp),

@@ -63,7 +63,21 @@ import org.gce.racehub.theme.AppColorScheme
 import org.gce.racehub.theme.DarkAppColors
 import org.gce.racehub.theme.LocalAppColors
 import androidx.compose.ui.tooling.preview.Preview
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import racehub.composeapp.generated.resources.Res
+import racehub.composeapp.generated.resources.action_reply
+import racehub.composeapp.generated.resources.action_share
+import racehub.composeapp.generated.resources.contentdesc_back
+import racehub.composeapp.generated.resources.contentdesc_post_reply
+import racehub.composeapp.generated.resources.label_anonymous
+import racehub.composeapp.generated.resources.label_just_now
+import racehub.composeapp.generated.resources.label_original_poster
+import racehub.composeapp.generated.resources.thread_no_replies
+import racehub.composeapp.generated.resources.thread_one_reply
+import racehub.composeapp.generated.resources.thread_replies
+import racehub.composeapp.generated.resources.thread_reply_placeholder
+import racehub.composeapp.generated.resources.title_thread_detail
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -137,7 +151,7 @@ private fun ThreadDetailContent(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "Thread",
+                        text = stringResource(Res.string.title_thread_detail),
                         color = colors.primaryText,
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp
@@ -147,7 +161,7 @@ private fun ThreadDetailContent(
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(Res.string.contentdesc_back),
                             tint = colors.primaryText
                         )
                     }
@@ -191,7 +205,7 @@ private fun ThreadDetailContent(
 
             item {
                 Text(
-                    text = if (allComments.size == 1) "1 Reply" else "${allComments.size} Replies",
+                    text = if (allComments.size == 1) stringResource(Res.string.thread_one_reply) else stringResource(Res.string.thread_replies, allComments.size),
                     color = colors.mutedText,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
@@ -202,7 +216,7 @@ private fun ThreadDetailContent(
             if (allComments.isEmpty()) {
                 item {
                     Text(
-                        text = "No replies yet. Be the first!",
+                        text = stringResource(Res.string.thread_no_replies),
                         color = colors.mutedText,
                         fontSize = 13.sp,
                         modifier = Modifier.padding(vertical = 8.dp)
@@ -264,14 +278,15 @@ private fun ThreadPostCard(
             )
             Spacer(modifier = Modifier.width(10.dp))
             Column {
+                val anonymousLabel = stringResource(Res.string.label_anonymous)
                 Text(
-                    text = thread.author.username.ifBlank { "Anonymous" },
+                    text = thread.author.username.ifBlank { anonymousLabel },
                     color = colors.primaryText,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "Original poster",
+                    text = stringResource(Res.string.label_original_poster),
                     color = colors.mutedText,
                     fontSize = 12.sp
                 )
@@ -308,7 +323,7 @@ private fun ThreadPostCard(
             )
             ActionPill(
                 icon = Icons.AutoMirrored.Filled.Send,
-                label = "Reply",
+                label = stringResource(Res.string.action_reply),
                 active = false,
                 activeColor = colors.racingRed,
                 borderColor = colors.cardBorder,
@@ -317,7 +332,7 @@ private fun ThreadPostCard(
             )
             ActionPill(
                 icon = Icons.Filled.Share,
-                label = "Share",
+                label = stringResource(Res.string.action_share),
                 active = false,
                 activeColor = colors.racingRed,
                 borderColor = colors.cardBorder,
@@ -386,15 +401,16 @@ private fun CommentCard(comment: ThreadComment, colors: AppColorScheme) {
             )
             Spacer(modifier = Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
+                val anonymousLabel = stringResource(Res.string.label_anonymous)
                 Text(
-                    text = comment.authorUsername.ifBlank { "Anonymous" },
+                    text = comment.authorUsername.ifBlank { anonymousLabel },
                     color = colors.primaryText,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
             Text(
-                text = "just now",
+                text = stringResource(Res.string.label_just_now),
                 color = colors.mutedText,
                 fontSize = 11.sp
             )
@@ -433,7 +449,7 @@ private fun CommentInputBar(
                 .weight(1f)
                 .focusRequester(focusRequester),
             enabled = !isSubmitting,
-            placeholder = { Text("Add a reply…", color = colors.mutedText) },
+            placeholder = { Text(stringResource(Res.string.thread_reply_placeholder), color = colors.mutedText) },
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = colors.primaryText,
                 unfocusedTextColor = colors.primaryText,
@@ -448,7 +464,7 @@ private fun CommentInputBar(
         IconButton(onClick = onSubmit, enabled = canSubmit) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.Send,
-                contentDescription = "Post reply",
+                contentDescription = stringResource(Res.string.contentdesc_post_reply),
                 tint = if (canSubmit) colors.racingRed else colors.mutedText
             )
         }

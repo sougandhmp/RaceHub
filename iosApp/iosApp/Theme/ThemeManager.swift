@@ -4,7 +4,7 @@ import Combine
 enum ThemeMode: String, CaseIterable {
     case system, dark, light
 
-    var displayName: String {
+    var displayName: LocalizedStringKey {
         switch self {
         case .system: return "System"
         case .dark:   return "Dark"

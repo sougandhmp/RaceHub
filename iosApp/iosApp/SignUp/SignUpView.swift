@@ -159,8 +159,8 @@ struct SignUpView: View {
     // MARK: - Reusable field builders
 
     private func inputField(
-        label: String,
-        placeholder: String,
+        label: LocalizedStringKey,
+        placeholder: LocalizedStringKey,
         text: Binding<String>,
         keyboardType: UIKeyboardType
     ) -> some View {
@@ -188,7 +188,7 @@ struct SignUpView: View {
     }
 
     private func passwordField(
-        label: String,
+        label: LocalizedStringKey,
         text: Binding<String>,
         isVisible: Bool,
         onToggle: @escaping () -> Void
@@ -211,7 +211,7 @@ struct SignUpView: View {
                 .autocapitalization(.none)
 
                 Button(action: onToggle) {
-                    Text(isVisible ? "Hide" : "Show")
+                    Text(isVisible ? String(localized: "Hide") : String(localized: "Show"))
                         .font(.caption)
                         .foregroundColor(Color(hex: t.authMuted))
                 }
@@ -252,7 +252,7 @@ struct SignUpView: View {
                 }
             } label: {
                 HStack {
-                    Text(hasSelection ? displayName : "Select country")
+                    Text(hasSelection ? displayName : String(localized: "Select country"))
                         .foregroundColor(hasSelection ? .white : Color(hex: t.authMuted).opacity(0.6))
                     Spacer()
                     Image(systemName: "chevron.down")

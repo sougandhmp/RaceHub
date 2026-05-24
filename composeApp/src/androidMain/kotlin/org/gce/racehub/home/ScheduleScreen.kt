@@ -28,6 +28,14 @@ import org.gce.racehub.race.domain.model.Race
 import org.gce.racehub.theme.AppColorScheme
 import org.gce.racehub.theme.DarkAppColors
 import org.gce.racehub.theme.LocalAppColors
+import org.jetbrains.compose.resources.stringResource
+import racehub.composeapp.generated.resources.Res
+import racehub.composeapp.generated.resources.contentdesc_back
+import racehub.composeapp.generated.resources.contentdesc_circuit_diagram
+import racehub.composeapp.generated.resources.label_completed
+import racehub.composeapp.generated.resources.label_next_race
+import racehub.composeapp.generated.resources.label_round
+import racehub.composeapp.generated.resources.title_schedule
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,7 +50,7 @@ fun ScheduleScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        "SCHEDULE",
+                        stringResource(Res.string.title_schedule),
                         fontWeight = FontWeight.Black,
                         letterSpacing = 2.sp,
                         color = colors.primaryText
@@ -52,7 +60,7 @@ fun ScheduleScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(Res.string.contentdesc_back),
                             tint = colors.primaryText
                         )
                     }
@@ -99,7 +107,7 @@ private fun RaceItem(race: Race, isNextRace: Boolean, colors: AppColorScheme) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "ROUND ${race.round}",
+                text = stringResource(Res.string.label_round, race.round),
                 color = if (race.isCompleted) colors.mutedText else colors.racingRed,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold
@@ -107,7 +115,7 @@ private fun RaceItem(race: Race, isNextRace: Boolean, colors: AppColorScheme) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (race.isCompleted) {
                     Text(
-                        text = "COMPLETED",
+                        text = stringResource(Res.string.label_completed),
                         color = colors.mutedText,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
@@ -118,7 +126,7 @@ private fun RaceItem(race: Race, isNextRace: Boolean, colors: AppColorScheme) {
                         shape = RoundedCornerShape(4.dp)
                     ) {
                         Text(
-                            text = "NEXT RACE",
+                            text = stringResource(Res.string.label_next_race),
                             color = Color.White,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Black,
@@ -194,7 +202,7 @@ private fun CircuitImage(circuitName: String, grandPrixName: String, colors: App
         if (resId != null) {
             androidx.compose.foundation.Image(
                 painter = painterResource(resId),
-                contentDescription = "Circuit Diagram",
+                contentDescription = stringResource(Res.string.contentdesc_circuit_diagram),
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(4.dp),

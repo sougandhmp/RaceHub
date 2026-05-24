@@ -44,8 +44,23 @@ import org.gce.racehub.theme.DarkAppColors
 import org.gce.racehub.theme.LocalAppColors
 import org.gce.racehub.theme.ThemeManager
 import org.gce.racehub.theme.ThemeMode
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import racehub.composeapp.generated.resources.Res
+import racehub.composeapp.generated.resources.action_sign_out
+import racehub.composeapp.generated.resources.heading_recent_posts
+import racehub.composeapp.generated.resources.label_appearance
+import racehub.composeapp.generated.resources.label_country_caps
+import racehub.composeapp.generated.resources.label_email
+import racehub.composeapp.generated.resources.label_joined
+import racehub.composeapp.generated.resources.label_posts
+import racehub.composeapp.generated.resources.label_saved
+import racehub.composeapp.generated.resources.label_username
+import racehub.composeapp.generated.resources.profile_not_signed_in
+import racehub.composeapp.generated.resources.theme_dark
+import racehub.composeapp.generated.resources.theme_light
+import racehub.composeapp.generated.resources.theme_system
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -97,7 +112,7 @@ private fun ProfileContent(
             val user = state.user
             if (user == null) {
                 Text(
-                    text = "Not signed in.",
+                    text = stringResource(Res.string.profile_not_signed_in),
                     color = colors.mutedText,
                     fontSize = 16.sp,
                     modifier = Modifier.align(Alignment.Center)
@@ -125,7 +140,7 @@ private fun ProfileContent(
                         if (profile.recentThreadTitles.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(24.dp))
                             ThreadTitleSection(
-                                heading = "RECENT POSTS",
+                                heading = stringResource(Res.string.heading_recent_posts),
                                 titles = profile.recentThreadTitles,
                                 colors = colors
                             )
@@ -133,7 +148,7 @@ private fun ProfileContent(
                         if (profile.savedThreadTitles.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(16.dp))
                             ThreadTitleSection(
-                                heading = "SAVED",
+                                heading = stringResource(Res.string.label_saved),
                                 titles = profile.savedThreadTitles,
                                 colors = colors
                             )
@@ -204,13 +219,13 @@ private fun ThemeToggle(
     colors: AppColorScheme
 ) {
     val options = listOf(
-        ThemeMode.SYSTEM to "System",
-        ThemeMode.DARK   to "Dark",
-        ThemeMode.LIGHT  to "Light"
+        ThemeMode.SYSTEM to stringResource(Res.string.theme_system),
+        ThemeMode.DARK   to stringResource(Res.string.theme_dark),
+        ThemeMode.LIGHT  to stringResource(Res.string.theme_light)
     )
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "APPEARANCE",
+            text = stringResource(Res.string.label_appearance),
             color = colors.mutedText,
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
@@ -327,9 +342,9 @@ private fun ProfileStats(user: User, profile: UserProfile?, colors: AppColorSche
             .padding(vertical = 16.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        StatCell(label = "POSTS", value = (profile?.postsCount ?: user.postsCount).toString(), colors = colors)
-        StatCell(label = "SAVED", value = profile?.savedCount?.toString() ?: "—", colors = colors)
-        StatCell(label = "COUNTRY", value = user.country?.uppercase() ?: "—", colors = colors)
+        StatCell(label = stringResource(Res.string.label_posts), value = (profile?.postsCount ?: user.postsCount).toString(), colors = colors)
+        StatCell(label = stringResource(Res.string.label_saved), value = profile?.savedCount?.toString() ?: "—", colors = colors)
+        StatCell(label = stringResource(Res.string.label_country_caps), value = user.country?.uppercase() ?: "—", colors = colors)
     }
 }
 
@@ -363,14 +378,14 @@ private fun ProfileDetails(user: User, colors: AppColorScheme) {
             .border(1.dp, colors.cardBorder, RoundedCornerShape(16.dp))
             .padding(16.dp)
     ) {
-        DetailRow(label = "Email", value = user.email, colors = colors)
+        DetailRow(label = stringResource(Res.string.label_email), value = user.email, colors = colors)
         user.username?.takeIf { it.isNotBlank() }?.let {
             Spacer(modifier = Modifier.height(12.dp))
-            DetailRow(label = "Username", value = it, colors = colors)
+            DetailRow(label = stringResource(Res.string.label_username), value = it, colors = colors)
         }
         user.joinedAt?.takeIf { it.isNotBlank() }?.let {
             Spacer(modifier = Modifier.height(12.dp))
-            DetailRow(label = "Joined", value = formatJoined(it), colors = colors)
+            DetailRow(label = stringResource(Res.string.label_joined), value = formatJoined(it), colors = colors)
         }
     }
 }
@@ -450,7 +465,7 @@ private fun SignOutButton(isSigningOut: Boolean, colors: AppColorScheme, onClick
                 modifier = Modifier.size(18.dp)
             )
         } else {
-            Text(text = "Sign Out", fontWeight = FontWeight.Bold)
+            Text(text = stringResource(Res.string.action_sign_out), fontWeight = FontWeight.Bold)
         }
     }
 }

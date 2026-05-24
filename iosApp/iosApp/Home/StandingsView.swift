@@ -3,7 +3,7 @@ import Shared
 
 private enum StandingsCategory: String, CaseIterable {
     case drivers, constructors
-    var label: String { self == .drivers ? "DRIVERS" : "CONSTRUCTORS" }
+    var label: LocalizedStringKey { self == .drivers ? "DRIVERS" : "CONSTRUCTORS" }
 }
 
 struct StandingsView: View {
@@ -226,7 +226,7 @@ private struct PointsBlock: View {
                     .font(.system(size: 10, weight: .bold))
                     .foregroundColor(colors.mutedText)
             }
-            Text(wins == 1 ? "1 WIN" : "\(wins) WINS")
+            Text(wins == 1 ? String(localized: "1 WIN") : String(format: NSLocalizedString("label_wins_caps", comment: ""), wins))
                 .font(.system(size: 10, weight: .bold))
                 .kerning(0.5)
                 .foregroundColor(wins > 0 ? AppColors.f1Red : colors.mutedText)

@@ -27,6 +27,17 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.tooling.preview.Preview
+import org.jetbrains.compose.resources.stringResource
+import racehub.composeapp.generated.resources.Res
+import racehub.composeapp.generated.resources.action_forgot_password
+import racehub.composeapp.generated.resources.action_hide
+import racehub.composeapp.generated.resources.action_show
+import racehub.composeapp.generated.resources.action_sign_in
+import racehub.composeapp.generated.resources.action_sign_up
+import racehub.composeapp.generated.resources.label_email
+import racehub.composeapp.generated.resources.label_password
+import racehub.composeapp.generated.resources.login_no_account
+import racehub.composeapp.generated.resources.login_tagline
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
@@ -114,7 +125,7 @@ private fun LoginScreenContent(
             )
 
             Text(
-                text = "Your Racing Universe",
+                text = stringResource(Res.string.login_tagline),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MutedGray
             )
@@ -124,7 +135,7 @@ private fun LoginScreenContent(
             OutlinedTextField(
                 value = state.email,
                 onValueChange = { onIntent(LoginIntent.EmailChanged(it)) },
-                label = { Text("Email") },
+                label = { Text(stringResource(Res.string.label_email)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Email,
@@ -143,7 +154,7 @@ private fun LoginScreenContent(
             OutlinedTextField(
                 value = state.password,
                 onValueChange = { onIntent(LoginIntent.PasswordChanged(it)) },
-                label = { Text("Password") },
+                label = { Text(stringResource(Res.string.label_password)) },
                 singleLine = true,
                 visualTransformation = if (state.isPasswordVisible)
                     VisualTransformation.None
@@ -162,7 +173,7 @@ private fun LoginScreenContent(
                 trailingIcon = {
                     TextButton(onClick = { onIntent(LoginIntent.TogglePasswordVisibility) }) {
                         Text(
-                            text = if (state.isPasswordVisible) "Hide" else "Show",
+                            text = if (state.isPasswordVisible) stringResource(Res.string.action_hide) else stringResource(Res.string.action_show),
                             color = MutedGray,
                             fontSize = 12.sp
                         )
@@ -204,7 +215,7 @@ private fun LoginScreenContent(
                     )
                 } else {
                     Text(
-                        text = "Sign In",
+                        text = stringResource(Res.string.action_sign_in),
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 16.sp,
                         color = Color.White
@@ -216,7 +227,7 @@ private fun LoginScreenContent(
 
             TextButton(onClick = onNavigateToForgotPassword) {
                 Text(
-                    text = "Forgot Password?",
+                    text = stringResource(Res.string.action_forgot_password),
                     color = MutedGray,
                     fontSize = 14.sp
                 )
@@ -226,13 +237,13 @@ private fun LoginScreenContent(
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "Don't have an account?",
+                    text = stringResource(Res.string.login_no_account),
                     color = MutedGray,
                     fontSize = 14.sp
                 )
                 TextButton(onClick = onNavigateToSignUp) {
                     Text(
-                        text = "Sign Up",
+                        text = stringResource(Res.string.action_sign_up),
                         color = RacingRed,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 14.sp
