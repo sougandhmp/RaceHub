@@ -98,7 +98,7 @@ struct LoginView: View {
                             .autocapitalization(.none)
 
                             Button(action: { viewModel.send(.togglePasswordVisibility) }) {
-                                Text(viewModel.state.isPasswordVisible ? "Hide" : "Show")
+                                Text(viewModel.state.isPasswordVisible ? String(localized: "Hide") : String(localized: "Show"))
                                     .font(.caption)
                                     .foregroundColor(Color(hex: t.authMuted))
                             }

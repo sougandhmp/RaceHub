@@ -39,15 +39,15 @@ struct ForgotPasswordView: View {
 
                     Spacer(minLength: 16)
 
-                    Text(viewModel.state.step == .request ? "Forgot Password?" : "Reset Password")
+                    Text(viewModel.state.step == .request ? String(localized: "Forgot Password?") : String(localized: "Reset Password"))
                         .font(.system(size: 28, weight: .heavy))
                         .foregroundColor(AppColors.racingRed)
 
                     Spacer(minLength: 8)
 
                     Text(viewModel.state.step == .request
-                         ? "Enter your email and we'll send you a reset code."
-                         : "Code sent to \(viewModel.state.email). Enter it below with your new password.")
+                         ? String(localized: "forgot_password_request_subtitle")
+                         : String(format: NSLocalizedString("forgot_password_confirm_subtitle", comment: ""), viewModel.state.email))
                         .font(.footnote)
                         .foregroundColor(Color(hex: t.authMuted))
                         .multilineTextAlignment(.center)
@@ -83,7 +83,7 @@ struct ForgotPasswordView: View {
                                 ProgressView()
                                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             } else {
-                                Text(viewModel.state.step == .request ? "Send Reset Code" : "Reset Password")
+                                Text(viewModel.state.step == .request ? String(localized: "Send Reset Code") : String(localized: "Reset Password"))
                                     .font(.system(size: 16, weight: .semibold))
                                     .foregroundColor(.white)
                             }
@@ -170,8 +170,8 @@ private struct ConfirmStepView: View {
 }
 
 private struct AuthTextField: View {
-    let label: String
-    let placeholder: String
+    let label: LocalizedStringKey
+    let placeholder: LocalizedStringKey
     @Binding var text: String
     var keyboardType: UIKeyboardType = .default
 
@@ -201,7 +201,7 @@ private struct AuthTextField: View {
 }
 
 private struct PasswordFieldView: View {
-    let label: String
+    let label: LocalizedStringKey
     @Binding var text: String
     let isVisible: Bool
     let onToggle: () -> Void
@@ -225,7 +225,7 @@ private struct PasswordFieldView: View {
                 .autocapitalization(.none)
 
                 Button(action: onToggle) {
-                    Text(isVisible ? "Hide" : "Show")
+                    Text(isVisible ? String(localized: "Hide") : String(localized: "Show"))
                         .font(.caption)
                         .foregroundColor(Color(hex: t.authMuted))
                 }

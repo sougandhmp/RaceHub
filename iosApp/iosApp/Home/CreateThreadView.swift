@@ -91,14 +91,14 @@ struct CreateThreadView: View {
         .padding(.vertical, 16)
     }
 
-    private func fieldLabel(_ text: String) -> some View {
+    private func fieldLabel(_ text: LocalizedStringKey) -> some View {
         Text(text)
             .font(.system(size: 11, weight: .bold))
             .kerning(0.5)
             .foregroundColor(colors.mutedText)
     }
 
-    private func textField(placeholder: String, text: Binding<String>) -> some View {
+    private func textField(placeholder: LocalizedStringKey, text: Binding<String>) -> some View {
         TextField("", text: text, prompt: Text(placeholder).foregroundColor(colors.mutedText))
             .foregroundColor(colors.primaryText)
             .accentColor(AppColors.racingRed)

@@ -126,7 +126,7 @@ private struct HomeBottomBar: View {
 
 private struct TabItem: View {
     let tab: HomeTab
-    let label: String
+    let label: LocalizedStringKey
     let isSelected: Bool
     let colors: AppColors
     let action: (HomeTab) -> Void

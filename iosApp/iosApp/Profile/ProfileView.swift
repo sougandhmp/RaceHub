@@ -108,7 +108,7 @@ private struct ThemeToggleView: View {
 }
 
 private struct ThemePill: View {
-    let label: String
+    let label: LocalizedStringKey
     let isSelected: Bool
     let colors: AppColors
     let action: () -> Void
@@ -204,7 +204,7 @@ private struct ProfileStatsView: View {
 }
 
 private struct StatCell: View {
-    let label: String
+    let label: LocalizedStringKey
     let value: String
     let colors: AppColors
 
@@ -225,7 +225,7 @@ private struct StatCell: View {
 // MARK: - Thread Titles
 
 private struct ThreadTitleSection: View {
-    let heading: String
+    let heading: LocalizedStringKey
     let titles: [String]
     let colors: AppColors
 
@@ -281,7 +281,7 @@ private struct ProfileDetailsView: View {
 }
 
 private struct DetailRow: View {
-    let label: String
+    let label: LocalizedStringKey
     let value: String
     let colors: AppColors
 

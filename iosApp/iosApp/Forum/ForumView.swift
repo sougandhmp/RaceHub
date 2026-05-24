@@ -1,13 +1,13 @@
 import SwiftUI
 import Shared
 
-private let sortTabs: [(label: String, value: String)] = [
+private let sortTabs: [(label: LocalizedStringKey, value: String)] = [
     ("Latest", "latest"),
     ("Most popular", "top"),
     ("Most commented", "commented")
 ]
 
-private let categoryTabs: [(label: String, value: String?)] = [
+private let categoryTabs: [(label: LocalizedStringKey, value: String?)] = [
     ("All", nil),
     ("General Discussion", "General Discussion"),
     ("Race Weekends", "Race Weekends"),
@@ -129,7 +129,7 @@ private struct FilterRow: View {
 }
 
 private struct FilterPill: View {
-    let label: String
+    let label: LocalizedStringKey
     let isSelected: Bool
     let colors: AppColors
     let action: () -> Void

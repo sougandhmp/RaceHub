@@ -47,7 +47,13 @@ import org.gce.racehub.race.domain.model.ThreadComment
 import org.gce.racehub.theme.AppColorScheme
 import org.gce.racehub.theme.DarkAppColors
 import org.gce.racehub.theme.LocalAppColors
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import racehub.composeapp.generated.resources.Res
+import racehub.composeapp.generated.resources.contentdesc_create_thread
+import racehub.composeapp.generated.resources.forum_no_threads_subtitle
+import racehub.composeapp.generated.resources.forum_no_threads_title
+import racehub.composeapp.generated.resources.label_saved_star
 
 private val SORT_TABS = listOf(
     "Latest" to "latest",
@@ -125,14 +131,14 @@ private fun ForumScreenContent(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "No threads yet",
+                            text = stringResource(Res.string.forum_no_threads_title),
                             color = colors.primaryText,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Tap + to start the first conversation.",
+                            text = stringResource(Res.string.forum_no_threads_subtitle),
                             color = colors.mutedText,
                             fontSize = 14.sp
                         )
@@ -161,7 +167,7 @@ private fun ForumScreenContent(
                 .align(Alignment.BottomEnd)
                 .padding(end = 20.dp, bottom = 20.dp)
         ) {
-            Icon(imageVector = Icons.Filled.Add, contentDescription = "Create thread")
+            Icon(imageVector = Icons.Filled.Add, contentDescription = stringResource(Res.string.contentdesc_create_thread))
         }
     }
 }
@@ -292,7 +298,7 @@ private fun ThreadCard(thread: Thread, colors: AppColorScheme, onClick: () -> Un
             Spacer(modifier = Modifier.weight(1f))
             if (thread.bookmarked) {
                 Text(
-                    text = "★ Saved",
+                    text = stringResource(Res.string.label_saved_star),
                     color = colors.racingRed,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold

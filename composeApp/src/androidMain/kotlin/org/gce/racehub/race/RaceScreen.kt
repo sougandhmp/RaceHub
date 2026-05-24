@@ -56,7 +56,24 @@ import org.gce.racehub.theme.AppColorScheme
 import org.gce.racehub.theme.DarkAppColors
 import org.gce.racehub.theme.LocalAppColors
 import org.gce.racehub.theme.teamColorOf
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import racehub.composeapp.generated.resources.Res
+import racehub.composeapp.generated.resources.action_see_all
+import racehub.composeapp.generated.resources.label_featured_discussion
+import racehub.composeapp.generated.resources.label_forum_arrow
+import racehub.composeapp.generated.resources.label_no_trending
+import racehub.composeapp.generated.resources.label_pts
+import racehub.composeapp.generated.resources.label_standings
+import racehub.composeapp.generated.resources.label_trending
+import racehub.composeapp.generated.resources.label_likes
+import racehub.composeapp.generated.resources.label_wins
+import racehub.composeapp.generated.resources.race_full_calendar
+import racehub.composeapp.generated.resources.race_no_upcoming
+import racehub.composeapp.generated.resources.race_weekend_detail
+import racehub.composeapp.generated.resources.standings_loading
+import racehub.composeapp.generated.resources.tab_constructors
+import racehub.composeapp.generated.resources.tab_drivers
 import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -176,7 +193,7 @@ private fun NextRaceSection(
 
         // Race name
         Text(
-            text = race?.let { shortRaceName(it.name) } ?: "No Upcoming Race",
+            text = race?.let { shortRaceName(it.name) } ?: stringResource(Res.string.race_no_upcoming),
             color = colors.primaryText,
             fontSize = 26.sp,
             fontWeight = FontWeight.Black,
@@ -234,7 +251,7 @@ private fun NextRaceSection(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Weekend detail",
+                    text = stringResource(Res.string.race_weekend_detail),
                     color = colors.primaryText,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold
@@ -251,7 +268,7 @@ private fun NextRaceSection(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "Full calendar",
+                        text = stringResource(Res.string.race_full_calendar),
                         color = Color.White,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold
@@ -343,7 +360,7 @@ private fun StandingsSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Standings",
+                text = stringResource(Res.string.label_standings),
                 color = colors.primaryText,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
@@ -354,7 +371,7 @@ private fun StandingsSection(
                 modifier = Modifier.heightIn(min = 24.dp)
             ) {
                 Text(
-                    text = "See all",
+                    text = stringResource(Res.string.action_see_all),
                     color = colors.racingRed,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold
@@ -393,7 +410,7 @@ private fun StandingsLoadingPlaceholder(colors: AppColorScheme) {
             .padding(vertical = 16.dp),
         contentAlignment = Alignment.Center
     ) {
-        Text("Standings loading…", color = colors.mutedText, fontSize = 13.sp)
+        Text(stringResource(Res.string.standings_loading), color = colors.mutedText, fontSize = 13.sp)
     }
 }
 
@@ -423,7 +440,7 @@ private fun StandingsTabPills(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = if (tab == StandingsTab.Drivers) "Drivers" else "Constructors",
+                    text = if (tab == StandingsTab.Drivers) stringResource(Res.string.tab_drivers) else stringResource(Res.string.tab_constructors),
                     color = if (isSelected) Color.White else colors.mutedText,
                     fontSize = 13.sp,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
@@ -485,7 +502,7 @@ private fun DriverStandingCard(standing: DriverStanding, colors: AppColorScheme)
                     fontWeight = FontWeight.ExtraBold
                 )
                 Text(
-                    text = "PTS",
+                    text = stringResource(Res.string.label_pts),
                     color = colors.mutedText,
                     fontSize = 9.sp,
                     fontWeight = FontWeight.Bold
@@ -534,7 +551,7 @@ private fun ConstructorStandingCard(standing: ConstructorStanding, colors: AppCo
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "${standing.wins} wins",
+                    text = stringResource(Res.string.label_wins, standing.wins),
                     color = colors.mutedText,
                     fontSize = 12.sp
                 )
@@ -547,7 +564,7 @@ private fun ConstructorStandingCard(standing: ConstructorStanding, colors: AppCo
                     fontWeight = FontWeight.ExtraBold
                 )
                 Text(
-                    text = "PTS",
+                    text = stringResource(Res.string.label_pts),
                     color = colors.mutedText,
                     fontSize = 9.sp,
                     fontWeight = FontWeight.Bold
@@ -568,14 +585,14 @@ private fun FeaturedSection(thread: TrendingThread?, colors: AppColorScheme) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "FEATURED DISCUSSION",
+                text = stringResource(Res.string.label_featured_discussion),
                 color = colors.mutedText,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.ExtraBold,
                 letterSpacing = 1.sp
             )
             Text(
-                text = "Forum →",
+                text = stringResource(Res.string.label_forum_arrow),
                 color = colors.racingRed,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold
@@ -592,7 +609,7 @@ private fun FeaturedSection(thread: TrendingThread?, colors: AppColorScheme) {
                     .padding(24.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text("No trending topics yet", color = colors.mutedText, fontSize = 14.sp)
+                Text(stringResource(Res.string.label_no_trending), color = colors.mutedText, fontSize = 14.sp)
             }
         } else {
             Column(
@@ -613,7 +630,7 @@ private fun FeaturedSection(thread: TrendingThread?, colors: AppColorScheme) {
                         shape = RoundedCornerShape(4.dp)
                     ) {
                         Text(
-                            text = "TRENDING",
+                            text = stringResource(Res.string.label_trending),
                             color = colors.racingRed,
                             fontSize = 9.sp,
                             fontWeight = FontWeight.Black,
@@ -649,7 +666,7 @@ private fun FeaturedSection(thread: TrendingThread?, colors: AppColorScheme) {
                             Text(text = "❤️", fontSize = 12.sp)
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "${thread.likes} likes",
+                                text = stringResource(Res.string.label_likes, thread.likes),
                                 color = colors.mutedText,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium

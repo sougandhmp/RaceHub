@@ -43,7 +43,17 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.gce.racehub.theme.AppColorScheme
 import org.gce.racehub.theme.DarkAppColors
 import org.gce.racehub.theme.LocalAppColors
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import racehub.composeapp.generated.resources.Res
+import racehub.composeapp.generated.resources.action_cancel
+import racehub.composeapp.generated.resources.action_post_thread
+import racehub.composeapp.generated.resources.create_thread_content_placeholder
+import racehub.composeapp.generated.resources.create_thread_title_placeholder
+import racehub.composeapp.generated.resources.label_content
+import racehub.composeapp.generated.resources.label_tag
+import racehub.composeapp.generated.resources.label_title_caps
+import racehub.composeapp.generated.resources.title_new_thread
 
 @Composable
 fun CreateThreadScreen(
@@ -90,10 +100,10 @@ private fun CreateThreadContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(onClick = onCancel, enabled = !state.isSubmitting) {
-                    Text(text = "Cancel", color = colors.mutedText, fontSize = 14.sp)
+                    Text(text = stringResource(Res.string.action_cancel), color = colors.mutedText, fontSize = 14.sp)
                 }
                 Text(
-                    text = "New Thread",
+                    text = stringResource(Res.string.title_new_thread),
                     color = colors.primaryText,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
@@ -103,12 +113,12 @@ private fun CreateThreadContent(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            FieldLabel("TITLE", colors)
+            FieldLabel(stringResource(Res.string.label_title_caps), colors)
             OutlinedTextField(
                 value = state.title,
                 onValueChange = { onIntent(CreateThreadIntent.TitleChanged(it)) },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("What's on your mind?", color = colors.mutedText) },
+                placeholder = { Text(stringResource(Res.string.create_thread_title_placeholder), color = colors.mutedText) },
                 singleLine = true,
                 enabled = !state.isSubmitting,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
@@ -116,7 +126,7 @@ private fun CreateThreadContent(
             )
 
             Spacer(modifier = Modifier.height(16.dp))
-            FieldLabel("TAG", colors)
+            FieldLabel(stringResource(Res.string.label_tag), colors)
             CategoryPicker(
                 selected = state.category,
                 enabled = !state.isSubmitting,
@@ -125,14 +135,14 @@ private fun CreateThreadContent(
             )
 
             Spacer(modifier = Modifier.height(16.dp))
-            FieldLabel("CONTENT", colors)
+            FieldLabel(stringResource(Res.string.label_content), colors)
             OutlinedTextField(
                 value = state.content,
                 onValueChange = { onIntent(CreateThreadIntent.ContentChanged(it)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(220.dp),
-                placeholder = { Text("Share your thoughts…", color = colors.mutedText) },
+                placeholder = { Text(stringResource(Res.string.create_thread_content_placeholder), color = colors.mutedText) },
                 enabled = !state.isSubmitting,
                 colors = fieldColors(colors)
             )
@@ -163,7 +173,7 @@ private fun CreateThreadContent(
                         modifier = Modifier.size(18.dp)
                     )
                 } else {
-                    Text(text = "Post Thread", fontWeight = FontWeight.Bold)
+                    Text(text = stringResource(Res.string.action_post_thread), fontWeight = FontWeight.Bold)
                 }
             }
         }

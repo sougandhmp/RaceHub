@@ -51,6 +51,16 @@ import org.gce.racehub.theme.AppColorScheme
 import org.gce.racehub.theme.DarkAppColors
 import org.gce.racehub.theme.LocalAppColors
 import org.gce.racehub.theme.teamColorOf
+import org.jetbrains.compose.resources.stringResource
+import racehub.composeapp.generated.resources.Res
+import racehub.composeapp.generated.resources.contentdesc_back
+import racehub.composeapp.generated.resources.label_constructor
+import racehub.composeapp.generated.resources.label_one_win
+import racehub.composeapp.generated.resources.label_pts
+import racehub.composeapp.generated.resources.label_wins_caps
+import racehub.composeapp.generated.resources.tab_constructors_caps
+import racehub.composeapp.generated.resources.tab_drivers_caps
+import racehub.composeapp.generated.resources.title_standings
 
 private val Gold   = Color(0xFFFFD700)
 private val Silver = Color(0xFFC0C0C0)
@@ -80,7 +90,7 @@ fun StandingsScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        "STANDINGS",
+                        stringResource(Res.string.title_standings),
                         fontWeight = FontWeight.Black,
                         letterSpacing = 2.sp,
                         color = colors.primaryText
@@ -90,7 +100,7 @@ fun StandingsScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(Res.string.contentdesc_back),
                             tint = colors.primaryText
                         )
                     }
@@ -165,7 +175,7 @@ private fun StandingsToggle(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = if (tab == StandingsCategory.Drivers) "DRIVERS" else "CONSTRUCTORS",
+                    text = if (tab == StandingsCategory.Drivers) stringResource(Res.string.tab_drivers_caps) else stringResource(Res.string.tab_constructors_caps),
                     color = if (isSelected) Color.White else colors.mutedText,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
@@ -279,7 +289,7 @@ private fun ConstructorStandingCard(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "CONSTRUCTOR",
+                    text = stringResource(Res.string.label_constructor),
                     color = teamColor,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
@@ -327,7 +337,7 @@ private fun PointsBlock(points: Int, wins: Int, colors: AppColorScheme) {
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
-                text = "PTS",
+                text = stringResource(Res.string.label_pts),
                 color = colors.mutedText,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
@@ -335,7 +345,7 @@ private fun PointsBlock(points: Int, wins: Int, colors: AppColorScheme) {
             )
         }
         Text(
-            text = if (wins == 1) "1 WIN" else "$wins WINS",
+            text = if (wins == 1) stringResource(Res.string.label_one_win) else stringResource(Res.string.label_wins_caps, wins),
             color = if (wins > 0) colors.racingRed else colors.mutedText,
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold,

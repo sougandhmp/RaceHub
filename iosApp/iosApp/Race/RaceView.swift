@@ -153,7 +153,7 @@ private struct NextRaceSection: View {
             Spacer().frame(height: 10)
 
             // Race name
-            Text(race.map { shortRaceName($0.name) } ?? "No Upcoming Race")
+            Text(race.map { shortRaceName($0.name) } ?? String(localized: "No Upcoming Race"))
                 .font(.system(size: 26, weight: .black))
                 .foregroundColor(colors.primaryText)
 
@@ -329,7 +329,7 @@ private struct StandingsTabPills: View {
             ForEach(StandingsTab.allCases, id: \.self) { tab in
                 let isSelected = tab == selected
                 Button(action: { selected = tab }) {
-                    Text(tab == .drivers ? "Drivers" : "Constructors")
+                    Text(tab == .drivers ? String(localized: "Drivers") : String(localized: "Constructors"))
                         .font(.system(size: 13, weight: isSelected ? .bold : .medium))
                         .foregroundColor(isSelected ? .white : colors.mutedText)
                         .frame(maxWidth: .infinity)
@@ -419,7 +419,7 @@ private struct ConstructorStandingCard: View {
                     Text(standing.name)
                         .font(.system(size: 15, weight: .bold))
                         .foregroundColor(colors.primaryText)
-                    Text("\(Int(standing.wins)) wins")
+                    Text(String(format: NSLocalizedString("label_wins", comment: ""), Int(standing.wins)))
                         .font(.system(size: 12))
                         .foregroundColor(colors.mutedText)
                 }
@@ -485,7 +485,7 @@ private struct FeaturedSection: View {
                     }
                 }
 
-                Text(thread?.title ?? "No threads yet — be the first to post.")
+                Text(thread?.title ?? String(localized: "No threads yet — be the first to post."))
                     .font(.system(size: 17, weight: .bold))
                     .foregroundColor(colors.primaryText)
                     .lineSpacing(4)

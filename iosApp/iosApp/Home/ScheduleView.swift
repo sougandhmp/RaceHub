@@ -56,7 +56,7 @@ struct RaceRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("ROUND \(Int(race.round))")
+                Text(String(format: NSLocalizedString("label_round", comment: ""), Int(race.round)))
                     .font(.system(size: 12, weight: .bold))
                     .foregroundColor(race.isCompleted ? colors.mutedText : AppColors.racingRed)
 
@@ -69,7 +69,7 @@ struct RaceRow: View {
                 } else {
                     let days = daysUntil(race.dateTime)
                     if let days, days > 0 {
-                        Text("\(days) DAYS")
+                        Text(String(format: NSLocalizedString("label_days", comment: ""), days))
                             .font(.system(size: 12, weight: .bold))
                             .foregroundColor(AppColors.racingRed)
                             .padding(.trailing, isNextRace ? 4 : 0)

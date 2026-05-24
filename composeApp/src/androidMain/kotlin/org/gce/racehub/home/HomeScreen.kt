@@ -41,7 +41,11 @@ import org.gce.racehub.race.RaceScreen
 import org.gce.racehub.race.di.createRaceModule
 import org.gce.racehub.race.domain.model.Thread
 import org.gce.racehub.theme.LocalAppColors
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.KoinApplication
+import racehub.composeapp.generated.resources.Res
+import racehub.composeapp.generated.resources.contentdesc_menu
+import racehub.composeapp.generated.resources.home_title
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.dsl.koinConfiguration
 
@@ -108,7 +112,7 @@ private fun HomeHeader() {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "Race Hub",
+            text = stringResource(Res.string.home_title),
             color = colors.primaryText,
             fontWeight = FontWeight.Bold,
             fontSize = 30.sp
@@ -116,7 +120,7 @@ private fun HomeHeader() {
         IconButton(onClick = { }) {
             Icon(
                 imageVector = Icons.Filled.MoreVert,
-                contentDescription = "Menu",
+                contentDescription = stringResource(Res.string.contentdesc_menu),
                 tint = colors.primaryText,
                 modifier = Modifier.size(24.dp)
             )
