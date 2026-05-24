@@ -1,25 +1,41 @@
 package org.gce.racehub.auth.data.storage
 
 import android.content.Context
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 import org.gce.racehub.auth.domain.model.User
+import androidx.core.content.edit
 
 class AndroidSessionStorage(context: Context) : SessionStorage {
 
-    private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    // The session holds the auth bearer token, so persist it encrypted at rest
+    // (AES-256) rather than in plaintext SharedPreferences.
+    private val prefs = run {
+        val masterKey = MasterKey.Builder(context.applicationContext)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
+        EncryptedSharedPreferences.create(
+            context.applicationContext,
+            PREFS_NAME,
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+    }
 
     override fun saveUser(user: User) {
-        prefs.edit()
-            .putString(KEY_ID, user.id)
-            .putString(KEY_EMAIL, user.email)
-            .putString(KEY_NAME, user.name)
-            .putString(KEY_TOKEN, user.token)
-            .putString(KEY_USERNAME, user.username)
-            .putString(KEY_COUNTRY, user.country)
-            .putString(KEY_AVATAR, user.avatar)
-            .putString(KEY_ROLE, user.role)
-            .putString(KEY_JOINED_AT, user.joinedAt)
-            .putInt(KEY_POSTS_COUNT, user.postsCount)
-            .apply()
+        prefs.edit {
+            putString(KEY_ID, user.id)
+                .putString(KEY_EMAIL, user.email)
+                .putString(KEY_NAME, user.name)
+                .putString(KEY_TOKEN, user.token)
+                .putString(KEY_USERNAME, user.username)
+                .putString(KEY_COUNTRY, user.country)
+                .putString(KEY_AVATAR, user.avatar)
+                .putString(KEY_ROLE, user.role)
+                .putString(KEY_JOINED_AT, user.joinedAt)
+                .putInt(KEY_POSTS_COUNT, user.postsCount)
+        }
     }
 
     override fun restoreUser(): User? {

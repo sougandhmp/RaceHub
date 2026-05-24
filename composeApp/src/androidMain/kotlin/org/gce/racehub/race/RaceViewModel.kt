@@ -38,6 +38,9 @@ class RaceViewModel(
             is RaceIntent.Refresh ->
                 loadData()
 
+            is RaceIntent.SelectRace ->
+                fetchSelectedRaceDetail(intent.slug)
+
             is RaceIntent.DismissError ->
                 _state.update { it.copy(errorMessage = null) }
         }
@@ -81,6 +84,22 @@ class RaceViewModel(
                 _state.update { it.copy(isLoadingDetail = false, nextRaceDetail = detail) }
             } catch (_: Exception) {
                 _state.update { it.copy(isLoadingDetail = false) }
+            }
+        }
+    }
+
+    /**
+     * Loads the detail for the race the user tapped through to. Clears any
+     * previously-selected detail first so a stale race's data never flashes.
+     */
+    private fun fetchSelectedRaceDetail(slug: String) {
+        viewModelScope.launch {
+            _state.update { it.copy(isLoadingSelectedDetail = true, selectedRaceDetail = null) }
+            try {
+                val detail = getRaceDetailUseCase(slug)
+                _state.update { it.copy(isLoadingSelectedDetail = false, selectedRaceDetail = detail) }
+            } catch (_: Exception) {
+                _state.update { it.copy(isLoadingSelectedDetail = false) }
             }
         }
     }

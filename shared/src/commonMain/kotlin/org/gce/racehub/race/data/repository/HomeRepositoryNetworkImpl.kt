@@ -10,6 +10,8 @@ import org.gce.racehub.race.data.dto.*
 import org.gce.racehub.race.domain.model.*
 import org.gce.racehub.race.domain.repository.HomeRepository
 import org.gce.racehub.util.logError
+import org.gce.racehub.util.platformIoDispatcher
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Network-based implementation of [HomeRepository].
@@ -25,13 +27,21 @@ import org.gce.racehub.util.logError
 class HomeRepositoryNetworkImpl(
     private val httpClient: HttpClient,
     private val baseUrl: String,
-    private val localDataSource: LocalDataSource
+    private val localDataSource: LocalDataSource,
+    private val ioDispatcher: CoroutineDispatcher = platformIoDispatcher
 ) : HomeRepository {
 
     companion object {
         private const val TAG = "HomeRepository"
         private const val SYNC_TIMEOUT_MS = 5_000L
     }
+
+    /**
+     * Long-lived scope for fire-and-forget background refreshes. Survives the
+     * suspend call that triggered it so cached data can be returned immediately
+     * while the network sync completes off the caller's critical path.
+     */
+    private val syncScope = CoroutineScope(SupervisorJob() + ioDispatcher)
 
     private fun List<GraphQLError>?.toErrorMessage(fallback: String): String =
         this?.joinToString { it.message }?.takeIf { it.isNotBlank() } ?: fallback
@@ -328,58 +338,56 @@ class HomeRepositoryNetworkImpl(
      * Returns the full race schedule, fetching from the dedicated races query.
      * Blocks on first load; subsequent calls refresh in the background.
      */
-    override suspend fun getRaceSchedule(): List<Race> {
-        val localRaces = localDataSource.getAllRaces()
-        if (localRaces.isEmpty()) {
+    override suspend fun getRaceSchedule(): List<Race> = withContext(ioDispatcher) {
+        if (localDataSource.getAllRaces().isEmpty()) {
+            // Cold cache: block until the first sync populates the DB.
             syncRaceSchedule()
         } else {
-            try {
-                withTimeoutOrNull(SYNC_TIMEOUT_MS) { syncRaceSchedule() }
-            } catch (_: CancellationException) {}
+            // Warm cache: refresh in the background, return what we have now.
+            syncScope.launch { withTimeoutOrNull(SYNC_TIMEOUT_MS.milliseconds) { syncRaceSchedule() } }
         }
-        return localDataSource.getAllRaces()
+        localDataSource.getAllRaces()
     }
 
     /**
      * Returns driver standings, refreshing from the network if empty.
      * Subsequent calls trigger background syncs without blocking.
      */
-    override suspend fun getDriverStandings(): List<DriverStanding> {
-        val localStandings = localDataSource.getAllDriverStandings()
-        if (localStandings.isEmpty()) {
+    override suspend fun getDriverStandings(): List<DriverStanding> = withContext(ioDispatcher) {
+        if (localDataSource.getAllDriverStandings().isEmpty()) {
             syncDashboard()
         } else {
             backgroundSync()
         }
-        return localDataSource.getAllDriverStandings()
+        localDataSource.getAllDriverStandings()
     }
 
     /**
      * Returns constructor standings, refreshing from the network if empty.
      * Subsequent calls trigger background syncs without blocking.
      */
-    override suspend fun getConstructorStandings(): List<ConstructorStanding> {
-        val localStandings = localDataSource.getAllConstructorStandings()
-        if (localStandings.isEmpty()) {
+    override suspend fun getConstructorStandings(): List<ConstructorStanding> = withContext(ioDispatcher) {
+        if (localDataSource.getAllConstructorStandings().isEmpty()) {
             syncDashboard()
         } else {
             backgroundSync()
         }
-        return localStandings
+        // Re-read after a cold-cache sync so freshly-saved rows are returned.
+        localDataSource.getAllConstructorStandings()
     }
 
     /**
      * Returns trending threads, refreshing from the network if empty.
      * Subsequent calls trigger background syncs without blocking.
      */
-    override suspend fun getTrendingThreads(): List<TrendingThread> {
-        val localThreads = localDataSource.getAllTrendingThreads()
-        if (localThreads.isEmpty()) {
+    override suspend fun getTrendingThreads(): List<TrendingThread> = withContext(ioDispatcher) {
+        if (localDataSource.getAllTrendingThreads().isEmpty()) {
             syncDashboard()
         } else {
             backgroundSync()
         }
-        return localThreads
+        // Re-read after a cold-cache sync so freshly-saved rows are returned.
+        localDataSource.getAllTrendingThreads()
     }
 
     /**
@@ -515,7 +523,9 @@ class HomeRepositoryNetworkImpl(
 
         val added = response.data?.addComment
             ?: error(response.errors.toErrorMessage("Failed to add comment"))
-        return ThreadComment(content = added.content, authorUsername = userId)
+        // The mutation does not return author info; leave the username blank so
+        // callers don't mistake the raw user id for a display name.
+        return ThreadComment(content = added.content, authorUsername = "")
     }
 
     /**
@@ -564,15 +574,16 @@ class HomeRepositoryNetworkImpl(
     }
 
     /**
-     * Triggers a background sync without blocking the caller.
-     * Used to refresh data asynchronously.
+     * Triggers a background sync without blocking the caller. Launched on
+     * [syncScope] so it outlives the suspend call that requested it — the
+     * caller returns cached data immediately and the refresh lands for next time.
      */
-    private suspend fun backgroundSync() {
-        try {
-            withTimeoutOrNull(SYNC_TIMEOUT_MS) {
+    private fun backgroundSync() {
+        syncScope.launch {
+            withTimeoutOrNull(SYNC_TIMEOUT_MS.milliseconds) {
                 syncDashboard()
             }
-        } catch (_: CancellationException) {}
+        }
     }
 
     /**

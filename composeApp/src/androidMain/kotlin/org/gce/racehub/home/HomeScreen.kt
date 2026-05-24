@@ -39,6 +39,7 @@ import org.gce.racehub.forum.ForumScreen
 import org.gce.racehub.profile.ProfileScreen
 import org.gce.racehub.race.RaceScreen
 import org.gce.racehub.race.di.createRaceModule
+import org.gce.racehub.race.domain.model.Race
 import org.gce.racehub.race.domain.model.Thread
 import org.gce.racehub.theme.LocalAppColors
 import org.jetbrains.compose.resources.stringResource
@@ -63,7 +64,8 @@ fun HomeScreen(
     onViewAllStandings: () -> Unit,
     onCreateThread: () -> Unit = {},
     onThreadClick: (Thread) -> Unit = {},
-    onSignedOut: () -> Unit = {}
+    onSignedOut: () -> Unit = {},
+    onViewRaceDetail: (Race) -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val colors = LocalAppColors.current
@@ -86,7 +88,8 @@ fun HomeScreen(
             when (state.selectedTab) {
                 HomeTab.Race -> RaceScreen(
                     onViewAllSchedule = onViewAllSchedule,
-                    onViewAllStandings = onViewAllStandings
+                    onViewAllStandings = onViewAllStandings,
+                    onViewRaceDetail = onViewRaceDetail
                 )
 
                 HomeTab.Forum -> ForumScreen(
