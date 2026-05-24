@@ -81,7 +81,8 @@ import java.util.Calendar
 fun RaceScreen(
     viewModel: RaceViewModel = koinViewModel(),
     onViewAllSchedule: () -> Unit,
-    onViewAllStandings: () -> Unit
+    onViewAllStandings: () -> Unit,
+    onViewRaceDetail: (Race) -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val colors = LocalAppColors.current
@@ -105,7 +106,8 @@ fun RaceScreen(
                 state = state,
                 colors = colors,
                 onViewAllSchedule = onViewAllSchedule,
-                onViewAllStandings = onViewAllStandings
+                onViewAllStandings = onViewAllStandings,
+                onViewRaceDetail = onViewRaceDetail
             )
         }
     }
@@ -116,7 +118,8 @@ private fun RaceTabContent(
     state: RaceState,
     colors: AppColorScheme,
     onViewAllSchedule: () -> Unit,
-    onViewAllStandings: () -> Unit
+    onViewAllStandings: () -> Unit,
+    onViewRaceDetail: (Race) -> Unit = {}
 ) {
     LazyColumn(
         modifier = Modifier
@@ -131,7 +134,8 @@ private fun RaceTabContent(
                 nextRaceDetail = state.nextRaceDetail,
                 totalRaces = state.raceSchedule.size,
                 colors = colors,
-                onViewAllSchedule = onViewAllSchedule
+                onViewAllSchedule = onViewAllSchedule,
+                onViewRaceDetail = onViewRaceDetail
             )
         }
         item {
@@ -159,7 +163,8 @@ private fun NextRaceSection(
     nextRaceDetail: RaceDetail?,
     totalRaces: Int,
     colors: AppColorScheme,
-    onViewAllSchedule: () -> Unit
+    onViewAllSchedule: () -> Unit,
+    onViewRaceDetail: (Race) -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -247,12 +252,12 @@ private fun NextRaceSection(
                     .height(44.dp)
                     .clip(RoundedCornerShape(22.dp))
                     .border(1.dp, colors.cardBorder, RoundedCornerShape(22.dp))
-                    .clickable { },
+                    .clickable(enabled = race != null) { race?.let(onViewRaceDetail) },
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = stringResource(Res.string.race_weekend_detail),
-                    color = colors.primaryText,
+                    color = if (race != null) colors.primaryText else colors.mutedText,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -681,17 +686,17 @@ private fun FeaturedSection(thread: TrendingThread?, colors: AppColorScheme) {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-private data class RaceSessionChip(
+internal data class RaceSessionChip(
     val label: String,
     val fullDate: String,
     val time: String,
     val timezone: String
 )
 
-private fun shortRaceName(name: String): String =
+internal fun shortRaceName(name: String): String =
     name.replace("Grand Prix", "GP", ignoreCase = true).trim()
 
-private fun countryFlag(country: String): String = when {
+internal fun countryFlag(country: String): String = when {
     country.contains("bahrain", true)                                          -> "🇧🇭"
     country.contains("saudi", true)                                            -> "🇸🇦"
     country.contains("australia", true)                                        -> "🇦🇺"
@@ -723,7 +728,7 @@ private fun formatRaceHeaderDate(dateTime: String): String {
         .format(date).uppercase()
 }
 
-private fun stripLabel(full: String): String = when (full.uppercase().trim()) {
+internal fun stripLabel(full: String): String = when (full.uppercase().trim()) {
     "PRACTICE 1" -> "FP1"
     "PRACTICE 2" -> "FP2"
     "PRACTICE 3" -> "FP3"
@@ -735,7 +740,7 @@ private fun stripLabel(full: String): String = when (full.uppercase().trim()) {
 }
 
 
-private fun deviceTimezoneLabel(): String {
+internal fun deviceTimezoneLabel(): String {
     val tz = java.util.TimeZone.getDefault()
     val now = java.util.Date()
     val offset = tz.getOffset(now.time)
@@ -747,17 +752,17 @@ private fun deviceTimezoneLabel(): String {
     else "GMT$sign$hours:${String.format(java.util.Locale.US, "%02d", minutes)}"
 }
 
-private fun formatSessionDate(cal: Calendar): String =
+internal fun formatSessionDate(cal: Calendar): String =
     java.text.SimpleDateFormat("MMM d", java.util.Locale.US)
         .apply { timeZone = java.util.TimeZone.getDefault() }
         .format(cal.time)
 
-private fun formatSessionTime(cal: Calendar): String =
+internal fun formatSessionTime(cal: Calendar): String =
     java.text.SimpleDateFormat("HH:mm", java.util.Locale.US)
         .apply { timeZone = java.util.TimeZone.getDefault() }
         .format(cal.time)
 
-private fun displayLabel(raw: String): String = when (raw.uppercase().trim()) {
+internal fun displayLabel(raw: String): String = when (raw.uppercase().trim()) {
     "FP1", "PRACTICE 1", "P1", "PRACTICE1" -> "PRACTICE 1"
     "FP2", "PRACTICE 2", "P2", "PRACTICE2" -> "PRACTICE 2"
     "FP3", "PRACTICE 3", "P3", "PRACTICE3" -> "PRACTICE 3"
@@ -769,7 +774,7 @@ private fun displayLabel(raw: String): String = when (raw.uppercase().trim()) {
 }
 
 
-private fun sessionsFromRace(race: Race?): List<RaceSessionChip> {
+internal fun sessionsFromRace(race: Race?): List<RaceSessionChip> {
     if (race == null) return emptyList()
     val raceDate = parseIsoToDate(race.dateTime) ?: return fallbackSessions()
     val tzLabel = deviceTimezoneLabel()
@@ -810,7 +815,7 @@ private fun sessionsFromRace(race: Race?): List<RaceSessionChip> {
     )
 }
 
-private fun fallbackSessions(): List<RaceSessionChip> {
+internal fun fallbackSessions(): List<RaceSessionChip> {
     val tz = deviceTimezoneLabel()
     return listOf(
         RaceSessionChip("PRACTICE 1", "—", "—", tz),
@@ -821,7 +826,7 @@ private fun fallbackSessions(): List<RaceSessionChip> {
     )
 }
 
-private fun sessionsFromDetail(sessions: List<RaceSession>): List<RaceSessionChip> {
+internal fun sessionsFromDetail(sessions: List<RaceSession>): List<RaceSessionChip> {
     val tzLabel = deviceTimezoneLabel()
     return sessions.map { session ->
         val date = parseIsoToDate(session.dateTime)

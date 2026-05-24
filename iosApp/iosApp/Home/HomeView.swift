@@ -11,6 +11,7 @@ struct HomeView: View {
     @StateObject private var forumViewModel = ForumViewModel()
     @State private var path = NavigationPath()
     @State private var selectedThread: Shared.Thread? = nil
+    @State private var selectedRace: Race? = nil
     @Environment(\.colorScheme) private var colorScheme
 
     private var colors: AppColors { AppColors.forScheme(colorScheme) }
@@ -28,7 +29,11 @@ struct HomeView: View {
                         RaceView(
                             viewModel: raceViewModel,
                             onViewAllSchedule: { path.append("schedule") },
-                            onViewAllStandings: { path.append("standings") }
+                            onViewAllStandings: { path.append("standings") },
+                            onViewRaceDetail: { race in
+                                selectedRace = race
+                                path.append("raceDetail")
+                            }
                         )
                     case .forum:
                         ForumView(
@@ -66,6 +71,8 @@ struct HomeView: View {
                     })
                 } else if destination == "threadDetail", let thread = selectedThread {
                     ThreadDetailView(thread: thread)
+                } else if destination == "raceDetail", let race = selectedRace {
+                    RaceDetailView(race: race)
                 }
             }
         }
