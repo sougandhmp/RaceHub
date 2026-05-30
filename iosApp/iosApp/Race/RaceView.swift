@@ -218,8 +218,8 @@ private struct NextRaceSection: View {
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(colors.card)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-        .overlay(RoundedRectangle(cornerRadius: 20).stroke(colors.cardBorder, lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(colors.cardBorder, lineWidth: 1))
     }
 }
 
@@ -395,9 +395,9 @@ private struct DriverStandingCard: View {
         .frame(maxWidth: .infinity)
         .frame(height: 56)
         .background(colors.card)
-        .cornerRadius(14)
+        .cornerRadius(16)
         .overlay(
-            RoundedRectangle(cornerRadius: 14)
+            RoundedRectangle(cornerRadius: 16)
                 .stroke(colors.cardBorder, lineWidth: 1)
         )
     }
@@ -445,9 +445,9 @@ private struct ConstructorStandingCard: View {
         .frame(maxWidth: .infinity)
         .frame(height: 56)
         .background(colors.card)
-        .cornerRadius(14)
+        .cornerRadius(16)
         .overlay(
-            RoundedRectangle(cornerRadius: 14)
+            RoundedRectangle(cornerRadius: 16)
                 .stroke(colors.cardBorder, lineWidth: 1)
         )
     }
@@ -501,9 +501,9 @@ private struct FeaturedSection: View {
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(colors.card)
-            .cornerRadius(20)
+            .cornerRadius(16)
             .overlay(
-                RoundedRectangle(cornerRadius: 20)
+                RoundedRectangle(cornerRadius: 16)
                     .stroke(colors.cardBorder, lineWidth: 1)
             )
         }

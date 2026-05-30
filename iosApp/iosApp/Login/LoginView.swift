@@ -178,7 +178,7 @@ struct LoginView: View {
 
                     Spacer(minLength: 32)
                 }
-                .padding(.horizontal, 28)
+                .padding(.horizontal, 20)
             }
         }
         .onReceive(viewModel.effectPublisher) { effect in

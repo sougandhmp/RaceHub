@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -46,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.gce.racehub.theme.AppColorTokens
+import org.gce.racehub.theme.Dimens
 import org.gce.racehub.theme.hexColor
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -110,7 +112,8 @@ private fun ForgotPasswordContent(
             onClick = onBack,
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(top = 16.dp, start = 8.dp)
+                .statusBarsPadding()
+                .padding(top = 8.dp, start = 8.dp)
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -123,7 +126,7 @@ private fun ForgotPasswordContent(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 28.dp),
+                .padding(horizontal = Dimens.screenGutter),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {

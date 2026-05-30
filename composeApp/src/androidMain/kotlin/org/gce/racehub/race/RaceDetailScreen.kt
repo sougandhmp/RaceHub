@@ -42,6 +42,7 @@ import org.gce.racehub.race.domain.model.RaceSession
 import org.gce.racehub.race.domain.model.TrackFacts
 import org.gce.racehub.theme.AppColorScheme
 import org.gce.racehub.theme.DarkAppColors
+import org.gce.racehub.theme.Dimens
 import org.gce.racehub.theme.LocalAppColors
 import org.jetbrains.compose.resources.stringResource
 import racehub.composeapp.generated.resources.Res
@@ -160,9 +161,9 @@ private fun HeroCard(race: Race, colors: AppColorScheme) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
+            .clip(Dimens.cardShape)
             .background(colors.card)
-            .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
+            .border(1.dp, colors.cardBorder, Dimens.cardShape)
             .padding(20.dp)
     ) {
         Row(
@@ -292,9 +293,9 @@ private fun ScheduleSection(sessions: List<RaceSessionChip>, colors: AppColorSch
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(20.dp))
+                .clip(Dimens.cardShape)
                 .background(colors.card)
-                .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
+                .border(1.dp, colors.cardBorder, Dimens.cardShape)
         ) {
             sessions.forEachIndexed { index, chip ->
                 val isRace = chip.label == "RACE"
@@ -497,9 +498,9 @@ private fun InfoSection(race: Race, colors: AppColorScheme) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(20.dp))
+                .clip(Dimens.cardShape)
                 .background(colors.card)
-                .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
+                .border(1.dp, colors.cardBorder, Dimens.cardShape)
         ) {
             InfoRow(
                 label = stringResource(Res.string.label_status),
@@ -560,9 +561,9 @@ private fun SectionCard(title: String, colors: AppColorScheme, content: @Composa
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(20.dp))
+                .clip(Dimens.cardShape)
                 .background(colors.card)
-                .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
+                .border(1.dp, colors.cardBorder, Dimens.cardShape)
                 .padding(vertical = 16.dp)
         ) {
             content()

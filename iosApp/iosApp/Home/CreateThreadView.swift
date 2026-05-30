@@ -53,7 +53,7 @@ struct CreateThreadView: View {
                         submitButton
                             .padding(.top, 16)
                     }
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, 20)
                     .padding(.vertical, 16)
                 }
             }
@@ -87,7 +87,7 @@ struct CreateThreadView: View {
 
             Color.clear.frame(width: 64, height: 1)
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, 20)
         .padding(.vertical, 16)
     }
 

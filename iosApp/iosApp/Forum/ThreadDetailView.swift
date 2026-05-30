@@ -177,10 +177,10 @@ private struct ThreadPostCard: View {
                     .padding(.vertical, 8)
                     .background(Color.clear)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 20)
+                        RoundedRectangle(cornerRadius: 16)
                             .stroke(colors.cardBorder, lineWidth: 1)
                     )
-                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
                 }
                 .buttonStyle(.plain)
             }
@@ -188,9 +188,9 @@ private struct ThreadPostCard: View {
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(colors.card)
-        .cornerRadius(20)
+        .cornerRadius(16)
         .overlay(
-            RoundedRectangle(cornerRadius: 20)
+            RoundedRectangle(cornerRadius: 16)
                 .stroke(colors.cardBorder, lineWidth: 1)
         )
     }
@@ -218,10 +218,10 @@ private struct ActionPill: View {
             .padding(.vertical, 8)
             .background(active ? AppColors.racingRed.opacity(0.10) : Color.clear)
             .overlay(
-                RoundedRectangle(cornerRadius: 20)
+                RoundedRectangle(cornerRadius: 16)
                     .stroke(active ? AppColors.racingRed.opacity(0.4) : colors.cardBorder, lineWidth: 1)
             )
-            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
         }
         .disabled(!enabled)
         .buttonStyle(.plain)

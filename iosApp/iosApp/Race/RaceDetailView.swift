@@ -48,7 +48,7 @@ struct RaceDetailView: View {
             Spacer()
             Image(systemName: "arrow.left").opacity(0)
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, 20)
         .padding(.vertical, 20)
         .background(colors.background)
     }
@@ -105,8 +105,8 @@ struct RaceDetailView: View {
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(colors.card)
-        .cornerRadius(20)
-        .overlay(RoundedRectangle(cornerRadius: 20).stroke(colors.cardBorder, lineWidth: 1))
+        .cornerRadius(16)
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(colors.cardBorder, lineWidth: 1))
     }
 
     // MARK: - Circuit Image
@@ -116,9 +116,9 @@ struct RaceDetailView: View {
             SectionLabel(title: "CIRCUIT MAP", colors: colors)
 
             ZStack {
-                RoundedRectangle(cornerRadius: 20)
+                RoundedRectangle(cornerRadius: 16)
                     .fill(colors.card)
-                RoundedRectangle(cornerRadius: 20)
+                RoundedRectangle(cornerRadius: 16)
                     .stroke(colors.cardBorder, lineWidth: 1)
 
                 if let imageName = circuitImageName(circuit: race.circuit, grandPrix: race.name) {
@@ -187,8 +187,8 @@ struct RaceDetailView: View {
                 }
             }
             .background(colors.card)
-            .cornerRadius(20)
-            .overlay(RoundedRectangle(cornerRadius: 20).stroke(colors.cardBorder, lineWidth: 1))
+            .cornerRadius(16)
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(colors.cardBorder, lineWidth: 1))
         }
     }
 
@@ -216,8 +216,8 @@ struct RaceDetailView: View {
                 }
             }
             .background(colors.card)
-            .cornerRadius(20)
-            .overlay(RoundedRectangle(cornerRadius: 20).stroke(colors.cardBorder, lineWidth: 1))
+            .cornerRadius(16)
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(colors.cardBorder, lineWidth: 1))
         }
     }
 

@@ -33,7 +33,7 @@ struct StandingsView: View {
                     Spacer()
                     Image(systemName: "arrow.left").opacity(0)
                 }
-                .padding(.horizontal, 24)
+                .padding(.horizontal, 20)
                 .padding(.vertical, 20)
 
                 ScrollView {

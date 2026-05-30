@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import org.gce.racehub.race.domain.model.Race
 import org.gce.racehub.theme.AppColorScheme
 import org.gce.racehub.theme.DarkAppColors
+import org.gce.racehub.theme.Dimens
 import org.gce.racehub.theme.LocalAppColors
 import org.jetbrains.compose.resources.stringResource
 import racehub.composeapp.generated.resources.Res
@@ -78,9 +79,9 @@ fun ScheduleScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(bottom = 24.dp)
+                .padding(horizontal = Dimens.screenGutter),
+            verticalArrangement = Arrangement.spacedBy(Dimens.spaceLg),
+            contentPadding = PaddingValues(bottom = Dimens.spaceXl)
         ) {
             items(schedule) { race ->
                 RaceItem(race = race, isNextRace = race == nextRace, colors = colors, onClick = { onViewRaceDetail(race) })
@@ -94,15 +95,15 @@ private fun RaceItem(race: Race, isNextRace: Boolean, colors: AppColorScheme, on
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(Dimens.cardShape)
             .background(colors.card)
             .border(
                 width = if (isNextRace) 2.dp else 1.dp,
                 color = if (isNextRace) colors.racingRed else colors.cardBorder,
-                shape = RoundedCornerShape(16.dp)
+                shape = Dimens.cardShape
             )
             .clickable(onClick = onClick)
-            .padding(16.dp)
+            .padding(Dimens.spaceLg)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -126,7 +127,7 @@ private fun RaceItem(race: Race, isNextRace: Boolean, colors: AppColorScheme, on
                 } else if (isNextRace) {
                     Surface(
                         color = colors.racingRed,
-                        shape = RoundedCornerShape(4.dp)
+                        shape = Dimens.chipShape
                     ) {
                         Text(
                             text = stringResource(Res.string.label_next_race),
@@ -147,46 +148,43 @@ private fun RaceItem(race: Race, isNextRace: Boolean, colors: AppColorScheme, on
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(Dimens.spaceSm))
 
-        Text(
-            text = race.name,
-            color = colors.primaryText,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
-        )
-
-        Text(
-            text = "${race.city}, ${race.country}",
-            color = colors.mutedText,
-            fontSize = 12.sp,
-            modifier = Modifier.padding(top = 2.dp)
-        )
-
-        Text(
-            text = race.circuit,
-            color = colors.mutedText,
-            fontSize = 12.sp,
-            modifier = Modifier.padding(top = 2.dp)
-        )
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(top = 4.dp)
-        ) {
+        Column(verticalArrangement = Arrangement.spacedBy(Dimens.spaceXs)) {
             Text(
-                text = formatRaceDate(race.dateTime),
-                color = colors.mutedText,
-                fontSize = 14.sp
+                text = race.name,
+                color = colors.primaryText,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
             )
-            race.weather?.let { weather ->
-                Spacer(modifier = Modifier.width(8.dp))
-                WeatherChip(weather = weather, colors = colors)
+
+            Text(
+                text = "${race.city}, ${race.country}",
+                color = colors.mutedText,
+                fontSize = 12.sp
+            )
+
+            Text(
+                text = race.circuit,
+                color = colors.mutedText,
+                fontSize = 12.sp
+            )
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = formatRaceDate(race.dateTime),
+                    color = colors.mutedText,
+                    fontSize = 14.sp
+                )
+                race.weather?.let { weather ->
+                    Spacer(modifier = Modifier.width(Dimens.spaceSm))
+                    WeatherChip(weather = weather, colors = colors)
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
-        
+        Spacer(modifier = Modifier.height(Dimens.spaceMd))
+
         CircuitImage(circuitName = race.circuit, grandPrixName = race.name, colors = colors)
     }
 }
@@ -198,7 +196,7 @@ private fun CircuitImage(circuitName: String, grandPrixName: String, colors: App
         modifier = Modifier
             .fillMaxWidth()
             .height(100.dp)
-            .clip(RoundedCornerShape(8.dp))
+            .clip(Dimens.tileShape)
             .background(colors.cardBorder.copy(alpha = 0.2f)),
         contentAlignment = Alignment.Center
     ) {

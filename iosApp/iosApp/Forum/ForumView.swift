@@ -51,7 +51,7 @@ struct ForumView: View {
                             .foregroundColor(colors.mutedText)
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, 20)
                     Spacer()
                 } else {
                     ScrollView {
@@ -235,9 +235,9 @@ private struct ThreadCard: View {
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(colors.card)
-        .cornerRadius(20)
+        .cornerRadius(16)
         .overlay(
-            RoundedRectangle(cornerRadius: 20)
+            RoundedRectangle(cornerRadius: 16)
                 .stroke(colors.cardBorder, lineWidth: 1)
         )
     }
