@@ -5,7 +5,7 @@ android-minSdk = "24"
 android-targetSdk = "37"
 androidx-activity = "1.13.0"
 androidx-lifecycle = "2.10.0"
-androidx-security-crypto = "1.1.0-alpha06"
+androidx-security-crypto = "1.1.0"
 composeMultiplatform = "1.11.0"
 compose-material-icons-extended = "1.7.3"
 kotlin = "2.3.21"
@@ -15,7 +15,7 @@ ktor = "3.5.0"
 kotlinx-serialization = "1.11.0"
 material3 = "1.10.0-alpha05"
 sqldelight = "2.3.2"
-kover = "0.8.3"
+kover = "0.9.8"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
