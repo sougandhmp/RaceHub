@@ -18,7 +18,7 @@ struct HomeView: View {
 
     var body: some View {
         NavigationStack(path: $path) {
-            ZStack(alignment: .bottom) {
+            ZStack {
                 colors.background.ignoresSafeArea()
 
                 VStack(spacing: 0) {
@@ -48,7 +48,10 @@ struct HomeView: View {
                         ProfileView(onSignedOut: onSignedOut)
                     }
                 }
-
+            }
+            // The bottom bar reserves its own space via safeAreaInset, so the tab
+            // content's scroll views inset automatically — no magic bottom padding.
+            .safeAreaInset(edge: .bottom, spacing: 0) {
                 HomeBottomBar(
                     selectedTab: viewModel.state.selectedTab,
                     colors: colors,
@@ -120,8 +123,14 @@ private struct HomeBottomBar: View {
             Spacer()
         }
         .padding(.top, 12)
-        .padding(.bottom, 34)
-        .background(colors.navBar.opacity(0.97))
+        .padding(.bottom, 12)
+        .frame(maxWidth: .infinity)
+        // Bleed the bar colour behind the home indicator; the items stay above it
+        // because safeAreaInset places the bar at the safe-area edge.
+        .background(
+            colors.navBar.opacity(0.97)
+                .ignoresSafeArea(edges: .bottom)
+        )
         .overlay(
             Rectangle()
                 .fill(colors.cardBorder)
