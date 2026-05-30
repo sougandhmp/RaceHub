@@ -64,7 +64,7 @@ struct ForumView: View {
                         }
                         .padding(.horizontal, 20)
                         .padding(.vertical, 12)
-                        .padding(.bottom, 100)
+                        .padding(.bottom, 24)
                     }
                     .refreshable {
                         await viewModel.refresh()
@@ -83,7 +83,7 @@ struct ForumView: View {
                     .shadow(color: Color.black.opacity(0.4), radius: 6, x: 0, y: 3)
             }
             .padding(.trailing, 20)
-            .padding(.bottom, 110)
+            .padding(.bottom, 20)
         }
     }
 }

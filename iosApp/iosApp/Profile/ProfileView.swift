@@ -52,7 +52,7 @@ struct ProfileView: View {
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 24)
-                    .padding(.bottom, 120)
+                    .padding(.bottom, 24)
                 }
                 .refreshable {
                     await viewModel.refresh()
