@@ -260,11 +260,11 @@ class HomeRepositoryNetworkImpl(
      * Processes and saves all dashboard data from the GraphQL response.
      */
     private fun saveDashboardData(dashboard: DashboardContent) {
-        // Save races
-        val races = buildRacesList(dashboard.upcomingRace)
-        if (races.isNotEmpty()) {
-            localDataSource.saveRaces(races)
-        }
+        // NOTE: the races table is owned exclusively by syncRaceSchedule() (the full
+        // GetRaces query). The dashboard only carries a single summary "upcoming" race,
+        // and saveRaces() replaces the whole table — writing it here would wipe the full
+        // calendar down to one row. The UI derives the upcoming race from the full
+        // schedule, so dashboard race data is intentionally not persisted.
 
         // Save driver standings
         val driverStandings = dashboard.driverStandings.map { dto ->
@@ -308,43 +308,22 @@ class HomeRepositoryNetworkImpl(
     }
 
     /**
-     * Builds a list of races from upcoming and latest race data.
-     */
-    private fun buildRacesList(
-        upcomingRace: UpcomingRaceDto?
-    ): List<Race> {
-        val races = mutableListOf<Race>()
-
-        upcomingRace?.let {
-            races.add(
-                Race(
-                    id = "upcoming",
-                    name = it.grandPrix,
-                    circuit = "",
-                    country = "",
-                    city = it.city,
-                    dateTime = it.dateTime,
-                    round = 0,
-                    status = it.status,
-                    weather = null
-                )
-            )
-        }
-
-        return races
-    }
-
-    /**
-     * Returns the full race schedule, fetching from the dedicated races query.
-     * Blocks on first load; subsequent calls refresh in the background.
+     * Returns the full race schedule from the dedicated races query.
+     *
+     * Unlike the secondary dashboard data, the schedule is the primary content of
+     * the calendar screen, so we await the sync (bounded by [SYNC_TIMEOUT_MS]) and
+     * then re-read, returning the freshest data the network can provide within the
+     * timeout and falling back to whatever is cached if the network is slow. A pure
+     * background refresh would leave the screen showing a stale snapshot until the
+     * next manual reload.
      */
     override suspend fun getRaceSchedule(): List<Race> = withContext(ioDispatcher) {
         if (localDataSource.getAllRaces().isEmpty()) {
             // Cold cache: block until the first sync populates the DB.
             syncRaceSchedule()
         } else {
-            // Warm cache: refresh in the background, return what we have now.
-            syncScope.launch { withTimeoutOrNull(SYNC_TIMEOUT_MS.milliseconds) { syncRaceSchedule() } }
+            // Warm cache: refresh now, capped by the timeout, then return fresh rows.
+            withTimeoutOrNull(SYNC_TIMEOUT_MS.milliseconds) { syncRaceSchedule() }
         }
         localDataSource.getAllRaces()
     }
