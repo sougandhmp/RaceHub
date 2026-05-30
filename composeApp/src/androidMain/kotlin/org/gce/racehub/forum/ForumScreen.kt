@@ -46,6 +46,7 @@ import org.gce.racehub.race.domain.model.ThreadAuthor
 import org.gce.racehub.race.domain.model.ThreadComment
 import org.gce.racehub.theme.AppColorScheme
 import org.gce.racehub.theme.DarkAppColors
+import org.gce.racehub.theme.Dimens
 import org.gce.racehub.theme.LocalAppColors
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -243,9 +244,9 @@ private fun ThreadCard(thread: Thread, colors: AppColorScheme, onClick: () -> Un
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
+            .clip(Dimens.cardShape)
             .background(colors.card)
-            .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
+            .border(1.dp, colors.cardBorder, Dimens.cardShape)
             .clickable(onClick = onClick)
             .padding(16.dp)
     ) {

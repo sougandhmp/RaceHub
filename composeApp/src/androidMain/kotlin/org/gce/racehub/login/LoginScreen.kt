@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.gce.racehub.theme.AppColorTokens
+import org.gce.racehub.theme.Dimens
 import org.gce.racehub.theme.hexColor
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -108,7 +109,7 @@ private fun LoginScreenContent(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 28.dp),
+                .padding(horizontal = Dimens.screenGutter),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {

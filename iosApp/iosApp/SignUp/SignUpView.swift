@@ -145,7 +145,7 @@ struct SignUpView: View {
 
                     Spacer(minLength: 40)
                 }
-                .padding(.horizontal, 28)
+                .padding(.horizontal, 20)
             }
         }
         .onReceive(viewModel.effectPublisher) { effect in

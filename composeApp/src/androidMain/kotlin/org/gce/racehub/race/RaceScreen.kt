@@ -54,6 +54,7 @@ import org.gce.racehub.race.domain.model.RaceSession
 import org.gce.racehub.race.domain.model.TrendingThread
 import org.gce.racehub.theme.AppColorScheme
 import org.gce.racehub.theme.DarkAppColors
+import org.gce.racehub.theme.Dimens
 import org.gce.racehub.theme.LocalAppColors
 import org.gce.racehub.theme.teamColorOf
 import org.jetbrains.compose.resources.stringResource
@@ -169,9 +170,9 @@ private fun NextRaceSection(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
+            .clip(Dimens.cardShape)
             .background(colors.card)
-            .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
+            .border(1.dp, colors.cardBorder, Dimens.cardShape)
             .padding(20.dp)
     ) {
         // R9/24 · SUN MAY 24  +  🇨🇦
@@ -461,9 +462,9 @@ private fun DriverStandingCard(standing: DriverStanding, colors: AppColorScheme)
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
+            .clip(Dimens.cardShape)
             .background(colors.card)
-            .border(1.dp, colors.cardBorder, RoundedCornerShape(14.dp)),
+            .border(1.dp, colors.cardBorder, Dimens.cardShape),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
@@ -523,9 +524,9 @@ private fun ConstructorStandingCard(standing: ConstructorStanding, colors: AppCo
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
+            .clip(Dimens.cardShape)
             .background(colors.card)
-            .border(1.dp, colors.cardBorder, RoundedCornerShape(14.dp)),
+            .border(1.dp, colors.cardBorder, Dimens.cardShape),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(

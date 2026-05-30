@@ -61,6 +61,7 @@ import org.gce.racehub.race.domain.model.ThreadAuthor
 import org.gce.racehub.race.domain.model.ThreadComment
 import org.gce.racehub.theme.AppColorScheme
 import org.gce.racehub.theme.DarkAppColors
+import org.gce.racehub.theme.Dimens
 import org.gce.racehub.theme.LocalAppColors
 import androidx.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.resources.stringResource
@@ -245,9 +246,9 @@ private fun ThreadPostCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
+            .clip(Dimens.cardShape)
             .background(colors.card)
-            .border(1.dp, colors.cardBorder, RoundedCornerShape(20.dp))
+            .border(1.dp, colors.cardBorder, Dimens.cardShape)
             .padding(20.dp)
     ) {
         // Category · date
@@ -356,12 +357,12 @@ private fun ActionPill(
 ) {
     Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
+            .clip(Dimens.cardShape)
             .background(if (active) activeColor.copy(alpha = 0.10f) else Color.Transparent)
             .border(
                 1.dp,
                 if (active) activeColor.copy(alpha = 0.4f) else borderColor,
-                RoundedCornerShape(20.dp)
+                Dimens.cardShape
             )
             .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 8.dp),
