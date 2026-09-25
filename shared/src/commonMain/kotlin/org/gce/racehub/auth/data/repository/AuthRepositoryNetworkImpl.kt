@@ -3,6 +3,7 @@ package org.gce.racehub.auth.data.repository
 import org.gce.racehub.auth.data.dto.toDomainModel
 import org.gce.racehub.auth.data.network.AuthService
 import org.gce.racehub.auth.domain.model.AuthResult
+import org.gce.racehub.auth.domain.model.EmailVerificationResult
 import org.gce.racehub.auth.domain.model.PasswordResetResult
 import org.gce.racehub.auth.domain.repository.AuthRepository
 
@@ -90,6 +91,36 @@ class AuthRepositoryNetworkImpl(private val authService: AuthService) : AuthRepo
             else PasswordResetResult.failure(response.message)
         } catch (e: Exception) {
             PasswordResetResult.failure("Could not reset password. Check your connection and try again.")
+        }
+    }
+
+    override suspend fun sendOtp(email: String, subject: String): EmailVerificationResult {
+        return try {
+            val response = authService.sendOtp(email, subject)
+            if (response.success) EmailVerificationResult.success()
+            else EmailVerificationResult.failure(response.message)
+        } catch (e: Exception) {
+            EmailVerificationResult.failure("Could not send verification code. Check your connection and try again.")
+        }
+    }
+
+    override suspend fun resendOtp(email: String, subject: String): EmailVerificationResult {
+        return try {
+            val response = authService.resendOtp(email, subject)
+            if (response.success) EmailVerificationResult.success()
+            else EmailVerificationResult.failure(response.message)
+        } catch (e: Exception) {
+            EmailVerificationResult.failure("Could not resend code. Check your connection and try again.")
+        }
+    }
+
+    override suspend fun verifyOtp(email: String, otp: String): EmailVerificationResult {
+        return try {
+            val response = authService.verifyOtp(email, otp)
+            if (response.success) EmailVerificationResult.success()
+            else EmailVerificationResult.failure(response.message)
+        } catch (e: Exception) {
+            EmailVerificationResult.failure("Could not verify code. Check your connection and try again.")
         }
     }
 }

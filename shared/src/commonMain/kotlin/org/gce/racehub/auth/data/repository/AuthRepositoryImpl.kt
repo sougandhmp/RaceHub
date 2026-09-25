@@ -1,6 +1,7 @@
 package org.gce.racehub.auth.data.repository
 
 import org.gce.racehub.auth.domain.model.AuthResult
+import org.gce.racehub.auth.domain.model.EmailVerificationResult
 import org.gce.racehub.auth.domain.model.PasswordResetResult
 import org.gce.racehub.auth.domain.model.User
 import org.gce.racehub.auth.domain.repository.AuthRepository
@@ -36,4 +37,14 @@ class AuthRepositoryImpl : AuthRepository {
     override suspend fun confirmPasswordReset(email: String, otp: String, newPassword: String): PasswordResetResult =
         if (otp == "123456") PasswordResetResult.success()
         else PasswordResetResult.failure("Invalid reset code")
+
+    override suspend fun sendOtp(email: String, subject: String): EmailVerificationResult =
+        EmailVerificationResult.success()
+
+    override suspend fun resendOtp(email: String, subject: String): EmailVerificationResult =
+        EmailVerificationResult.success()
+
+    override suspend fun verifyOtp(email: String, otp: String): EmailVerificationResult =
+        if (otp == "123456") EmailVerificationResult.success()
+        else EmailVerificationResult.failure("Invalid verification code")
 }

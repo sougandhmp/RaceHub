@@ -73,6 +73,13 @@
     <string name="label_confirm_new_password">Confirm New Password</string>
     <string name="action_send_reset_code">Send Reset Code</string>
 
+    <!-- Email Verification screen -->
+    <string name="email_verification_title">Verify Your Email</string>
+    <string name="email_verification_subtitle">We sent a verification code to %1$s. Enter it below to activate your account.</string>
+    <string name="label_verification_code">Verification Code</string>
+    <string name="action_verify_email">Verify Email</string>
+    <string name="action_resend_code">Didn\'t get it? Resend code</string>
+
     <!-- Home screen -->
     <string name="home_title">Race Hub</string>
 

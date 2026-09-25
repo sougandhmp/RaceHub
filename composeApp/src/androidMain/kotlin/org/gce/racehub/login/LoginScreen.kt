@@ -68,7 +68,8 @@ fun LoginScreen(
     viewModel: LoginViewModel = koinViewModel(),
     onLoginSuccess: () -> Unit,
     onNavigateToSignUp: () -> Unit,
-    onNavigateToForgotPassword: () -> Unit
+    onNavigateToForgotPassword: () -> Unit,
+    onNavigateToEmailVerification: (email: String) -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -76,6 +77,7 @@ fun LoginScreen(
         viewModel.effect.collect { effect ->
             when (effect) {
                 is LoginEffect.NavigateToHome -> onLoginSuccess()
+                is LoginEffect.NavigateToEmailVerification -> onNavigateToEmailVerification(effect.email)
             }
         }
     }

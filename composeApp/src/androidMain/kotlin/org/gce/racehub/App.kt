@@ -16,6 +16,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.gce.racehub.auth.di.createProductionAuthModule
 import org.gce.racehub.auth.domain.session.UserSession
 import org.gce.racehub.di.appModule
+import org.gce.racehub.emailverification.EmailVerificationScreen
 import org.gce.racehub.forgotpassword.ForgotPasswordScreen
 import org.gce.racehub.forum.ForumIntent
 import org.gce.racehub.forum.ForumViewModel
@@ -43,7 +44,7 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.dsl.koinConfiguration
 
-private enum class Screen { Login, SignUp, ForgotPassword, Home, Schedule, Standings, CreateThread, ThreadDetail, RaceDetail }
+private enum class Screen { Login, SignUp, EmailVerification, ForgotPassword, Home, Schedule, Standings, CreateThread, ThreadDetail, RaceDetail }
 
 @Composable
 fun App() {
@@ -68,6 +69,7 @@ fun App() {
             val userSession: UserSession = koinInject()
             var screen by remember { mutableStateOf(if (userSession.currentUser.value != null) Screen.Home else Screen.Login) }
             var selectedThread by remember { mutableStateOf<Thread?>(null) }
+            var pendingVerificationEmail by remember { mutableStateOf("") }
 
             val raceViewModel: RaceViewModel = koinViewModel()
             val forumViewModel: ForumViewModel = koinViewModel()
@@ -90,7 +92,11 @@ fun App() {
                         screen = Screen.Home
                     },
                     onNavigateToSignUp = { screen = Screen.SignUp },
-                    onNavigateToForgotPassword = { screen = Screen.ForgotPassword }
+                    onNavigateToForgotPassword = { screen = Screen.ForgotPassword },
+                    onNavigateToEmailVerification = { email ->
+                        pendingVerificationEmail = email
+                        screen = Screen.EmailVerification
+                    }
                 )
 
                 Screen.ForgotPassword -> ForgotPasswordScreen(
@@ -99,12 +105,19 @@ fun App() {
                 )
 
                 Screen.SignUp -> SignUpScreen(
-                    onSignUpSuccess = {
-                        raceViewModel.onIntent(RaceIntent.Refresh)
-                        forumViewModel.onIntent(ForumIntent.Refresh)
-                        screen = Screen.Home
+                    onSignUpSuccess = { email ->
+                        pendingVerificationEmail = email
+                        screen = Screen.EmailVerification
                     },
                     onNavigateToLogin = { screen = Screen.Login }
+                )
+
+                Screen.EmailVerification -> EmailVerificationScreen(
+                    email = pendingVerificationEmail,
+                    onBack = { screen = Screen.SignUp },
+                    // Email verified, but the account was never signed in. Send the
+                    // user to Login to obtain a session with their verified account.
+                    onEmailVerified = { screen = Screen.Login }
                 )
 
                 Screen.Home -> HomeScreen(

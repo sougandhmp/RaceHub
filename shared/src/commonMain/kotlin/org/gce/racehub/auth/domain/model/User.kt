@@ -36,5 +36,8 @@ data class User(
     val joinedAt: String? = null,
 
     /** Total number of posts created by this user. */
-    val postsCount: Int = 0
+    val postsCount: Int = 0,
+
+    /** Whether the user has verified their email address. */
+    val isEmailVerified: Boolean = true
 )

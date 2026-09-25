@@ -22,6 +22,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
@@ -81,7 +82,7 @@ private val DimBorder = hexColor(AppColorTokens.authDimBorder)
 @Composable
 fun SignUpScreen(
     viewModel: SignUpViewModel = koinViewModel(),
-    onSignUpSuccess: () -> Unit,
+    onSignUpSuccess: (email: String) -> Unit,
     onNavigateToLogin: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -89,7 +90,7 @@ fun SignUpScreen(
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                is SignUpEffect.NavigateToHome -> onSignUpSuccess()
+                is SignUpEffect.NavigateToEmailVerification -> onSignUpSuccess(effect.email)
             }
         }
     }
@@ -332,7 +333,7 @@ private fun CountryDropdown(
 ) {
     val countries = remember {
         Locale.getISOCountries()
-            .map { code -> Locale("", code).displayCountry to code }
+            .map { code -> Locale.Builder().setRegion(code).build().displayCountry to code }
             .filter { it.first.isNotEmpty() }
             .sortedBy { it.first }
     }
@@ -352,7 +353,7 @@ private fun CountryDropdown(
             label = { Text(stringResource(Res.string.label_country)) },
             placeholder = { Text(stringResource(Res.string.signup_select_country_hint), color = MutedGray) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier.fillMaxWidth().menuAnchor(),
+            modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
             shape = RoundedCornerShape(12.dp),
             colors = textFieldColors()
         )

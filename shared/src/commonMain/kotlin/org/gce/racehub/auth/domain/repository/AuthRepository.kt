@@ -1,6 +1,7 @@
 package org.gce.racehub.auth.domain.repository
 
 import org.gce.racehub.auth.domain.model.AuthResult
+import org.gce.racehub.auth.domain.model.EmailVerificationResult
 import org.gce.racehub.auth.domain.model.PasswordResetResult
 
 /**
@@ -62,4 +63,32 @@ interface AuthRepository {
      *         [PasswordResetResult.failure] with an error message otherwise.
      */
     suspend fun confirmPasswordReset(email: String, otp: String, newPassword: String): PasswordResetResult
+
+    /**
+     * Sends a one-time verification code to [email].
+     *
+     * @param subject The subject line for the OTP email (varies by purpose,
+     *                e.g. email verification vs. password reset).
+     * @return [EmailVerificationResult.success] if the server accepted the request,
+     *         [EmailVerificationResult.failure] with an error message otherwise.
+     */
+    suspend fun sendOtp(email: String, subject: String): EmailVerificationResult
+
+    /**
+     * Requests a fresh OTP to be re-sent to [email].
+     *
+     * @param subject The subject line for the OTP email.
+     * @return [EmailVerificationResult.success] if the server accepted the request,
+     *         [EmailVerificationResult.failure] with an error message otherwise.
+     */
+    suspend fun resendOtp(email: String, subject: String): EmailVerificationResult
+
+    /**
+     * Verifies the OTP the user received at [email].
+     *
+     * @param otp The one-time code from the email.
+     * @return [EmailVerificationResult.success] once the code is accepted,
+     *         [EmailVerificationResult.failure] with an error message otherwise.
+     */
+    suspend fun verifyOtp(email: String, otp: String): EmailVerificationResult
 }

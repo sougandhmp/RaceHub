@@ -1,3 +1,7 @@
+// security-crypto is deprecated with no drop-in replacement; migrating to DataStore + Tink
+// would invalidate every persisted session, so keep it until that migration is planned.
+@file:Suppress("DEPRECATION")
+
 package org.gce.racehub.auth.data.storage
 
 import android.content.Context
@@ -57,7 +61,7 @@ class AndroidSessionStorage(context: Context) : SessionStorage {
     }
 
     override fun clearUser() {
-        prefs.edit().clear().apply()
+        prefs.edit { clear() }
     }
 
     companion object {
