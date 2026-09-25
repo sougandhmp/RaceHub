@@ -21,8 +21,8 @@ data class DashboardData(
 @Serializable
 data class DashboardContent(
     val seasonYear: Int,
-    val upcomingRace: UpcomingRaceDto?,
-    val latestRace: LatestRaceDto?,
+    val upcomingRace: UpcomingRaceDto? = null,
+    val latestRace: LatestRaceDto? = null,
     val driverStandings: List<DriverStandingDto>,
     val constructorStandings: List<ConstructorStandingDto>,
     val trendingThreads: List<TrendingThreadDto>
