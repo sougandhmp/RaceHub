@@ -22,9 +22,9 @@ The app is built with **Kotlin Multiplatform (KMP)**. All business logic, networ
 
 ### iOS
 
-|                          Login                          |
-|:-------------------------------------------------------:|
-| <img src="docs/screenshots/ios-login.png" width="200"/> |
+|                          Login                          |                          Sign up                         |
+|:-------------------------------------------------------:|:--------------------------------------------------------:|
+| <img src="docs/screenshots/ios-login.png" width="200"/> | <img src="docs/screenshots/ios-signup.png" width="200"/> |
 
 |                      Race (light)                      |                         Race (dark)                         |                            Race detail                             |                          Full calendar                          |
 |:------------------------------------------------------:|:-----------------------------------------------------------:|:------------------------------------------------------------------:|:---------------------------------------------------------------:|
