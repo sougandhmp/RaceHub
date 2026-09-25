@@ -37,35 +37,41 @@ final class RaceViewModel: ObservableObject {
     }
 
     func loadData() {
+        Task { await performLoad() }
+    }
+
+    func refresh() async {
+        await performLoad()
+    }
+
+    private func performLoad() async {
         state.isLoading = true
         state.errorMessage = nil
 
-        Task {
-            do {
-                var races: [Race] = []
-                let raceCount = Int(repository.getRaceCount())
-                for i in 0..<raceCount {
-                    races.append(repository.getRace(index: Int32(i)))
-                }
-
-                var driverStandings: [DriverStanding] = []
-                let driverCount = Int(repository.getStandingCount())
-                for i in 0..<driverCount {
-                    driverStandings.append(repository.getStanding(index: Int32(i)))
-                }
-
-                let constructorStandings = try await repository.getConstructorStandings()
-                let trendingThreads = try await repository.getTrendingThreads()
-
-                state.isLoading = false
-                state.raceSchedule = races
-                state.driverStandings = driverStandings
-                state.constructorStandings = constructorStandings
-                state.trendingThreads = trendingThreads
-            } catch {
-                state.isLoading = false
-                state.errorMessage = error.localizedDescription
+        do {
+            var races: [Race] = []
+            let raceCount = Int(repository.getRaceCount())
+            for i in 0..<raceCount {
+                races.append(repository.getRace(index: Int32(i)))
             }
+
+            var driverStandings: [DriverStanding] = []
+            let driverCount = Int(repository.getStandingCount())
+            for i in 0..<driverCount {
+                driverStandings.append(repository.getStanding(index: Int32(i)))
+            }
+
+            let constructorStandings = try await repository.getConstructorStandings()
+            let trendingThreads = try await repository.getTrendingThreads()
+
+            state.isLoading = false
+            state.raceSchedule = races
+            state.driverStandings = driverStandings
+            state.constructorStandings = constructorStandings
+            state.trendingThreads = trendingThreads
+        } catch {
+            state.isLoading = false
+            state.errorMessage = error.localizedDescription
         }
     }
 }

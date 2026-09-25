@@ -9,4 +9,10 @@ enum ForumIntent {
 
     /// Clears the active error message without changing any other state.
     case dismissError
+
+    /// User selected a sort tab (e.g. "latest", "top", "commented").
+    case selectSort(String)
+
+    /// User selected a category filter; nil means all categories.
+    case selectCategory(String?)
 }

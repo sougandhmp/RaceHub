@@ -16,11 +16,11 @@ class LocalDataSource(driverFactory: DatabaseDriverFactory) {
                 name = it.name,
                 circuit = it.circuit,
                 country = it.country,
-                countryFlag = it.countryFlag,
-                date = it.date,
+                city = it.city,
+                dateTime = it.dateTime,
                 round = it.round.toInt(),
-                isCompleted = it.isCompleted == 1L,
-                daysRemaining = it.daysRemaining?.toInt()
+                status = it.status,
+                weather = it.weather
             )
         }
     }
@@ -34,11 +34,11 @@ class LocalDataSource(driverFactory: DatabaseDriverFactory) {
                     name = it.name,
                     circuit = it.circuit,
                     country = it.country,
-                    countryFlag = it.countryFlag,
-                    date = it.date,
+                    city = it.city,
+                    dateTime = it.dateTime,
                     round = it.round.toLong(),
-                    isCompleted = if (it.isCompleted) 1L else 0L,
-                    daysRemaining = it.daysRemaining?.toLong()
+                    status = it.status,
+                    weather = it.weather
                 )
             }
         }

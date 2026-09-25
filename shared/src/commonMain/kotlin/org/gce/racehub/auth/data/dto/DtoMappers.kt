@@ -19,7 +19,8 @@ fun UserResponseDto.toDomainModel(token: String): User {
         avatar = this.avatar,
         role = this.role,
         joinedAt = this.joinedAt,
-        postsCount = this.postsCount
+        postsCount = this.postsCount,
+        isEmailVerified = this.emailVerified
     )
 }
 

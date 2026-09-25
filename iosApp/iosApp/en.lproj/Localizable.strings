@@ -1,0 +1,121 @@
+/* Login */
+"Your Racing Universe" = "Your Racing Universe";
+"Email" = "Email";
+"Password" = "Password";
+"Hide" = "Hide";
+"Show" = "Show";
+"Sign In" = "Sign In";
+"Forgot Password?" = "Forgot Password?";
+"Don't have an account?" = "Don't have an account?";
+"Sign Up" = "Sign Up";
+
+/* Sign Up */
+"Join RaceHub" = "Join RaceHub";
+"Start your racing journey" = "Start your racing journey";
+"Username" = "Username";
+"Country" = "Country";
+"Select country" = "Select country";
+"Create Account" = "Create Account";
+"Already have an account?" = "Already have an account?";
+"Confirm Password" = "Confirm Password";
+
+/* Forgot Password */
+"Reset Password" = "Reset Password";
+"forgot_password_request_subtitle" = "Enter your email and we'll send you a reset code.";
+"forgot_password_confirm_subtitle" = "Code sent to %@. Enter it below with your new password.";
+"Send Reset Code" = "Send Reset Code";
+"Reset Code" = "Reset Code";
+"New Password" = "New Password";
+"Confirm New Password" = "Confirm New Password";
+
+/* Home */
+"Race Hub" = "Race Hub";
+"Race" = "Race";
+"Forum" = "Forum";
+"Profile" = "Profile";
+
+/* Race */
+"No Upcoming Race" = "No Upcoming Race";
+"Weekend detail" = "Weekend detail";
+"Full calendar" = "Full calendar";
+"Standings" = "Standings";
+"See all" = "See all";
+"Standings loading…" = "Standings loading…";
+"Drivers" = "Drivers";
+"Constructors" = "Constructors";
+"PTS" = "PTS";
+"FEATURED" = "FEATURED";
+"TRENDING" = "TRENDING";
+"No threads yet — be the first to post." = "No threads yet — be the first to post.";
+"label_wins" = "%d wins";
+
+/* Schedule */
+"SCHEDULE" = "SCHEDULE";
+"COMPLETED" = "COMPLETED";
+"NEXT RACE" = "NEXT RACE";
+"label_round" = "ROUND %d";
+"label_days" = "%d DAYS";
+
+/* Standings */
+"STANDINGS" = "STANDINGS";
+"DRIVERS" = "DRIVERS";
+"CONSTRUCTORS" = "CONSTRUCTORS";
+"CONSTRUCTOR" = "CONSTRUCTOR";
+"1 WIN" = "1 WIN";
+"label_wins_caps" = "%d WINS";
+
+/* Forum */
+"No threads yet" = "No threads yet";
+"Tap + to start the first conversation." = "Tap + to start the first conversation.";
+"★ Saved" = "★ Saved";
+"Latest" = "Latest";
+"Most popular" = "Most popular";
+"Most commented" = "Most commented";
+"All" = "All";
+"General Discussion" = "General Discussion";
+"Race Weekends" = "Race Weekends";
+"Teams & Drivers" = "Teams & Drivers";
+"Technical / Cars" = "Technical / Cars";
+
+/* Thread Detail */
+"Thread" = "Thread";
+"1 Reply" = "1 Reply";
+"thread_replies" = "%d Replies";
+"No replies yet. Be the first!" = "No replies yet. Be the first!";
+"Anonymous" = "Anonymous";
+"Original poster" = "Original poster";
+"just now" = "just now";
+"Add a reply…" = "Add a reply…";
+"Reply" = "Reply";
+"Share" = "Share";
+"Error" = "Error";
+"OK" = "OK";
+
+/* Create Thread */
+"Cancel" = "Cancel";
+"New Thread" = "New Thread";
+"TITLE" = "TITLE";
+"What's on your mind?" = "What's on your mind?";
+"TAG" = "TAG";
+"CONTENT" = "CONTENT";
+"Share your thoughts…" = "Share your thoughts…";
+"Post Thread" = "Post Thread";
+
+/* Race Detail */
+"RACE DETAIL" = "RACE DETAIL";
+"CIRCUIT MAP" = "CIRCUIT MAP";
+"WEEKEND SCHEDULE" = "WEEKEND SCHEDULE";
+"RACE INFO" = "RACE INFO";
+
+/* Profile */
+"Not signed in." = "Not signed in.";
+"APPEARANCE" = "APPEARANCE";
+"RECENT POSTS" = "RECENT POSTS";
+"SAVED" = "SAVED";
+"POSTS" = "POSTS";
+"COUNTRY" = "COUNTRY";
+"Joined" = "Joined";
+"Sign Out" = "Sign Out";
+"System" = "System";
+"Dark" = "Dark";
+"Light" = "Light";

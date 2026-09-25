@@ -1,0 +1,10 @@
+package org.gce.racehub.race.domain.usecase
+
+import org.gce.racehub.race.domain.repository.HomeRepository
+
+class LikeThreadUseCase(private val repository: HomeRepository) {
+    suspend operator fun invoke(threadId: String): Int {
+        require(threadId.isNotBlank()) { "Invalid thread." }
+        return repository.likeThread(threadId)
+    }
+}

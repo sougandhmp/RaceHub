@@ -11,4 +11,11 @@ sealed class LoginEffect {
 
     /** Instructs the host composable to navigate away from Login to Home. */
     data object NavigateToHome : LoginEffect()
+
+    /**
+     * The credentials were valid but the email is not yet verified. The host
+     * composable should route to email verification (carrying [email]) instead
+     * of granting access.
+     */
+    data class NavigateToEmailVerification(val email: String) : LoginEffect()
 }

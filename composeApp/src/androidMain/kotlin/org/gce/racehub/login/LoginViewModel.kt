@@ -9,12 +9,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.gce.racehub.auth.domain.model.OtpPurpose
 import org.gce.racehub.auth.domain.session.UserSession
 import org.gce.racehub.auth.domain.usecase.LoginUseCase
+import org.gce.racehub.auth.domain.usecase.SendOtpUseCase
 
 class LoginViewModel(
     private val loginUseCase: LoginUseCase,
-    private val userSession: UserSession
+    private val userSession: UserSession,
+    private val sendOtpUseCase: SendOtpUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LoginState())
@@ -61,13 +64,25 @@ class LoginViewModel(
             _state.update { it.copy(isLoading = true, errorMessage = null) }
 
             val result = loginUseCase(_state.value.email, _state.value.password)
+            val user = result.user
 
-            if (result.isSuccess) {
-                result.user?.let(userSession::setUser)
-                _state.update { it.copy(isLoading = false) }
-                _effect.send(LoginEffect.NavigateToHome)
-            } else {
-                _state.update { it.copy(isLoading = false, errorMessage = result.error) }
+            when {
+                !result.isSuccess -> {
+                    _state.update { it.copy(isLoading = false, errorMessage = result.error) }
+                }
+                // Client-side guard: a verified email is required to enter the app.
+                // Even if the server issued a token, refuse to start a session for an
+                // unverified account; send a fresh code and divert to verification.
+                user != null && !user.isEmailVerified -> {
+                    sendOtpUseCase(user.email, OtpPurpose.EMAIL_VERIFICATION)
+                    _state.update { it.copy(isLoading = false) }
+                    _effect.send(LoginEffect.NavigateToEmailVerification(user.email))
+                }
+                else -> {
+                    user?.let(userSession::setUser)
+                    _state.update { it.copy(isLoading = false) }
+                    _effect.send(LoginEffect.NavigateToHome)
+                }
             }
         }
     }
