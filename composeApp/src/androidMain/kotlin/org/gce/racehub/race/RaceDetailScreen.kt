@@ -691,8 +691,9 @@ private fun statusColor(status: String, colors: AppColorScheme): Color = when (s
 
 private fun formatDetailDate(dateTime: String): String {
     val date = parseIsoToDate(dateTime) ?: return dateTime
+    // Local zone, matching formatRaceTime, so "May 25 … starts 06:00 local" agree.
     return java.text.SimpleDateFormat("MMMM d, yyyy", java.util.Locale.US)
-        .apply { timeZone = java.util.TimeZone.getTimeZone("UTC") }
+        .apply { timeZone = java.util.TimeZone.getDefault() }
         .format(date)
 }
 
