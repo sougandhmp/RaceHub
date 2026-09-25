@@ -5,12 +5,8 @@ import Shared
 /// ViewModel for the Race tab following the MVI pattern.
 ///
 /// Loads race schedule, driver/constructor standings and trending threads
-/// from the shared repository.
-///
-/// **Swift / Kotlin interop note:** Kotlin `List<T>` does not bridge directly
-/// to a Swift `[T]` array in Kotlin/Native, so this ViewModel uses the
-/// index-based accessors (`getRaceCount()`, `getRace(index:)`, etc.) defined
-/// on `HomeRepositoryImpl` to copy items into native Swift arrays.
+/// from the shared repository. All four are awaited so a cold cache is
+/// populated by the network sync before the state is published.
 @MainActor
 final class RaceViewModel: ObservableObject {
 
@@ -49,18 +45,8 @@ final class RaceViewModel: ObservableObject {
         state.errorMessage = nil
 
         do {
-            var races: [Race] = []
-            let raceCount = Int(repository.getRaceCount())
-            for i in 0..<raceCount {
-                races.append(repository.getRace(index: Int32(i)))
-            }
-
-            var driverStandings: [DriverStanding] = []
-            let driverCount = Int(repository.getStandingCount())
-            for i in 0..<driverCount {
-                driverStandings.append(repository.getStanding(index: Int32(i)))
-            }
-
+            let races = try await repository.getRaceSchedule()
+            let driverStandings = try await repository.getDriverStandings()
             let constructorStandings = try await repository.getConstructorStandings()
             let trendingThreads = try await repository.getTrendingThreads()
 
