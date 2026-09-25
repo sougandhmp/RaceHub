@@ -53,4 +53,14 @@ class LoginResponseMappingTest {
         assertTrue(user!!.isEmailVerified)
         assertEquals("racer@test.com", user.email)
     }
+
+    @Test
+    fun `failure response without data field decodes with null data`() {
+        val dto = json.decodeFromString<LoginResponseDto>(
+            """{"success":false,"message":"Invalid credentials"}"""
+        )
+        assertFalse(dto.success)
+        assertEquals("Invalid credentials", dto.message)
+        assertEquals(null, dto.data)
+    }
 }
