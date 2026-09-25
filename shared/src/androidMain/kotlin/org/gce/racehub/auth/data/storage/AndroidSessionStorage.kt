@@ -65,6 +65,7 @@ class AndroidSessionStorage(context: Context) : SessionStorage {
     }
 
     companion object {
+        // Excluded from backups in res/xml/data_extraction_rules.xml and backup_rules.xml (composeApp); keep in sync.
         private const val PREFS_NAME = "racehub_session"
         private const val KEY_ID = "user_id"
         private const val KEY_EMAIL = "user_email"

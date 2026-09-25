@@ -22,21 +22,26 @@ import org.gce.racehub.race.domain.model.UserProfile
 interface HomeRepository {
 
     /** Returns the full race calendar for the current season. */
+    @Throws(Exception::class)
     suspend fun getRaceSchedule(): List<Race>
 
     /** Returns the current Drivers' Championship standings table. */
+    @Throws(Exception::class)
     suspend fun getDriverStandings(): List<DriverStanding>
 
     /** Returns the current Constructors' Championship standings table. */
+    @Throws(Exception::class)
     suspend fun getConstructorStandings(): List<ConstructorStanding>
 
     /** Returns the trending threads from the forum. */
+    @Throws(Exception::class)
     suspend fun getTrendingThreads(): List<TrendingThread>
 
     /**
      * Returns full detail for the race identified by [slug].
      * @throws Exception if the request fails.
      */
+    @Throws(Exception::class)
     suspend fun getRaceDetail(slug: String): RaceDetail
 
     /**
@@ -46,6 +51,7 @@ interface HomeRepository {
      * @param category Restricts to a single category. `null` returns all categories.
      * @param userId Caller's user id; used to populate per-thread `bookmarked` flag.
      */
+    @Throws(Exception::class)
     suspend fun getThreads(
         sort: String? = null,
         category: String? = null,
@@ -58,6 +64,7 @@ interface HomeRepository {
      * @return The newly created thread (id, title, createdAt populated by the server).
      * @throws Exception if the request fails.
      */
+    @Throws(Exception::class)
     suspend fun createThread(
         userId: String,
         title: String,
@@ -73,6 +80,7 @@ interface HomeRepository {
      * @return The user's profile data including post/saved counts and thread lists.
      * @throws Exception if the request fails.
      */
+    @Throws(Exception::class)
     suspend fun getMyProfile(userId: String, token: String): UserProfile
 
     /**
@@ -81,6 +89,7 @@ interface HomeRepository {
      * @return The newly posted comment (content populated by the server).
      * @throws Exception if the request fails.
      */
+    @Throws(Exception::class)
     suspend fun addComment(
         userId: String,
         threadId: String,
@@ -93,6 +102,7 @@ interface HomeRepository {
      * @return The updated like count from the server.
      * @throws Exception if the request fails.
      */
+    @Throws(Exception::class)
     suspend fun likeThread(id: String): Int
 
     // ── Swift-friendly index-based accessors ─────────────────────────────────

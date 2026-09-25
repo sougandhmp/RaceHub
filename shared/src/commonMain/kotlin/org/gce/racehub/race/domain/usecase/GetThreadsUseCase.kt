@@ -4,6 +4,7 @@ import org.gce.racehub.race.domain.model.Thread
 import org.gce.racehub.race.domain.repository.HomeRepository
 
 class GetThreadsUseCase(private val repository: HomeRepository) {
+    @Throws(Exception::class)
     suspend operator fun invoke(
         sort: String? = "latest",
         category: String? = null,

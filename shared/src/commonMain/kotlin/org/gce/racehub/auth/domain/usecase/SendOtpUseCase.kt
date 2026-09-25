@@ -7,6 +7,8 @@ import org.gce.racehub.auth.domain.repository.AuthRepository
 /** Sends an OTP to [email] for the given [OtpPurpose], which sets the email subject. */
 class SendOtpUseCase(private val authRepository: AuthRepository) {
 
+    @Throws(Exception::class)
+
     suspend operator fun invoke(email: String, purpose: OtpPurpose): EmailVerificationResult {
         if (email.isBlank()) return EmailVerificationResult.failure("Email cannot be empty")
         return authRepository.sendOtp(email.trim(), purpose.subject)
