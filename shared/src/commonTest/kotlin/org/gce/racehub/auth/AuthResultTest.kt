@@ -33,7 +33,7 @@ class AuthResultTest {
     fun `success user is the exact instance provided`() {
         val result = AuthResult.success(user)
         assertNotNull(result.user)
-        assertEquals("1", result.user!!.id)
-        assertEquals("tok", result.user!!.token)
+        assertEquals("1", result.user.id)
+        assertEquals("tok", result.user.token)
     }
 }

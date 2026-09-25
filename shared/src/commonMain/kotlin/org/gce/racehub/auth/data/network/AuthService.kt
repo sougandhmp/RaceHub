@@ -10,6 +10,9 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import org.gce.racehub.auth.data.dto.LoginRequestDto
 import org.gce.racehub.auth.data.dto.LoginResponseDto
+import org.gce.racehub.auth.data.dto.OtpResponseDto
+import org.gce.racehub.auth.data.dto.OtpSendRequestDto
+import org.gce.racehub.auth.data.dto.OtpVerifyRequestDto
 import org.gce.racehub.auth.data.dto.LogoutResponseDto
 import org.gce.racehub.auth.data.dto.PasswordResetConfirmDto
 import org.gce.racehub.auth.data.dto.PasswordResetRequestDto
@@ -70,6 +73,27 @@ class AuthService(private val httpClient: HttpClient, private val baseUrl: Strin
         return httpClient.post("$baseUrl/api/v1/auth/password-reset/confirm") {
             contentType(ContentType.Application.Json)
             setBody(PasswordResetConfirmDto(email, otp, newPassword))
+        }.body()
+    }
+
+    suspend fun sendOtp(email: String, subject: String): OtpResponseDto {
+        return httpClient.post("$baseUrl/api/v1/auth/otp/send") {
+            contentType(ContentType.Application.Json)
+            setBody(OtpSendRequestDto(email, subject))
+        }.body()
+    }
+
+    suspend fun resendOtp(email: String, subject: String): OtpResponseDto {
+        return httpClient.post("$baseUrl/api/v1/auth/otp/resend") {
+            contentType(ContentType.Application.Json)
+            setBody(OtpSendRequestDto(email, subject))
+        }.body()
+    }
+
+    suspend fun verifyOtp(email: String, otp: String): OtpResponseDto {
+        return httpClient.post("$baseUrl/api/v1/auth/otp/verify") {
+            contentType(ContentType.Application.Json)
+            setBody(OtpVerifyRequestDto(email, otp))
         }.body()
     }
 }

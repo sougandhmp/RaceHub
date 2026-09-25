@@ -25,29 +25,14 @@ class ForgotPasswordViewModel(
 
     fun onIntent(intent: ForgotPasswordIntent) {
         when (intent) {
-            is ForgotPasswordIntent.EmailChanged ->
-                _state.update { it.copy(email = intent.email) }
-
-            is ForgotPasswordIntent.OtpChanged ->
-                _state.update { it.copy(otp = intent.otp) }
-
-            is ForgotPasswordIntent.NewPasswordChanged ->
-                _state.update { it.copy(newPassword = intent.password) }
-
-            is ForgotPasswordIntent.ConfirmPasswordChanged ->
-                _state.update { it.copy(confirmPassword = intent.password) }
-
-            is ForgotPasswordIntent.TogglePasswordVisibility ->
-                _state.update { it.copy(isPasswordVisible = !it.isPasswordVisible) }
-
-            is ForgotPasswordIntent.RequestReset ->
-                requestReset()
-
-            is ForgotPasswordIntent.ConfirmReset ->
-                confirmReset()
-
-            is ForgotPasswordIntent.DismissError ->
-                _state.update { it.copy(errorMessage = null) }
+            is ForgotPasswordIntent.EmailChanged -> _state.update { it.copy(email = intent.email) }
+            is ForgotPasswordIntent.OtpChanged -> _state.update { it.copy(otp = intent.otp) }
+            is ForgotPasswordIntent.NewPasswordChanged -> _state.update { it.copy(newPassword = intent.password) }
+            is ForgotPasswordIntent.ConfirmPasswordChanged -> _state.update { it.copy(confirmPassword = intent.password) }
+            is ForgotPasswordIntent.TogglePasswordVisibility -> _state.update { it.copy(isPasswordVisible = !it.isPasswordVisible) }
+            is ForgotPasswordIntent.RequestReset -> requestReset()
+            is ForgotPasswordIntent.ConfirmReset -> confirmReset()
+            is ForgotPasswordIntent.DismissError -> _state.update { it.copy(errorMessage = null) }
         }
     }
 

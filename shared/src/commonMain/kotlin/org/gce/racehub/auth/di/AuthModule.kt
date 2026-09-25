@@ -10,7 +10,10 @@ import org.gce.racehub.auth.domain.usecase.ConfirmPasswordResetUseCase
 import org.gce.racehub.auth.domain.usecase.LoginUseCase
 import org.gce.racehub.auth.domain.usecase.LogoutUseCase
 import org.gce.racehub.auth.domain.usecase.RequestPasswordResetUseCase
+import org.gce.racehub.auth.domain.usecase.ResendOtpUseCase
+import org.gce.racehub.auth.domain.usecase.SendOtpUseCase
 import org.gce.racehub.auth.domain.usecase.SignUpUseCase
+import org.gce.racehub.auth.domain.usecase.VerifyOtpUseCase
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -57,6 +60,9 @@ fun createAuthModule(baseUrl: String, useFakeRepository: Boolean = false): Modul
     factory { LogoutUseCase(get(), get()) }
     factory { RequestPasswordResetUseCase(get()) }
     factory { ConfirmPasswordResetUseCase(get()) }
+    factory { SendOtpUseCase(get()) }
+    factory { ResendOtpUseCase(get()) }
+    factory { VerifyOtpUseCase(get()) }
 }
 
 /**

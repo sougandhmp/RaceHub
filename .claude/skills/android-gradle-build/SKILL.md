@@ -289,11 +289,11 @@ gradlePlugin {
 
 ## Common Issues & Fixes
 
-| Issue | Fix |
-|---|---|
-| Duplicate class error | Check for transitive dependency conflicts; use `resolutionStrategy` to force a version |
-| `Configuration cache` errors | Ensure tasks don't capture `Project` instance at configuration time |
-| KSP vs KAPT | Prefer KSP — it's faster and compatible with Kotlin 2.0 |
-| Slow builds | Enable `org.gradle.caching=true` and `configuration-cache=true` |
-| `NonTransitiveRClass` errors | Update resource references to use fully qualified names |
-| Flavor + build type variant explosion | Use `variantFilter` to disable unused combinations |
+| Issue                                 | Fix                                                                                    |
+|---------------------------------------|----------------------------------------------------------------------------------------|
+| Duplicate class error                 | Check for transitive dependency conflicts; use `resolutionStrategy` to force a version |
+| `Configuration cache` errors          | Ensure tasks don't capture `Project` instance at configuration time                    |
+| KSP vs KAPT                           | Prefer KSP — it's faster and compatible with Kotlin 2.0                                |
+| Slow builds                           | Enable `org.gradle.caching=true` and `configuration-cache=true`                        |
+| `NonTransitiveRClass` errors          | Update resource references to use fully qualified names                                |
+| Flavor + build type variant explosion | Use `variantFilter` to disable unused combinations                                     |

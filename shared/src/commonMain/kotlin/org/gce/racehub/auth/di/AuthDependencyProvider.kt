@@ -6,7 +6,10 @@ import org.gce.racehub.auth.domain.usecase.ConfirmPasswordResetUseCase
 import org.gce.racehub.auth.domain.usecase.LoginUseCase
 import org.gce.racehub.auth.domain.usecase.LogoutUseCase
 import org.gce.racehub.auth.domain.usecase.RequestPasswordResetUseCase
+import org.gce.racehub.auth.domain.usecase.ResendOtpUseCase
+import org.gce.racehub.auth.domain.usecase.SendOtpUseCase
 import org.gce.racehub.auth.domain.usecase.SignUpUseCase
+import org.gce.racehub.auth.domain.usecase.VerifyOtpUseCase
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -26,6 +29,9 @@ class AuthDependencyProvider : KoinComponent {
     fun createSignUpUseCase(): SignUpUseCase = SignUpUseCase(authRepository)
     fun createRequestPasswordResetUseCase(): RequestPasswordResetUseCase = RequestPasswordResetUseCase(authRepository)
     fun createConfirmPasswordResetUseCase(): ConfirmPasswordResetUseCase = ConfirmPasswordResetUseCase(authRepository)
+    fun createSendOtpUseCase(): SendOtpUseCase = SendOtpUseCase(authRepository)
+    fun createResendOtpUseCase(): ResendOtpUseCase = ResendOtpUseCase(authRepository)
+    fun createVerifyOtpUseCase(): VerifyOtpUseCase = VerifyOtpUseCase(authRepository)
 
     companion object {
         val shared = AuthDependencyProvider()
