@@ -10,8 +10,6 @@ struct HomeView: View {
     @StateObject private var raceViewModel = RaceViewModel()
     @StateObject private var forumViewModel = ForumViewModel()
     @State private var path = NavigationPath()
-    @State private var selectedThread: Shared.Thread? = nil
-    @State private var selectedRace: Race? = nil
     @Environment(\.colorScheme) private var colorScheme
 
     private var colors: AppColors { AppColors.forScheme(colorScheme) }
@@ -30,19 +28,13 @@ struct HomeView: View {
                             viewModel: raceViewModel,
                             onViewAllSchedule: { path.append("schedule") },
                             onViewAllStandings: { path.append("standings") },
-                            onViewRaceDetail: { race in
-                                selectedRace = race
-                                path.append("raceDetail")
-                            }
+                            onViewRaceDetail: { race in path.append(race) }
                         )
                     case .forum:
                         ForumView(
                             viewModel: forumViewModel,
                             onCreateThread: { path.append("createThread") },
-                            onThreadTap: { thread in
-                                selectedThread = thread
-                                path.append("threadDetail")
-                            }
+                            onThreadTap: { thread in path.append(thread) }
                         )
                     case .profile:
                         ProfileView(onSignedOut: onSignedOut)
@@ -72,11 +64,16 @@ struct HomeView: View {
                     CreateThreadView(onThreadCreated: {
                         forumViewModel.send(.refresh)
                     })
-                } else if destination == "threadDetail", let thread = selectedThread {
-                    ThreadDetailView(thread: thread)
-                } else if destination == "raceDetail", let race = selectedRace {
-                    RaceDetailView(race: race)
                 }
+            }
+            // Push the model itself rather than a string key plus a @State
+            // "selected" value: the destination closure can run with a stale
+            // snapshot of that state and render nothing.
+            .navigationDestination(for: Race.self) { race in
+                RaceDetailView(race: race)
+            }
+            .navigationDestination(for: Shared.Thread.self) { thread in
+                ThreadDetailView(thread: thread)
             }
         }
     }
