@@ -121,12 +121,12 @@ struct RaceRow: View {
 }
 
 private func daysUntil(_ dateTime: String) -> Int? {
-    guard let date = ISO8601DateFormatter().date(from: dateTime) else { return nil }
+    guard let date = parseRaceDate(dateTime) else { return nil }
     return Calendar.current.dateComponents([.day], from: Date(), to: date).day
 }
 
 private func formattedDate(_ dateTime: String) -> String {
-    guard let date = ISO8601DateFormatter().date(from: dateTime) else { return dateTime }
+    guard let date = parseRaceDate(dateTime) else { return dateTime }
     let formatter = DateFormatter()
     formatter.dateStyle = .medium
     formatter.timeStyle = .none
