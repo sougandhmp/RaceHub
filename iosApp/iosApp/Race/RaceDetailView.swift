@@ -232,7 +232,7 @@ struct RaceDetailView: View {
     }
 
     private var formattedRaceDate: String {
-        guard let date = ISO8601DateFormatter().date(from: race.dateTime) else { return race.dateTime }
+        guard let date = parseRaceDate(race.dateTime) else { return race.dateTime }
         let fmt = DateFormatter()
         fmt.dateStyle = .long
         fmt.timeStyle = .none
@@ -240,7 +240,7 @@ struct RaceDetailView: View {
     }
 
     private var formattedRaceTime: String {
-        guard let date = ISO8601DateFormatter().date(from: race.dateTime) else { return "" }
+        guard let date = parseRaceDate(race.dateTime) else { return "" }
         let fmt = DateFormatter()
         fmt.dateStyle = .none
         fmt.timeStyle = .short
