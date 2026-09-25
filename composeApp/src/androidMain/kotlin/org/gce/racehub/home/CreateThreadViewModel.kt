@@ -63,13 +63,8 @@ class CreateThreadViewModel(
                 )
                 _state.update { it.copy(isSubmitting = false) }
                 _effect.send(CreateThreadEffect.ThreadCreated)
-            } catch (e: Exception) {
-                _state.update {
-                    it.copy(
-                        isSubmitting = false,
-                        errorMessage = e.message ?: "Failed to create thread."
-                    )
-                }
+            } catch (_: Exception) {
+                _state.update { it.copy(isSubmitting = false, errorMessage = "Failed to create thread.") }
             }
         }
     }

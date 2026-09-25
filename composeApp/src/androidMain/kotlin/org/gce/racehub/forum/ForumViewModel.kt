@@ -9,10 +9,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.gce.racehub.auth.domain.session.UserSession
 import org.gce.racehub.race.domain.usecase.GetThreadsUseCase
 
 class ForumViewModel(
-    private val getThreadsUseCase: GetThreadsUseCase
+    private val getThreadsUseCase: GetThreadsUseCase,
+    private val userSession: UserSession
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ForumState())
@@ -27,11 +29,16 @@ class ForumViewModel(
 
     fun onIntent(intent: ForumIntent) {
         when (intent) {
-            is ForumIntent.Refresh ->
+            is ForumIntent.Refresh -> loadThreads()
+            is ForumIntent.DismissError -> _state.update { it.copy(errorMessage = null) }
+            is ForumIntent.SelectSort -> {
+                _state.update { it.copy(selectedSort = intent.sort) }
                 loadThreads()
-
-            is ForumIntent.DismissError ->
-                _state.update { it.copy(errorMessage = null) }
+            }
+            is ForumIntent.SelectCategory -> {
+                _state.update { it.copy(selectedCategory = intent.category) }
+                loadThreads()
+            }
         }
     }
 
@@ -39,14 +46,15 @@ class ForumViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
             try {
-                val threads = getThreadsUseCase.execute("latest", null, null)
+                val threads = getThreadsUseCase(
+                    sort = _state.value.selectedSort,
+                    category = _state.value.selectedCategory,
+                    userId = userSession.userId
+                )
                 _state.update { it.copy(isLoading = false, threads = threads) }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 _state.update {
-                    it.copy(
-                        isLoading = false,
-                        errorMessage = e.message ?: "Failed to load threads. Pull to refresh."
-                    )
+                    it.copy(isLoading = false, errorMessage = "Failed to load threads. Pull to refresh.")
                 }
             }
         }

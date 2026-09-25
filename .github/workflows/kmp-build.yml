@@ -5,11 +5,12 @@ on:
     branches:
       - develop
     types:
-      - closed
+      - opened
+      - synchronize
+      - reopened
 
 jobs:
   android-build:
-    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
@@ -22,62 +23,174 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts', '**/gradle-wrapper.properties', '**/libs.versions.toml') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Inject google-services.json
+        run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 --decode > composeApp/google-services.json
+
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
+      - name: Set build number
+        run: echo "BUILD_NUMBER=$(date +'%y%m%d%H%M')" >> $GITHUB_ENV
+
       - name: Build Android Debug APK
-        run: ./gradlew assembleDebug
+        run: ./gradlew :composeApp:assembleDebug -PbuildNumber=${{ env.BUILD_NUMBER }} --build-cache --parallel
 
       - name: Upload Android APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: android-apk
-          path: androidApp/build/outputs/apk/debug/*.apk
+          path: composeApp/build/outputs/apk/debug/*.apk
 
-      # Optional: Firebase Distribution
+      - name: Decode Firebase Service Account
+        run: echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" | base64 --decode > ${{ github.workspace }}/firebase-service-account.json
+
       - name: Upload to Firebase App Distribution
-        if: success()
-        run: |
-          npm install -g firebase-tools
-          firebase appdistribution:distribute androidApp/build/outputs/apk/debug/app-debug.apk \
-            --app ${{ secrets.FIREBASE_APP_ID }} \
-            --groups testers \
-            --token ${{ secrets.FIREBASE_TOKEN }}
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
+          serviceCredentialsFile: ${{ github.workspace }}/firebase-service-account.json
+          groups: racers
+          file: composeApp/build/outputs/apk/debug/composeApp-debug.apk
 
   ios-build:
-    if: github.event.pull_request.merged == true
     runs-on: macos-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts', '**/gradle-wrapper.properties', '**/libs.versions.toml') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Cache Xcode DerivedData
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Developer/Xcode/DerivedData
+          key: xcode-deriveddata-${{ runner.os }}-${{ hashFiles('iosApp/iosApp.xcodeproj/project.pbxproj') }}
+          restore-keys: |
+            xcode-deriveddata-${{ runner.os }}-
+
+      - name: Inject GoogleService-Info.plist
+        run: echo "${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}" | base64 --decode > iosApp/iosApp/GoogleService-Info.plist
 
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      - name: Build shared KMP framework
-        run: ./gradlew :shared:assembleXCFramework
-
-      - name: Install CocoaPods dependencies
+      - name: Import iOS Certificate
+        if: false
+        env:
+          IOS_CERTIFICATE_P12: ${{ secrets.IOS_CERTIFICATE_P12 }}
+          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
         run: |
-          cd iosApp
-          pod install
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -hex 12)
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          echo "$IOS_CERTIFICATE_P12" | base64 --decode > /tmp/certificate.p12
+          security import /tmp/certificate.p12 -k "$KEYCHAIN_PATH" -P "$IOS_CERTIFICATE_PASSWORD" -A
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+
+      - name: Install Provisioning Profile
+        if: false
+        run: |
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          echo "${{ secrets.IOS_PROVISIONING_PROFILE }}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
+
+      - name: Build shared KMP framework
+        run: ./gradlew :shared:assembleSharedReleaseXCFramework --build-cache --parallel
 
       - name: Build iOS App (Simulator)
         run: |
           cd iosApp
           xcodebuild \
-            -workspace iosApp.xcworkspace \
+            -project iosApp.xcodeproj \
             -scheme iosApp \
             -configuration Debug \
-            -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath ../build/ios \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
             build
 
+      - name: Archive iOS App
+        if: false
+        run: |
+          cd iosApp
+          xcodebuild \
+            -project iosApp.xcodeproj \
+            -scheme iosApp \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath $RUNNER_TEMP/iosApp.xcarchive \
+            archive
+
+      - name: Export IPA
+        if: false
+        run: |
+          cat > /tmp/ExportOptions.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>ad-hoc</string>
+            <key>compileBitcode</key>
+            <false/>
+          </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive \
+            -archivePath $RUNNER_TEMP/iosApp.xcarchive \
+            -exportOptionsPlist /tmp/ExportOptions.plist \
+            -exportPath $RUNNER_TEMP/ipa
+
+      - name: Upload iOS Simulator App Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulator-app
+          path: build/ios/Build/Products/Debug-iphonesimulator/iosApp.app
+
+      - name: Decode Firebase Service Account
+        if: false
+        run: echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" | base64 --decode > ${{ github.workspace }}/firebase-service-account.json
+
+      - name: Upload to Firebase App Distribution
+        if: false
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_IOS_APP_ID }}
+          serviceCredentialsFile: ${{ github.workspace }}/firebase-service-account.json
+          groups: racers
+          file: ${{ runner.temp }}/ipa/iosApp.ipa
+
       - name: Upload iOS Build Logs
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ios-build-logs

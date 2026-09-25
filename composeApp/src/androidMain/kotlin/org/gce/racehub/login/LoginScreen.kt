@@ -26,6 +26,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.tooling.preview.Preview
+import org.jetbrains.compose.resources.stringResource
+import racehub.composeapp.generated.resources.Res
+import racehub.composeapp.generated.resources.action_forgot_password
+import racehub.composeapp.generated.resources.action_hide
+import racehub.composeapp.generated.resources.action_show
+import racehub.composeapp.generated.resources.action_sign_in
+import racehub.composeapp.generated.resources.action_sign_up
+import racehub.composeapp.generated.resources.label_email
+import racehub.composeapp.generated.resources.label_password
+import racehub.composeapp.generated.resources.login_no_account
+import racehub.composeapp.generated.resources.login_tagline
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
@@ -39,31 +51,53 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.gce.racehub.theme.AppColorTokens
+import org.gce.racehub.theme.Dimens
+import org.gce.racehub.theme.hexColor
 import org.koin.compose.viewmodel.koinViewModel
 
-private val RacingRed = Color(0xFFE63946)
-private val DarkBg = Color(0xFF0A0A0A)
-private val DarkBlue = Color(0xFF1A1A2E)
-private val DeepBlue = Color(0xFF16213E)
-private val MutedGray = Color(0xFF8D99AE)
-private val DimBorder = Color(0xFF444444)
+private val RacingRed = hexColor(AppColorTokens.racingRed)
+private val DarkBg    = hexColor(AppColorTokens.darkBackground)
+private val DarkBlue  = hexColor(AppColorTokens.authDarkBlue)
+private val DeepBlue  = hexColor(AppColorTokens.authDeepBlue)
+private val MutedGray = hexColor(AppColorTokens.authMuted)
+private val DimBorder = hexColor(AppColorTokens.authDimBorder)
 
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel = koinViewModel(),
     onLoginSuccess: () -> Unit,
-    onNavigateToSignUp: () -> Unit
+    onNavigateToSignUp: () -> Unit,
+    onNavigateToForgotPassword: () -> Unit,
+    onNavigateToEmailVerification: (email: String) -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val focusManager = LocalFocusManager.current
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 is LoginEffect.NavigateToHome -> onLoginSuccess()
+                is LoginEffect.NavigateToEmailVerification -> onNavigateToEmailVerification(effect.email)
             }
         }
     }
+
+    LoginScreenContent(
+        state = state,
+        onIntent = viewModel::onIntent,
+        onNavigateToSignUp = onNavigateToSignUp,
+        onNavigateToForgotPassword = onNavigateToForgotPassword
+    )
+}
+
+@Composable
+private fun LoginScreenContent(
+    state: LoginState,
+    onIntent: (LoginIntent) -> Unit,
+    onNavigateToSignUp: () -> Unit,
+    onNavigateToForgotPassword: () -> Unit
+) {
+    val focusManager = LocalFocusManager.current
 
     Box(
         modifier = Modifier
@@ -77,7 +111,7 @@ fun LoginScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 28.dp),
+                .padding(horizontal = Dimens.screenGutter),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -94,7 +128,7 @@ fun LoginScreen(
             )
 
             Text(
-                text = "Your Racing Universe",
+                text = stringResource(Res.string.login_tagline),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MutedGray
             )
@@ -103,8 +137,8 @@ fun LoginScreen(
 
             OutlinedTextField(
                 value = state.email,
-                onValueChange = { viewModel.onIntent(LoginIntent.EmailChanged(it)) },
-                label = { Text("Email") },
+                onValueChange = { onIntent(LoginIntent.EmailChanged(it)) },
+                label = { Text(stringResource(Res.string.label_email)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Email,
@@ -122,8 +156,8 @@ fun LoginScreen(
 
             OutlinedTextField(
                 value = state.password,
-                onValueChange = { viewModel.onIntent(LoginIntent.PasswordChanged(it)) },
-                label = { Text("Password") },
+                onValueChange = { onIntent(LoginIntent.PasswordChanged(it)) },
+                label = { Text(stringResource(Res.string.label_password)) },
                 singleLine = true,
                 visualTransformation = if (state.isPasswordVisible)
                     VisualTransformation.None
@@ -136,13 +170,13 @@ fun LoginScreen(
                 keyboardActions = KeyboardActions(
                     onDone = {
                         focusManager.clearFocus()
-                        viewModel.onIntent(LoginIntent.Login)
+                        onIntent(LoginIntent.Login)
                     }
                 ),
                 trailingIcon = {
-                    TextButton(onClick = { viewModel.onIntent(LoginIntent.TogglePasswordVisibility) }) {
+                    TextButton(onClick = { onIntent(LoginIntent.TogglePasswordVisibility) }) {
                         Text(
-                            text = if (state.isPasswordVisible) "Hide" else "Show",
+                            text = if (state.isPasswordVisible) stringResource(Res.string.action_hide) else stringResource(Res.string.action_show),
                             color = MutedGray,
                             fontSize = 12.sp
                         )
@@ -156,7 +190,7 @@ fun LoginScreen(
             if (state.errorMessage != null) {
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
-                    text = state.errorMessage!!,
+                    text = state.errorMessage,
                     color = RacingRed,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -165,7 +199,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(36.dp))
 
             Button(
-                onClick = { viewModel.onIntent(LoginIntent.Login) },
+                onClick = { onIntent(LoginIntent.Login) },
                 enabled = !state.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -184,7 +218,7 @@ fun LoginScreen(
                     )
                 } else {
                     Text(
-                        text = "Sign In",
+                        text = stringResource(Res.string.action_sign_in),
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 16.sp,
                         color = Color.White
@@ -192,26 +226,57 @@ fun LoginScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+
+            TextButton(onClick = onNavigateToForgotPassword) {
+                Text(
+                    text = stringResource(Res.string.action_forgot_password),
+                    color = MutedGray,
+                    fontSize = 14.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "Don't have an account?",
+                    text = stringResource(Res.string.login_no_account),
                     color = MutedGray,
                     fontSize = 14.sp
                 )
                 TextButton(onClick = onNavigateToSignUp) {
                     Text(
-                        text = "Sign Up",
+                        text = stringResource(Res.string.action_sign_up),
                         color = RacingRed,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 14.sp
                     )
                 }
             }
-
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun LoginScreenPreview() {
+    LoginScreenContent(
+        state = LoginState(email = "driver@f1.com"),
+        onIntent = {},
+        onNavigateToSignUp = {},
+        onNavigateToForgotPassword = {}
+    )
+}
+
+@Preview(showBackground = true, name = "Login – error state")
+@Composable
+private fun LoginScreenErrorPreview() {
+    LoginScreenContent(
+        state = LoginState(email = "bad@email", password = "wrong", errorMessage = "Invalid credentials"),
+        onIntent = {},
+        onNavigateToSignUp = {},
+        onNavigateToForgotPassword = {}
+    )
 }
 
 @Composable

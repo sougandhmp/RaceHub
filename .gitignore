@@ -17,3 +17,22 @@ captures
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
 node_modules/
+
+# CocoaPods
+**/Pods/
+**/Podfile.lock
+**/*.xcworkspace
+
+# CocoaPods generated files
+**/DerivedData/
+**/*.xcuserstate
+**/*.xcuserdata/
+
+# Optional (if using KMP cocoapods plugin)
+iosApp/build/
+shared/build/
+
+# Firebase config files (injected via CI secrets)
+google-services.json
+GoogleService-Info.plist
+

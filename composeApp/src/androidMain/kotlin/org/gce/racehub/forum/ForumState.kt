@@ -15,5 +15,11 @@ data class ForumState(
     val isLoading: Boolean = false,
 
     /** Non-null when a data-fetch error should be shown to the user. */
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+
+    /** Active sort key sent to the API. */
+    val selectedSort: String = "latest",
+
+    /** Active category filter; null means all categories. */
+    val selectedCategory: String? = null
 )

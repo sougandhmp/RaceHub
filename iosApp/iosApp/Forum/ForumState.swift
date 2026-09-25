@@ -13,4 +13,10 @@ struct ForumState {
 
     /// Non-`nil` when a data-fetch error should be shown to the user.
     var errorMessage: String? = nil
+
+    /// Active sort key sent to the API.
+    var selectedSort: String = "latest"
+
+    /// Active category filter; nil means all categories.
+    var selectedCategory: String? = nil
 }

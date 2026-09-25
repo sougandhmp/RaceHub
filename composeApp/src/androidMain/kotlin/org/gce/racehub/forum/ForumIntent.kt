@@ -11,4 +11,10 @@ sealed class ForumIntent {
 
     /** Clears the active error message without changing any other state. */
     data object DismissError : ForumIntent()
+
+    /** User selected a sort tab (e.g. "latest", "top", "commented"). */
+    data class SelectSort(val sort: String) : ForumIntent()
+
+    /** User selected a category filter; null means all categories. */
+    data class SelectCategory(val category: String?) : ForumIntent()
 }
