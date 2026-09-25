@@ -28,16 +28,22 @@ final class SignUpViewModel: ObservableObject {
     /// Use case that validates the sign-up form and delegates to the repository.
     private let signUpUseCase: SignUpUseCase
 
+    /// Process-wide holder for the authenticated user. Populated on success
+    /// so the session is persisted and the app navigates directly to Home on relaunch.
+    private let userSession: UserSession
+
     init() {
-        signUpUseCase = SignUpUseCase(authRepository: AuthRepositoryImpl())
+        let authProvider = AuthDependencyProvider.companion.shared
+        signUpUseCase = authProvider.createSignUpUseCase()
+        userSession = authProvider.userSession
     }
 
     /// Entry point for all View interactions.
     /// Maps each `SignUpIntent` to a state mutation or a command.
     func send(_ intent: SignUpIntent) {
         switch intent {
-        case .nameChanged(let name):
-            state.name = name
+        case .usernameChanged(let username):
+            state.username = username
 
         case .emailChanged(let email):
             state.email = email
@@ -47,6 +53,9 @@ final class SignUpViewModel: ObservableObject {
 
         case .confirmPasswordChanged(let confirmPassword):
             state.confirmPassword = confirmPassword
+
+        case .countryChanged(let country):
+            state.country = country
 
         case .togglePasswordVisibility:
             state.isPasswordVisible.toggle()
@@ -69,14 +78,18 @@ final class SignUpViewModel: ObservableObject {
         Task {
             do {
                 let result = try await signUpUseCase.invoke(
-                    name: state.name,
+                    username: state.username,
                     email: state.email,
                     password: state.password,
+                    country: state.country,
                     confirmPassword: state.confirmPassword
                 )
                 state.isLoading = false
 
                 if result.isSuccess {
+                    if let user = result.user {
+                        userSession.setUser(user: user)
+                    }
                     effectSubject.send(.navigateToHome)
                 } else {
                     state.errorMessage = result.error

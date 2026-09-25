@@ -9,6 +9,9 @@ import org.gce.racehub.db.LocalDataSource
 import org.gce.racehub.race.data.dto.*
 import org.gce.racehub.race.domain.model.*
 import org.gce.racehub.race.domain.repository.HomeRepository
+import org.gce.racehub.util.logError
+import org.gce.racehub.util.platformIoDispatcher
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Network-based implementation of [HomeRepository].
@@ -24,8 +27,60 @@ import org.gce.racehub.race.domain.repository.HomeRepository
 class HomeRepositoryNetworkImpl(
     private val httpClient: HttpClient,
     private val baseUrl: String,
-    private val localDataSource: LocalDataSource
+    private val localDataSource: LocalDataSource,
+    private val ioDispatcher: CoroutineDispatcher = platformIoDispatcher
 ) : HomeRepository {
+
+    companion object {
+        private const val TAG = "HomeRepository"
+        private const val SYNC_TIMEOUT_MS = 5_000L
+    }
+
+    /**
+     * Long-lived scope for fire-and-forget background refreshes. Survives the
+     * suspend call that triggered it so cached data can be returned immediately
+     * while the network sync completes off the caller's critical path.
+     */
+    private val syncScope = CoroutineScope(SupervisorJob() + ioDispatcher)
+
+    private fun List<GraphQLError>?.toErrorMessage(fallback: String): String =
+        this?.joinToString { it.message }?.takeIf { it.isNotBlank() } ?: fallback
+
+    // GraphQL query to fetch the signed-in user's profile
+    private val profileQuery = $$"""
+        query GetMyProfile($userId: String) {
+            me(userId: $userId) {
+                username
+                email
+                avatar
+                postsCount
+                savedCount
+                recentThreads { title }
+                savedThreads { title }
+            }
+        }
+    """.trimIndent()
+
+    // GraphQL mutation to add a comment to a forum thread
+    private val addCommentMutation = $$"""
+        mutation AddComment($userId: ID!, $threadId: ID!, $content: String!) {
+            addComment(userId: $userId, threadId: $threadId, content: $content) {
+                id
+                content
+                createdAt
+            }
+        }
+    """.trimIndent()
+
+    // GraphQL mutation to toggle like on a forum thread
+    private val likeThreadMutation = $$"""
+        mutation UserInteractions($id: ID!) {
+            likeThread(id: $id) {
+                id
+                likes
+            }
+        }
+    """.trimIndent()
 
     // GraphQL mutation to create a new forum thread
     private val createThreadMutation = $$"""
@@ -55,6 +110,55 @@ class HomeRepositoryNetworkImpl(
                     content
                     author { username }
                 }
+            }
+        }
+    """.trimIndent()
+
+    // GraphQL query to fetch full race detail by slug
+    private val raceDetailQuery = $$"""
+        query GetRaceDetail($slug: String!) {
+            race(slug: $slug) {
+                grandPrix
+                circuit
+                overview
+                trackFacts {
+                    laps
+                    lapRecord
+                    distanceKm
+                    corners
+                }
+                sessions {
+                    label
+                    dateTime
+                }
+                results {
+                    position
+                    driver
+                    team
+                    points
+                    time
+                }
+                fastestLap {
+                    driver
+                    time
+                }
+            }
+        }
+    """.trimIndent()
+
+    // GraphQL query to fetch the full race schedule
+    private val racesQuery = """
+        query GetRaces {
+            races {
+                round
+                slug
+                grandPrix
+                circuit
+                country
+                city
+                dateTime
+                status
+                weather
             }
         }
     """.trimIndent()
@@ -97,6 +201,40 @@ class HomeRepositoryNetworkImpl(
     """.trimIndent()
 
     /**
+     * Fetches the full race schedule from the network and saves it locally.
+     */
+    private suspend fun syncRaceSchedule() {
+        try {
+            val response: GraphQLResponse<RacesData> = httpClient.post("$baseUrl/graphql") {
+                contentType(ContentType.Application.Json)
+                setBody(GraphQLRequest(racesQuery))
+            }.body()
+
+            val races = response.data?.races
+            if (races == null) {
+                logError(TAG, "Failed to sync races: ${response.errors.toErrorMessage("no data")}")
+                return
+            }
+
+            localDataSource.saveRaces(races.map { dto ->
+                Race(
+                    id = dto.slug,
+                    name = dto.grandPrix,
+                    circuit = dto.circuit,
+                    country = dto.country,
+                    city = dto.city,
+                    dateTime = dto.dateTime,
+                    round = dto.round,
+                    status = dto.status,
+                    weather = dto.weather
+                )
+            })
+        } catch (e: Exception) {
+            logError(TAG, "Failed to sync races", e)
+        }
+    }
+
+    /**
      * Syncs all dashboard data from the network to the local database.
      * Runs silently without blocking; errors are logged but not thrown.
      */
@@ -109,12 +247,12 @@ class HomeRepositoryNetworkImpl(
 
             val dashboard = response.data?.dashboard
             if (dashboard == null) {
-                println("Failed to sync dashboard: ${response.errors?.joinToString { it.message } ?: "no data"}")
+                logError(TAG, "Failed to sync dashboard: ${response.errors.toErrorMessage("no data")}")
                 return
             }
             saveDashboardData(dashboard)
         } catch (e: Exception) {
-            println("Failed to sync dashboard: ${e.message}")
+            logError(TAG, "Failed to sync dashboard", e)
         }
     }
 
@@ -122,11 +260,11 @@ class HomeRepositoryNetworkImpl(
      * Processes and saves all dashboard data from the GraphQL response.
      */
     private fun saveDashboardData(dashboard: DashboardContent) {
-        // Save races
-        val races = buildRacesList(dashboard.upcomingRace)
-        if (races.isNotEmpty()) {
-            localDataSource.saveRaces(races)
-        }
+        // NOTE: the races table is owned exclusively by syncRaceSchedule() (the full
+        // GetRaces query). The dashboard only carries a single summary "upcoming" race,
+        // and saveRaces() replaces the whole table — writing it here would wipe the full
+        // calendar down to one row. The UI derives the upcoming race from the full
+        // schedule, so dashboard race data is intentionally not persisted.
 
         // Save driver standings
         val driverStandings = dashboard.driverStandings.map { dto ->
@@ -170,87 +308,65 @@ class HomeRepositoryNetworkImpl(
     }
 
     /**
-     * Builds a list of races from upcoming and latest race data.
+     * Returns the full race schedule from the dedicated races query.
+     *
+     * Unlike the secondary dashboard data, the schedule is the primary content of
+     * the calendar screen, so we await the sync (bounded by [SYNC_TIMEOUT_MS]) and
+     * then re-read, returning the freshest data the network can provide within the
+     * timeout and falling back to whatever is cached if the network is slow. A pure
+     * background refresh would leave the screen showing a stale snapshot until the
+     * next manual reload.
      */
-    private fun buildRacesList(
-        upcomingRace: UpcomingRaceDto?
-    ): List<Race> {
-        val races = mutableListOf<Race>()
-
-        upcomingRace?.let {
-            races.add(
-                Race(
-                    id = "upcoming",
-                    name = it.grandPrix,
-                    circuit = "",
-                    country = it.city,
-                    countryFlag = "",
-                    date = it.dateTime,
-                    round = 0,
-                    isCompleted = false,
-                    daysRemaining = null
-                )
-            )
-        }
-
-        return races
-    }
-
-    /**
-     * Returns the race schedule, refreshing from the network if empty.
-     * Subsequent calls trigger background syncs without blocking.
-     */
-    override suspend fun getRaceSchedule(): List<Race> {
-        val localRaces = localDataSource.getAllRaces()
-        if (localRaces.isEmpty()) {
-            syncDashboard()
+    override suspend fun getRaceSchedule(): List<Race> = withContext(ioDispatcher) {
+        if (localDataSource.getAllRaces().isEmpty()) {
+            // Cold cache: block until the first sync populates the DB.
+            syncRaceSchedule()
         } else {
-            // Trigger background refresh
-            backgroundSync()
+            // Warm cache: refresh now, capped by the timeout, then return fresh rows.
+            withTimeoutOrNull(SYNC_TIMEOUT_MS.milliseconds) { syncRaceSchedule() }
         }
-        return localDataSource.getAllRaces()
+        localDataSource.getAllRaces()
     }
 
     /**
      * Returns driver standings, refreshing from the network if empty.
      * Subsequent calls trigger background syncs without blocking.
      */
-    override suspend fun getDriverStandings(): List<DriverStanding> {
-        val localStandings = localDataSource.getAllDriverStandings()
-        if (localStandings.isEmpty()) {
+    override suspend fun getDriverStandings(): List<DriverStanding> = withContext(ioDispatcher) {
+        if (localDataSource.getAllDriverStandings().isEmpty()) {
             syncDashboard()
         } else {
             backgroundSync()
         }
-        return localDataSource.getAllDriverStandings()
+        localDataSource.getAllDriverStandings()
     }
 
     /**
      * Returns constructor standings, refreshing from the network if empty.
      * Subsequent calls trigger background syncs without blocking.
      */
-    override suspend fun getConstructorStandings(): List<ConstructorStanding> {
-        val localStandings = localDataSource.getAllConstructorStandings()
-        if (localStandings.isEmpty()) {
+    override suspend fun getConstructorStandings(): List<ConstructorStanding> = withContext(ioDispatcher) {
+        if (localDataSource.getAllConstructorStandings().isEmpty()) {
             syncDashboard()
         } else {
             backgroundSync()
         }
-        return localStandings
+        // Re-read after a cold-cache sync so freshly-saved rows are returned.
+        localDataSource.getAllConstructorStandings()
     }
 
     /**
      * Returns trending threads, refreshing from the network if empty.
      * Subsequent calls trigger background syncs without blocking.
      */
-    override suspend fun getTrendingThreads(): List<TrendingThread> {
-        val localThreads = localDataSource.getAllTrendingThreads()
-        if (localThreads.isEmpty()) {
+    override suspend fun getTrendingThreads(): List<TrendingThread> = withContext(ioDispatcher) {
+        if (localDataSource.getAllTrendingThreads().isEmpty()) {
             syncDashboard()
         } else {
             backgroundSync()
         }
-        return localThreads
+        // Re-read after a cold-cache sync so freshly-saved rows are returned.
+        localDataSource.getAllTrendingThreads()
     }
 
     /**
@@ -275,7 +391,7 @@ class HomeRepositoryNetworkImpl(
             }.body()
 
             val data = response.data
-                ?: error(response.errors?.joinToString { it.message } ?: "Empty GraphQL response")
+                ?: error(response.errors.toErrorMessage("Empty GraphQL response"))
 
             data.threads.map { dto ->
                 Thread(
@@ -294,7 +410,7 @@ class HomeRepositoryNetworkImpl(
                 )
             }
         } catch (e: Exception) {
-            println("Failed to fetch threads: ${e.message}")
+            logError(TAG, "Failed to fetch threads", e)
             emptyList()
         }
     }
@@ -322,7 +438,7 @@ class HomeRepositoryNetworkImpl(
         }.body()
 
         val created = response.data?.createThread
-            ?: error(response.errors?.joinToString { it.message } ?: "Failed to create thread")
+            ?: error(response.errors.toErrorMessage("Failed to create thread"))
         return Thread(
             id = created.id,
             title = created.title,
@@ -338,16 +454,114 @@ class HomeRepositoryNetworkImpl(
     }
 
     /**
-     * Triggers a background sync without blocking the caller.
-     * Used to refresh data asynchronously.
+     * Fetches the signed-in user's profile via GraphQL query.
+     * Sends the auth token as an `Authorization: Bearer` header.
      */
-    private suspend fun backgroundSync() {
-        try {
-            withTimeoutOrNull(5000) {
+    override suspend fun getMyProfile(userId: String, token: String): UserProfile {
+        val response: GraphQLResponse<ProfileData> = httpClient.post("$baseUrl/graphql") {
+            contentType(ContentType.Application.Json)
+            header("Authorization", "Bearer $token")
+            setBody(
+                GraphQLProfileRequest(
+                    query = profileQuery,
+                    variables = ProfileVariables(userId = userId)
+                )
+            )
+        }.body()
+
+        val me = response.data?.me
+            ?: error(response.errors.toErrorMessage("Failed to load profile"))
+        return UserProfile(
+            username = me.username,
+            email = me.email,
+            avatar = me.avatar,
+            postsCount = me.postsCount,
+            savedCount = me.savedCount,
+            recentThreadTitles = me.recentThreads.map { it.title },
+            savedThreadTitles = me.savedThreads.map { it.title }
+        )
+    }
+
+    /**
+     * Posts a comment via GraphQL mutation.
+     */
+    override suspend fun addComment(userId: String, threadId: String, content: String): ThreadComment {
+        val response: GraphQLResponse<AddCommentData> = httpClient.post("$baseUrl/graphql") {
+            contentType(ContentType.Application.Json)
+            setBody(
+                GraphQLAddCommentRequest(
+                    query = addCommentMutation,
+                    variables = AddCommentVariables(
+                        userId = userId,
+                        threadId = threadId,
+                        content = content
+                    )
+                )
+            )
+        }.body()
+
+        val added = response.data?.addComment
+            ?: error(response.errors.toErrorMessage("Failed to add comment"))
+        // The mutation does not return author info; leave the username blank so
+        // callers don't mistake the raw user id for a display name.
+        return ThreadComment(content = added.content, authorUsername = "")
+    }
+
+    /**
+     * Fetches full race detail for the given [slug] via GraphQL query.
+     */
+    override suspend fun getRaceDetail(slug: String): RaceDetail {
+        val response: GraphQLResponse<RaceDetailData> = httpClient.post("$baseUrl/graphql") {
+            contentType(ContentType.Application.Json)
+            setBody(GraphQLRaceDetailRequest(query = raceDetailQuery, variables = RaceDetailVariables(slug)))
+        }.body()
+
+        val dto = response.data?.race
+            ?: error(response.errors.toErrorMessage("Failed to load race detail"))
+        return RaceDetail(
+            grandPrix = dto.grandPrix,
+            circuit = dto.circuit,
+            overview = dto.overview,
+            trackFacts = dto.trackFacts?.let {
+                TrackFacts(laps = it.laps, lapRecord = it.lapRecord, distanceKm = it.distanceKm, corners = it.corners)
+            },
+            sessions = dto.sessions.map { RaceSession(label = it.label, dateTime = it.dateTime) },
+            results = dto.results.map { RaceResult(position = it.position, driver = it.driver, team = it.team, points = it.points, time = it.time) },
+            fastestLap = dto.fastestLap?.let { FastestLap(driver = it.driver, time = it.time) }
+        )
+    }
+
+    /**
+     * Toggles the like on the thread identified by [id] via GraphQL mutation.
+     *
+     * @return The updated like count returned by the server.
+     */
+    override suspend fun likeThread(id: String): Int {
+        val response: GraphQLResponse<LikeThreadData> = httpClient.post("$baseUrl/graphql") {
+            contentType(ContentType.Application.Json)
+            setBody(
+                GraphQLLikeThreadRequest(
+                    query = likeThreadMutation,
+                    variables = LikeThreadVariables(id = id)
+                )
+            )
+        }.body()
+
+        val result = response.data?.likeThread
+            ?: error(response.errors.toErrorMessage("Failed to like thread"))
+        return result.likes
+    }
+
+    /**
+     * Triggers a background sync without blocking the caller. Launched on
+     * [syncScope] so it outlives the suspend call that requested it — the
+     * caller returns cached data immediately and the refresh lands for next time.
+     */
+    private fun backgroundSync() {
+        syncScope.launch {
+            withTimeoutOrNull(SYNC_TIMEOUT_MS.milliseconds) {
                 syncDashboard()
             }
-        } catch (_: CancellationException) {
-            // Timeout or cancellation - gracefully ignore
         }
     }
 

@@ -1,33 +1,45 @@
 import SwiftUI
+import Shared
 
-/// Top-level navigation destinations.
 private enum Screen {
-    case login, signUp, home
+    case login, signUp, forgotPassword, home
 }
 
-/// Root view. Owns navigation state and routes to the correct screen.
-///
-/// Navigation is kept intentionally simple (enum + switch) here.
-/// Replace with `NavigationStack` + a router when the app grows.
 struct ContentView: View {
 
-    @State private var screen: Screen = .login
+    @StateObject private var themeManager = ThemeManager()
+    @State private var screen: Screen
+
+    init() {
+        let hasSession = RaceDependencyProvider.companion.shared.userSession.currentUser.value is User
+        _screen = State(initialValue: hasSession ? .home : .login)
+    }
 
     var body: some View {
-        switch screen {
-        case .login:
-            LoginView(
-                onLoginSuccess:    { screen = .home   },
-                onNavigateToSignUp: { screen = .signUp }
-            )
-        case .signUp:
-            SignUpView(
-                onSignUpSuccess:    { screen = .home  },
-                onNavigateToLogin: { screen = .login  }
-            )
-        case .home:
-            HomeView()
+        Group {
+            switch screen {
+            case .login:
+                LoginView(
+                    onLoginSuccess:             { screen = .home          },
+                    onNavigateToSignUp:         { screen = .signUp        },
+                    onNavigateToForgotPassword: { screen = .forgotPassword }
+                )
+            case .signUp:
+                SignUpView(
+                    onSignUpSuccess:   { screen = .home  },
+                    onNavigateToLogin: { screen = .login }
+                )
+            case .forgotPassword:
+                ForgotPasswordView(
+                    onBack:                 { screen = .login },
+                    onPasswordResetSuccess: { screen = .login }
+                )
+            case .home:
+                HomeView(onSignedOut: { screen = .login })
+            }
         }
+        .preferredColorScheme(themeManager.preferredColorScheme)
+        .environmentObject(themeManager)
     }
 }
 

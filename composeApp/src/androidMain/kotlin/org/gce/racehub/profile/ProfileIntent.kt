@@ -5,7 +5,7 @@ package org.gce.racehub.profile
  * The View dispatches intents; [ProfileViewModel] is the sole handler.
  */
 sealed class ProfileIntent {
-
-    /** Clears the active error message without changing any other state. */
+    data object SignOut : ProfileIntent()
+    data object RefreshProfile : ProfileIntent()
     data object DismissError : ProfileIntent()
 }

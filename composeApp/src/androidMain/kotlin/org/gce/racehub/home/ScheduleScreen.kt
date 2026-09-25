@@ -2,65 +2,76 @@ package org.gce.racehub.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.tooling.preview.Preview
+import org.gce.racehub.race.circuitDrawable
+import org.gce.racehub.race.formatRaceDate
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.gce.racehub.race.domain.model.Race
-import org.gce.racehub.race.domain.model.TrendingThread
-
-private val DarkBg = Color(0xFF101010)
-private val CardBg = Color(0xFF1A1A1A)
-private val CardBorder = Color(0xFF2A2A2A)
-private val MutedGray = Color(0xFF888888)
-private val RacingRed = Color(0xFFE10600)
+import org.gce.racehub.theme.AppColorScheme
+import org.gce.racehub.theme.DarkAppColors
+import org.gce.racehub.theme.Dimens
+import org.gce.racehub.theme.LocalAppColors
+import org.jetbrains.compose.resources.stringResource
+import racehub.composeapp.generated.resources.Res
+import racehub.composeapp.generated.resources.contentdesc_back
+import racehub.composeapp.generated.resources.contentdesc_circuit_diagram
+import racehub.composeapp.generated.resources.label_completed
+import racehub.composeapp.generated.resources.label_next_race
+import racehub.composeapp.generated.resources.label_round
+import racehub.composeapp.generated.resources.title_schedule
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleScreen(
     schedule: List<Race>,
-    latestThread: TrendingThread?,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onViewRaceDetail: (Race) -> Unit = {}
 ) {
+    val colors = LocalAppColors.current
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        "SCHEDULE",
+                        stringResource(Res.string.title_schedule),
                         fontWeight = FontWeight.Black,
                         letterSpacing = 2.sp,
-                        color = Color.White
+                        color = colors.primaryText
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color.White
+                            contentDescription = stringResource(Res.string.contentdesc_back),
+                            tint = colors.primaryText
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DarkBg
-                )
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = colors.background)
             )
         },
-        containerColor = DarkBg
+        containerColor = colors.background
     ) { padding ->
         val nextRace = schedule.firstOrNull { !it.isCompleted }
 
@@ -68,48 +79,31 @@ fun ScheduleScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(bottom = 24.dp)
+                .padding(horizontal = Dimens.screenGutter),
+            verticalArrangement = Arrangement.spacedBy(Dimens.spaceLg),
+            contentPadding = PaddingValues(bottom = Dimens.spaceXl)
         ) {
-            item {
-                if (latestThread != null) {
-                    ScheduleLatestThreadCard(thread = latestThread)
-                    HorizontalDivider(
-                        modifier = Modifier
-                            .padding(vertical = 8.dp)
-                            .fillMaxWidth(),
-                        thickness = 1.dp,
-                        color = CardBorder
-                    )
-                }
-            }
             items(schedule) { race ->
-                RaceItem(
-                    race = race,
-                    isNextRace = race == nextRace
-                )
+                RaceItem(race = race, isNextRace = race == nextRace, colors = colors, onClick = { onViewRaceDetail(race) })
             }
         }
     }
 }
 
 @Composable
-private fun RaceItem(
-    race: Race,
-    isNextRace: Boolean
-) {
+private fun RaceItem(race: Race, isNextRace: Boolean, colors: AppColorScheme, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(CardBg)
+            .clip(Dimens.cardShape)
+            .background(colors.card)
             .border(
                 width = if (isNextRace) 2.dp else 1.dp,
-                color = if (isNextRace) RacingRed else CardBorder,
-                shape = RoundedCornerShape(16.dp)
+                color = if (isNextRace) colors.racingRed else colors.cardBorder,
+                shape = Dimens.cardShape
             )
-            .padding(16.dp)
+            .clickable(onClick = onClick)
+            .padding(Dimens.spaceLg)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -117,150 +111,183 @@ private fun RaceItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "ROUND ${race.round}",
-                color = if (race.isCompleted) MutedGray else RacingRed,
+                text = stringResource(Res.string.label_round, race.round),
+                color = if (race.isCompleted) colors.mutedText else colors.racingRed,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (race.isCompleted) {
                     Text(
-                        text = "COMPLETED",
-                        color = MutedGray,
+                        text = stringResource(Res.string.label_completed),
+                        color = colors.mutedText,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
                     )
-                } else {
-                    race.daysRemaining?.let { days ->
+                } else if (isNextRace) {
+                    Surface(
+                        color = colors.racingRed,
+                        shape = Dimens.chipShape
+                    ) {
                         Text(
-                            text = "$days DAYS",
-                            color = RacingRed,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(end = 8.dp)
+                            text = stringResource(Res.string.label_next_race),
+                            color = Color.White,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Black,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         )
                     }
-                    if (isNextRace) {
-                        Surface(
-                            color = RacingRed,
-                            shape = RoundedCornerShape(4.dp)
-                        ) {
-                            Text(
-                                text = "NEXT RACE",
-                                color = Color.White,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Black,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                            )
-                        }
-                    }
+                } else {
+                    Text(
+                        text = race.status,
+                        color = colors.racingRed,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        Row(verticalAlignment = Alignment.CenterVertically) {
+
+        Spacer(modifier = Modifier.height(Dimens.spaceSm))
+
+        Column(verticalArrangement = Arrangement.spacedBy(Dimens.spaceXs)) {
             Text(
                 text = race.name,
-                color = Color.White,
+                color = colors.primaryText,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(text = race.countryFlag, fontSize = 18.sp)
+
+            Text(
+                text = "${race.city}, ${race.country}",
+                color = colors.mutedText,
+                fontSize = 12.sp
+            )
+
+            Text(
+                text = race.circuit,
+                color = colors.mutedText,
+                fontSize = 12.sp
+            )
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = formatRaceDate(race.dateTime),
+                    color = colors.mutedText,
+                    fontSize = 14.sp
+                )
+                race.weather?.let { weather ->
+                    Spacer(modifier = Modifier.width(Dimens.spaceSm))
+                    WeatherChip(weather = weather, colors = colors)
+                }
+            }
         }
-        
-        Text(
-            text = race.date,
-            color = MutedGray,
-            fontSize = 14.sp,
-            modifier = Modifier.padding(top = 4.dp)
+
+        Spacer(modifier = Modifier.height(Dimens.spaceMd))
+
+        CircuitImage(circuitName = race.circuit, grandPrixName = race.name, colors = colors)
+    }
+}
+
+@Composable
+private fun CircuitImage(circuitName: String, grandPrixName: String, colors: AppColorScheme) {
+    val resId = circuitDrawable(circuitName) ?: circuitDrawable(grandPrixName)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(100.dp)
+            .clip(Dimens.tileShape)
+            .background(colors.cardBorder.copy(alpha = 0.2f)),
+        contentAlignment = Alignment.Center
+    ) {
+        if (resId != null) {
+            androidx.compose.foundation.Image(
+                painter = painterResource(resId),
+                contentDescription = stringResource(Res.string.contentdesc_circuit_diagram),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(4.dp),
+                contentScale = ContentScale.Fit
+            )
+        } else {
+            Text(
+                text = "🏁",
+                fontSize = 24.sp,
+                modifier = Modifier.alpha(0.3f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun WeatherChip(weather: String, colors: AppColorScheme) {
+    val emoji = weatherEmoji(weather)
+    val bg = weatherBackground(weather)
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = bg.copy(alpha = 0.15f),
+        border = androidx.compose.foundation.BorderStroke(1.dp, bg.copy(alpha = 0.35f))
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(text = emoji, fontSize = 14.sp)
+            Text(
+                text = weather.replaceFirstChar { it.uppercase() },
+                color = bg,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+    }
+}
+
+private fun weatherEmoji(weather: String): String {
+    val w = weather.lowercase()
+    return when {
+        "sun" in w || "clear" in w || "dry" in w || "fine" in w -> "☀️"
+        "part" in w && "cloud" in w -> "⛅"
+        "overcast" in w || "cloud" in w -> "🌥️"
+        "storm" in w || "thunder" in w || "lightning" in w -> "⛈️"
+        "rain" in w || "shower" in w || "wet" in w -> "🌧️"
+        "snow" in w || "sleet" in w -> "🌨️"
+        "fog" in w || "mist" in w || "haz" in w -> "🌫️"
+        "wind" in w || "breez" in w -> "💨"
+        "hot" in w || "humid" in w -> "🌡️"
+        else -> "🌤️"
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ScheduleScreenPreview() {
+    CompositionLocalProvider(LocalAppColors provides DarkAppColors) {
+        ScheduleScreen(
+            schedule = listOf(
+                Race("1", "Bahrain Grand Prix", "Bahrain International Circuit", "Bahrain", "Sakhir", "2025-03-02T15:00:00Z", 1, "COMPLETED", "Sunny"),
+                Race("2", "Saudi Arabian Grand Prix", "Jeddah Corniche Circuit", "Saudi Arabia", "Jeddah", "2025-06-01T17:00:00Z", 8, "UPCOMING", "Clear"),
+                Race("3", "Monaco Grand Prix", "Circuit de Monaco", "Monaco", "Monte Carlo", "2025-05-25T13:00:00Z", 9, "UPCOMING"),
+            ),
+            onBack = {}
         )
     }
 }
 
-/**
- * Card displaying the latest trending thread on the race schedule page.
- * Shows thread title, like count, and a visual indicator for trending content.
- */
-@Composable
-private fun ScheduleLatestThreadCard(thread: TrendingThread) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(CardBg)
-            .border(1.dp, CardBorder, RoundedCornerShape(16.dp))
-            .padding(16.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "LATEST DISCUSSION",
-                color = RacingRed,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.ExtraBold,
-                letterSpacing = 1.sp
-            )
-            Surface(
-                color = RacingRed.copy(alpha = 0.1f),
-                shape = RoundedCornerShape(4.dp)
-            ) {
-                Text(
-                    text = "TRENDING",
-                    color = RacingRed,
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Black,
-                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .clip(CircleShape)
-                    .background(RacingRed),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "💬",
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = thread.title,
-                    color = Color.White,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 2
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "❤️",
-                        fontSize = 12.sp
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "${thread.likes} likes",
-                        color = MutedGray,
-                        fontSize = 11.sp
-                    )
-                }
-            }
-        }
+private fun weatherBackground(weather: String): Color {
+    val w = weather.lowercase()
+    return when {
+        "sun" in w || "clear" in w || "dry" in w || "fine" in w -> Color(0xFFF59E0B)
+        "part" in w && "cloud" in w -> Color(0xFF94A3B8)
+        "overcast" in w || "cloud" in w -> Color(0xFF64748B)
+        "storm" in w || "thunder" in w || "lightning" in w -> Color(0xFF7C3AED)
+        "rain" in w || "shower" in w || "wet" in w -> Color(0xFF3B82F6)
+        "snow" in w || "sleet" in w -> Color(0xFF93C5FD)
+        "fog" in w || "mist" in w || "haz" in w -> Color(0xFF9CA3AF)
+        "wind" in w || "breez" in w -> Color(0xFF06B6D4)
+        "hot" in w || "humid" in w -> Color(0xFFEF4444)
+        else -> Color(0xFF60A5FA)
     }
 }
 
