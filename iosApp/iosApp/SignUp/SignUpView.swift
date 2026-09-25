@@ -270,8 +270,13 @@ struct SignUpView: View {
         }
     }
 
+    private static let nonCountryRegions: Set<String> = ["EU", "EZ", "QO", "UN"]
+
     private var isoCountries: [(name: String, code: String)] {
-        Locale.isoRegionCodes
+        Locale.Region.isoRegions
+            .map(\.identifier)
+            // Keep only two-letter country codes; drop numeric areas (e.g. "001") and groupings (EU, UN, ...)
+            .filter { $0.count == 2 && $0.allSatisfy(\.isLetter) && !Self.nonCountryRegions.contains($0) }
             .compactMap { code -> (name: String, code: String)? in
                 guard let name = Locale.current.localizedString(forRegionCode: code), !name.isEmpty else { return nil }
                 return (name: name, code: code)

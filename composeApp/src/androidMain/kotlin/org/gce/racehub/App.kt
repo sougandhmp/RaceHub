@@ -1,5 +1,6 @@
 package org.gce.racehub
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -76,6 +77,20 @@ fun App() {
             val raceState by raceViewModel.state.collectAsStateWithLifecycle()
             var selectedRace by remember { mutableStateOf<Race?>(null) }
             var raceDetailOrigin by remember { mutableStateOf(Screen.Home) }
+
+            // Screens are swapped via `screen` state rather than a nav back stack, so
+            // system Back must be routed explicitly — otherwise it finishes the
+            // activity from any sub-screen. Targets mirror each screen's onBack.
+            val backTarget: Screen? = when (screen) {
+                Screen.Login, Screen.Home -> null
+                Screen.SignUp, Screen.ForgotPassword -> Screen.Login
+                Screen.EmailVerification -> Screen.SignUp
+                Screen.Schedule, Screen.Standings, Screen.CreateThread, Screen.ThreadDetail -> Screen.Home
+                Screen.RaceDetail -> raceDetailOrigin
+            }
+            BackHandler(enabled = backTarget != null) {
+                backTarget?.let { screen = it }
+            }
 
             LaunchedEffect(Unit) {
                 if (userSession.currentUser.value != null) {

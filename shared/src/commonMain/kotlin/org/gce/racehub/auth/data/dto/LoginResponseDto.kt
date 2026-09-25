@@ -64,6 +64,6 @@ data class LoginResponseDto(
     val message: String,
 
     @SerialName("data")
-    val data: LoginDataDto?
+    val data: LoginDataDto? = null
 )
 

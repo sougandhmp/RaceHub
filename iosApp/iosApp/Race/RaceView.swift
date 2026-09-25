@@ -88,7 +88,7 @@ private func countryFlag(_ country: String) -> String {
 }
 
 private func raceHeaderDate(from dateString: String) -> String {
-    guard let date = ISO8601DateFormatter().date(from: dateString) else { return "" }
+    guard let date = parseRaceDate(dateString) else { return "" }
     let fmt = DateFormatter()
     fmt.dateFormat = "EEE MMM d"
     fmt.locale = Locale(identifier: "en_US")
@@ -100,7 +100,7 @@ func buildSessionChips(from raceDateString: String?) -> [SessionChipData] {
     let placeholders = ["FP1", "FP2", "FP3", "QUAL", "RACE"].map {
         SessionChipData(label: $0, date: "—", time: "—")
     }
-    guard let s = raceDateString, let raceDate = ISO8601DateFormatter().date(from: s) else {
+    guard let s = raceDateString, let raceDate = parseRaceDate(s) else {
         return placeholders
     }
     var utcCal = Calendar(identifier: .gregorian)
@@ -109,7 +109,8 @@ func buildSessionChips(from raceDateString: String?) -> [SessionChipData] {
     let dateFmt = DateFormatter()
     dateFmt.dateFormat = "MMM d"
     dateFmt.locale = Locale(identifier: "en_US")
-    dateFmt.timeZone = TimeZone(identifier: "UTC")!
+    // Same zone as timeFmt so a chip's date and time describe the same instant.
+    dateFmt.timeZone = .current
 
     let timeFmt = DateFormatter()
     timeFmt.dateFormat = "HH:mm"
