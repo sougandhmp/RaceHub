@@ -50,11 +50,13 @@ class ProfileViewModel(
         if (token.isNullOrBlank()) return
         viewModelScope.launch {
             _state.update { it.copy(isLoadingProfile = true) }
-            try {
-                val profile = getMyProfileUseCase(userId = userId, token = token)
-                _state.update { it.copy(isLoadingProfile = false, profile = profile) }
-            } catch (_: Exception) {
-                _state.update { it.copy(isLoadingProfile = false, errorMessage = "Failed to load profile.") }
+            val result = getMyProfileUseCase(userId = userId, token = token)
+            _state.update {
+                it.copy(
+                    isLoadingProfile = false,
+                    profile = result.data ?: it.profile,
+                    errorMessage = result.error?.message ?: it.errorMessage
+                )
             }
         }
     }

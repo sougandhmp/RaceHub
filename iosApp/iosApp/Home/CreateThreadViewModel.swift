@@ -62,14 +62,18 @@ final class CreateThreadViewModel: ObservableObject {
 
         Task {
             do {
-                _ = try await createThreadUseCase.invoke(
+                let result = try await createThreadUseCase.invoke(
                     userId: userId,
                     title: titleSnapshot,
                     category: categorySnapshot,
                     content: contentSnapshot
                 )
                 state.isSubmitting = false
-                effectSubject.send(.threadCreated)
+                if result.isSuccess {
+                    effectSubject.send(.threadCreated)
+                } else {
+                    state.errorMessage = result.error?.message
+                }
             } catch {
                 state.isSubmitting = false
                 state.errorMessage = error.localizedDescription

@@ -52,9 +52,17 @@ final class ThreadDetailViewModel: ObservableObject {
 
         Task {
             do {
-                let updatedLikes = try await likeThreadUseCase.invoke(threadId: threadId)
-                state.likes = Int32(truncating: updatedLikes)
-                state.isLiking = false
+                let result = try await likeThreadUseCase.invoke(threadId: threadId)
+                if let updatedLikes = result.data {
+                    state.likes = updatedLikes.int32Value
+                    state.isLiking = false
+                } else {
+                    // Revert the optimistic update
+                    state.isLiked = previousLiked
+                    state.likes = previousLikes
+                    state.isLiking = false
+                    state.errorMessage = result.error?.message
+                }
             } catch {
                 state.isLiked = previousLiked
                 state.likes = previousLikes
@@ -80,11 +88,16 @@ final class ThreadDetailViewModel: ObservableObject {
 
         Task {
             do {
-                _ = try await addCommentUseCase.invoke(
+                let result = try await addCommentUseCase.invoke(
                     userId: userId,
                     threadId: threadId,
                     content: text
                 )
+                guard result.isSuccess else {
+                    state.isSubmitting = false
+                    state.errorMessage = result.error?.message
+                    return
+                }
                 state.isSubmitting = false
                 state.commentInput = ""
                 state.postedComments.append(

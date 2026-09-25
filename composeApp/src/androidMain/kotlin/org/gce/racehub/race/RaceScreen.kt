@@ -57,6 +57,7 @@ import org.gce.racehub.theme.DarkAppColors
 import org.gce.racehub.theme.Dimens
 import org.gce.racehub.theme.LocalAppColors
 import org.gce.racehub.theme.teamColorOf
+import org.gce.racehub.theme.ErrorBanner
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import racehub.composeapp.generated.resources.Res
@@ -109,6 +110,14 @@ fun RaceScreen(
                 onViewAllSchedule = onViewAllSchedule,
                 onViewAllStandings = onViewAllStandings,
                 onViewRaceDetail = onViewRaceDetail
+            )
+        }
+        state.errorMessage?.let { message ->
+            ErrorBanner(
+                message = message,
+                onRetry = { viewModel.onIntent(RaceIntent.Refresh) },
+                onDismiss = { viewModel.onIntent(RaceIntent.DismissError) },
+                modifier = Modifier.align(Alignment.TopCenter)
             )
         }
     }

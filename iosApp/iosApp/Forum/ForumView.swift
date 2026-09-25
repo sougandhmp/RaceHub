@@ -34,6 +34,15 @@ struct ForumView: View {
                     colors: colors
                 )
 
+                if let message = viewModel.state.errorMessage {
+                    ErrorBanner(
+                        message: message,
+                        colors: colors,
+                        onRetry: { viewModel.send(.refresh) },
+                        onDismiss: { viewModel.send(.dismissError) }
+                    )
+                }
+
                 if viewModel.state.isLoading && viewModel.state.threads.isEmpty {
                     Spacer()
                     ProgressView()

@@ -149,4 +149,6 @@
     <string name="label_points_abbr">PTS</string>
     <string name="label_pos">POS</string>
     <string name="label_race_starts">Race starts %1$s local</string>
+    <string name="action_try_again">Try again</string>
+    <string name="contentdesc_dismiss_error">Dismiss error</string>
 </resources>
