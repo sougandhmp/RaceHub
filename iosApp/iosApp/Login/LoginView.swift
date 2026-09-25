@@ -1,19 +1,23 @@
 import SwiftUI
 import Combine
+import Shared
+
+private let t = AppColorTokens.shared
 
 struct LoginView: View {
 
     @StateObject private var viewModel = LoginViewModel()
     let onLoginSuccess: () -> Void
     let onNavigateToSignUp: () -> Void
+    let onNavigateToForgotPassword: () -> Void
 
     var body: some View {
         ZStack {
             LinearGradient(
                 colors: [
-                    Color(hex: "0A0A0A"),
-                    Color(hex: "1A1A2E"),
-                    Color(hex: "16213E")
+                    Color(hex: t.darkBackground),
+                    Color(hex: t.authDarkBlue),
+                    Color(hex: t.authDeepBlue)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -29,12 +33,12 @@ struct LoginView: View {
 
                     Text("RaceHub")
                         .font(.system(size: 36, weight: .heavy))
-                        .foregroundColor(Color(hex: "E63946"))
+                        .foregroundColor(AppColors.racingRed)
                         .padding(.top, 8)
 
                     Text("Your Racing Universe")
                         .font(.subheadline)
-                        .foregroundColor(Color(hex: "8D99AE"))
+                        .foregroundColor(Color(hex: t.authMuted))
                         .padding(.top, 4)
 
                     Spacer(minLength: 52)
@@ -43,7 +47,7 @@ struct LoginView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Email")
                             .font(.caption)
-                            .foregroundColor(Color(hex: "8D99AE"))
+                            .foregroundColor(Color(hex: t.authMuted))
 
                         TextField("driver@racehub.com", text: Binding(
                             get: { viewModel.state.email },
@@ -59,8 +63,8 @@ struct LoginView: View {
                             RoundedRectangle(cornerRadius: 12)
                                 .stroke(
                                     viewModel.state.email.isEmpty
-                                        ? Color(hex: "444444")
-                                        : Color(hex: "E63946"),
+                                        ? Color(hex: t.authDimBorder)
+                                        : AppColors.racingRed,
                                     lineWidth: 1.5
                                 )
                         )
@@ -73,7 +77,7 @@ struct LoginView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Password")
                             .font(.caption)
-                            .foregroundColor(Color(hex: "8D99AE"))
+                            .foregroundColor(Color(hex: t.authMuted))
 
                         HStack {
                             Group {
@@ -94,9 +98,9 @@ struct LoginView: View {
                             .autocapitalization(.none)
 
                             Button(action: { viewModel.send(.togglePasswordVisibility) }) {
-                                Text(viewModel.state.isPasswordVisible ? "Hide" : "Show")
+                                Text(viewModel.state.isPasswordVisible ? String(localized: "Hide") : String(localized: "Show"))
                                     .font(.caption)
-                                    .foregroundColor(Color(hex: "8D99AE"))
+                                    .foregroundColor(Color(hex: t.authMuted))
                             }
                         }
                         .padding()
@@ -105,8 +109,8 @@ struct LoginView: View {
                             RoundedRectangle(cornerRadius: 12)
                                 .stroke(
                                     viewModel.state.password.isEmpty
-                                        ? Color(hex: "444444")
-                                        : Color(hex: "E63946"),
+                                        ? Color(hex: t.authDimBorder)
+                                        : AppColors.racingRed,
                                     lineWidth: 1.5
                                 )
                         )
@@ -117,7 +121,7 @@ struct LoginView: View {
                     if let error = viewModel.state.errorMessage {
                         Text(error)
                             .font(.caption)
-                            .foregroundColor(Color(hex: "E63946"))
+                            .foregroundColor(AppColors.racingRed)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.top, 8)
                     }
@@ -141,14 +145,14 @@ struct LoginView: View {
                     }
                     .background(
                         RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(hex: "E63946").opacity(viewModel.state.isLoading ? 0.4 : 1.0))
+                            .fill(AppColors.racingRed.opacity(viewModel.state.isLoading ? 0.4 : 1.0))
                     )
                     .disabled(viewModel.state.isLoading)
 
-                    Button(action: {}) {
+                    Button(action: onNavigateToForgotPassword) {
                         Text("Forgot Password?")
                             .font(.footnote)
-                            .foregroundColor(Color(hex: "8D99AE"))
+                            .foregroundColor(Color(hex: t.authMuted))
                     }
                     .padding(.top, 16)
 
@@ -157,12 +161,12 @@ struct LoginView: View {
                     HStack(spacing: 4) {
                         Text("Don't have an account?")
                             .font(.footnote)
-                            .foregroundColor(Color(hex: "8D99AE"))
+                            .foregroundColor(Color(hex: t.authMuted))
 
                         Button(action: onNavigateToSignUp) {
                             Text("Sign Up")
                                 .font(.footnote.bold())
-                                .foregroundColor(Color(hex: "E63946"))
+                                .foregroundColor(AppColors.racingRed)
                         }
                     }
 
@@ -170,11 +174,11 @@ struct LoginView: View {
 
                     Text("Use driver@racehub.com / race123")
                         .font(.caption2)
-                        .foregroundColor(Color(hex: "8D99AE").opacity(0.5))
+                        .foregroundColor(Color(hex: t.authMuted).opacity(0.5))
 
                     Spacer(minLength: 32)
                 }
-                .padding(.horizontal, 28)
+                .padding(.horizontal, 20)
             }
         }
         .onReceive(viewModel.effectPublisher) { effect in
@@ -188,5 +192,5 @@ struct LoginView: View {
 
 
 #Preview {
-    LoginView(onLoginSuccess: {}, onNavigateToSignUp: {})
+    LoginView(onLoginSuccess: {}, onNavigateToSignUp: {}, onNavigateToForgotPassword: {})
 }

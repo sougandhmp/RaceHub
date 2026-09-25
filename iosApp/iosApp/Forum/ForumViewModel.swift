@@ -25,22 +25,38 @@ final class ForumViewModel: ObservableObject {
             loadThreads()
         case .dismissError:
             state.errorMessage = nil
+        case .selectSort(let sort):
+            state.selectedSort = sort
+            loadThreads()
+        case .selectCategory(let category):
+            state.selectedCategory = category
+            loadThreads()
         }
     }
 
-    private func loadThreads() {
+    func loadThreads() {
+        Task { await performLoad() }
+    }
+
+    func refresh() async {
+        await performLoad()
+    }
+
+    private func performLoad() async {
         state.isLoading = true
         state.errorMessage = nil
 
-        Task {
-            do {
-                let threads = try await repository.getThreads(sort: "latest", category: nil, userId: nil)
-                state.isLoading = false
-                state.threads = threads
-            } catch {
-                state.isLoading = false
-                state.errorMessage = error.localizedDescription
-            }
+        do {
+            let threads = try await repository.getThreads(
+                sort: state.selectedSort,
+                category: state.selectedCategory,
+                userId: nil
+            )
+            state.isLoading = false
+            state.threads = threads
+        } catch {
+            state.isLoading = false
+            state.errorMessage = error.localizedDescription
         }
     }
 }

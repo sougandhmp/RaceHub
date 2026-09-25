@@ -1,7 +1,7 @@
 package org.gce.racehub.di
 
 import org.gce.racehub.auth.di.createProductionAuthModule
-import org.gce.racehub.race.di.raceModule
+import org.gce.racehub.race.di.createRaceModule
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 
@@ -22,7 +22,7 @@ actual object KoinInitializer {
         startKoin {
             modules(
                 createProductionAuthModule(baseUrl),
-                raceModule,
+                createRaceModule(baseUrl),
                 platformModule,
                 *additionalModules
             )
@@ -38,7 +38,7 @@ actual object KoinInitializer {
         startKoin {
             modules(
                 org.gce.racehub.auth.di.fakeAuthModule,
-                raceModule,
+                createRaceModule(""),
                 platformModule,
                 *additionalModules
             )

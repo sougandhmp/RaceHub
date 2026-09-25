@@ -1,12 +1,13 @@
 import Foundation
+import Shared
 
-/// Immutable snapshot of the Profile tab. The screen is a placeholder for now;
-/// fields will be added as the profile feature is built out.
 struct ProfileState {
-
-    /// `true` while profile data is being fetched.
-    var isLoading: Bool = false
-
-    /// Non-`nil` when an error should be shown to the user.
+    var user: User? = nil
+    var isLoadingProfile: Bool = false
+    var postsCount: Int = 0
+    var savedCount: Int = 0
+    var recentThreadTitles: [String] = []
+    var savedThreadTitles: [String] = []
+    var isSigningOut: Bool = false
     var errorMessage: String? = nil
 }

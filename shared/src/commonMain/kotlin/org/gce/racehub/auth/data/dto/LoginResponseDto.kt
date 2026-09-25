@@ -30,7 +30,12 @@ data class UserResponseDto(
     val joinedAt: String,
 
     @SerialName("postsCount")
-    val postsCount: Int
+    val postsCount: Int,
+
+    // Whether the user's email has been verified. Defaults to true so a server
+    // that omits the field never accidentally locks users out of login.
+    @SerialName("emailVerified")
+    val emailVerified: Boolean = true
 )
 
 /**
@@ -59,6 +64,6 @@ data class LoginResponseDto(
     val message: String,
 
     @SerialName("data")
-    val data: LoginDataDto?
+    val data: LoginDataDto? = null
 )
 

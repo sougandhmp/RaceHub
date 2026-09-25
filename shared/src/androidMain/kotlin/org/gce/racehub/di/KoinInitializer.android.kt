@@ -2,7 +2,7 @@ package org.gce.racehub.di
 
 import android.app.Application
 import org.gce.racehub.auth.di.createProductionAuthModule
-import org.gce.racehub.race.di.raceModule
+import org.gce.racehub.race.di.createRaceModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
@@ -34,7 +34,7 @@ actual object KoinInitializer {
     actual fun init(baseUrl: String, vararg additionalModules: Module) {
         startKoin {
             androidApplication?.let { androidContext(it) }
-            modules(createProductionAuthModule(baseUrl), raceModule, platformModule, *additionalModules)
+            modules(createProductionAuthModule(baseUrl), createRaceModule(baseUrl), platformModule, *additionalModules)
         }
     }
 
@@ -45,7 +45,7 @@ actual object KoinInitializer {
     actual fun initForTesting(vararg additionalModules: Module) {
         startKoin {
             androidApplication?.let { androidContext(it) }
-            modules(org.gce.racehub.auth.di.fakeAuthModule, raceModule, platformModule, *additionalModules)
+            modules(org.gce.racehub.auth.di.fakeAuthModule, createRaceModule(""), platformModule, *additionalModules)
         }
     }
 }

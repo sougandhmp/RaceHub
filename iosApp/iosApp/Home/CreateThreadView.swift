@@ -1,16 +1,25 @@
 import SwiftUI
 import Combine
 
+private let threadTags = [
+    "General Discussion",
+    "Race Weekends",
+    "Teams & Drivers",
+    "Technical / Cars"
+]
+
 struct CreateThreadView: View {
 
     let onThreadCreated: () -> Void
 
     @StateObject private var viewModel = CreateThreadViewModel()
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var colorScheme
+    private var colors: AppColors { AppColors.forScheme(colorScheme) }
 
     var body: some View {
         ZStack {
-            Color(hex: "0A0A0A").ignoresSafeArea()
+            colors.background.ignoresSafeArea()
 
             VStack(alignment: .leading, spacing: 0) {
                 header
@@ -25,19 +34,11 @@ struct CreateThreadView: View {
                             text: Binding(
                                 get: { viewModel.state.title },
                                 set: { viewModel.send(.titleChanged($0)) }
-                            ),
-                            singleLine: true
+                            )
                         )
 
-                        fieldLabel("CATEGORY")
-                        textField(
-                            placeholder: "Category",
-                            text: Binding(
-                                get: { viewModel.state.category },
-                                set: { viewModel.send(.categoryChanged($0)) }
-                            ),
-                            singleLine: true
-                        )
+                        fieldLabel("TAG")
+                        categoryPicker
 
                         fieldLabel("CONTENT")
                         contentEditor
@@ -45,14 +46,14 @@ struct CreateThreadView: View {
                         if let message = viewModel.state.errorMessage {
                             Text(message)
                                 .font(.system(size: 13))
-                                .foregroundColor(Color(hex: "E63946"))
+                                .foregroundColor(AppColors.racingRed)
                                 .padding(.top, 4)
                         }
 
                         submitButton
                             .padding(.top, 16)
                     }
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, 20)
                     .padding(.vertical, 16)
                 }
             }
@@ -71,7 +72,7 @@ struct CreateThreadView: View {
         HStack {
             Button(action: { dismiss() }) {
                 Text("Cancel")
-                    .foregroundColor(Color(hex: "8E8E93"))
+                    .foregroundColor(colors.mutedText)
                     .font(.system(size: 14))
             }
             .disabled(viewModel.state.isSubmitting)
@@ -80,42 +81,71 @@ struct CreateThreadView: View {
 
             Text("New Thread")
                 .font(.system(size: 16, weight: .bold))
-                .foregroundColor(.white)
+                .foregroundColor(colors.primaryText)
 
             Spacer()
 
             Color.clear.frame(width: 64, height: 1)
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, 20)
         .padding(.vertical, 16)
     }
 
-    private func fieldLabel(_ text: String) -> some View {
+    private func fieldLabel(_ text: LocalizedStringKey) -> some View {
         Text(text)
             .font(.system(size: 11, weight: .bold))
             .kerning(0.5)
-            .foregroundColor(Color(hex: "8E8E93"))
+            .foregroundColor(colors.mutedText)
     }
 
-    private func textField(placeholder: String, text: Binding<String>, singleLine: Bool) -> some View {
-        TextField("", text: text, prompt: Text(placeholder).foregroundColor(Color(hex: "8E8E93")))
-            .foregroundColor(.white)
-            .accentColor(Color(hex: "E63946"))
+    private func textField(placeholder: LocalizedStringKey, text: Binding<String>) -> some View {
+        TextField("", text: text, prompt: Text(placeholder).foregroundColor(colors.mutedText))
+            .foregroundColor(colors.primaryText)
+            .accentColor(AppColors.racingRed)
             .padding(12)
-            .background(Color(hex: "161616"))
+            .background(colors.card)
             .cornerRadius(8)
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color(hex: "262626"), lineWidth: 1)
+                    .stroke(colors.cardBorder, lineWidth: 1)
             )
             .disabled(viewModel.state.isSubmitting)
+    }
+
+    private var categoryPicker: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(threadTags, id: \.self) { tag in
+                    let isSelected = viewModel.state.category == tag
+                    Button(action: { viewModel.send(.categoryChanged(tag)) }) {
+                        Text(tag)
+                            .font(.system(size: 14, weight: isSelected ? .bold : .medium))
+                            .foregroundColor(isSelected ? .white : colors.primaryText)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 9)
+                            .background(
+                                Capsule()
+                                    .fill(isSelected ? AppColors.racingRed : colors.card)
+                            )
+                            .overlay(
+                                Capsule()
+                                    .stroke(
+                                        isSelected ? AppColors.racingRed : colors.cardBorder,
+                                        lineWidth: 1
+                                    )
+                            )
+                    }
+                    .disabled(viewModel.state.isSubmitting)
+                }
+            }
+        }
     }
 
     private var contentEditor: some View {
         ZStack(alignment: .topLeading) {
             if viewModel.state.content.isEmpty {
                 Text("Share your thoughts…")
-                    .foregroundColor(Color(hex: "8E8E93"))
+                    .foregroundColor(colors.mutedText)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 16)
             }
@@ -125,16 +155,16 @@ struct CreateThreadView: View {
                 set: { viewModel.send(.contentChanged($0)) }
             ))
             .scrollContentBackground(.hidden)
-            .foregroundColor(.white)
-            .accentColor(Color(hex: "E63946"))
+            .foregroundColor(colors.primaryText)
+            .accentColor(AppColors.racingRed)
             .padding(8)
             .frame(height: 220)
         }
-        .background(Color(hex: "161616"))
+        .background(colors.card)
         .cornerRadius(8)
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(Color(hex: "262626"), lineWidth: 1)
+                .stroke(colors.cardBorder, lineWidth: 1)
         )
         .disabled(viewModel.state.isSubmitting)
     }
@@ -148,14 +178,18 @@ struct CreateThreadView: View {
                 } else {
                     Text("Post Thread")
                         .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(viewModel.state.canSubmit ? .white : Color(hex: "8E8E93"))
+                        .foregroundColor(viewModel.state.canSubmit ? .white : colors.mutedText)
                 }
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
-            .background(viewModel.state.canSubmit ? Color(hex: "E63946") : Color(hex: "161616"))
+            .background(viewModel.state.canSubmit ? AppColors.racingRed : colors.card)
             .cornerRadius(12)
         }
         .disabled(!viewModel.state.canSubmit)
     }
+}
+
+#Preview {
+    CreateThreadView(onThreadCreated: {})
 }

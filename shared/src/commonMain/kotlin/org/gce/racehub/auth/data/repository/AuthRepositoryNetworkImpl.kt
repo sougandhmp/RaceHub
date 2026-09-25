@@ -3,6 +3,8 @@ package org.gce.racehub.auth.data.repository
 import org.gce.racehub.auth.data.dto.toDomainModel
 import org.gce.racehub.auth.data.network.AuthService
 import org.gce.racehub.auth.domain.model.AuthResult
+import org.gce.racehub.auth.domain.model.EmailVerificationResult
+import org.gce.racehub.auth.domain.model.PasswordResetResult
 import org.gce.racehub.auth.domain.repository.AuthRepository
 
 /**
@@ -47,20 +49,79 @@ class AuthRepositoryNetworkImpl(private val authService: AuthService) : AuthRepo
         }
     }
 
-    /**
-     * Creates a new user account via the sign-up API endpoint.
-     *
-     * Note: This method is a placeholder. The actual endpoint needs to be
-     * implemented once the backend sign-up API is ready.
-     *
-     * @param name The user's chosen display name
-     * @param email The email address to register
-     * @param password The chosen password
-     * @return [AuthResult] with success or failure
-     */
-    override suspend fun signUp(name: String, email: String, password: String): AuthResult {
-        // TODO: Implement sign-up API call once endpoint is available
-        return AuthResult.failure("Sign-up is not yet implemented")
+    override suspend fun signUp(username: String, email: String, password: String, country: String): AuthResult {
+        return try {
+            val response = authService.signUp(username, email, password, country)
+            if (response.success && response.data != null) {
+                AuthResult.success(response.data.user.toDomainModel(response.data.token))
+            } else {
+                AuthResult.failure(response.message)
+            }
+        } catch (_: Exception) {
+            AuthResult.failure("Could not create account. Check your connection and try again.")
+        }
+    }
+
+    override suspend fun logout(token: String): Boolean {
+        return try {
+            authService.logout(token).success
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    override suspend fun requestPasswordReset(email: String): PasswordResetResult {
+        return try {
+            val response = authService.requestPasswordReset(email)
+            if (response.success) PasswordResetResult.success()
+            else PasswordResetResult.failure(response.message)
+        } catch (e: Exception) {
+            PasswordResetResult.failure("Could not send reset code. Check your connection and try again.")
+        }
+    }
+
+    override suspend fun confirmPasswordReset(
+        email: String,
+        otp: String,
+        newPassword: String
+    ): PasswordResetResult {
+        return try {
+            val response = authService.confirmPasswordReset(email, otp, newPassword)
+            if (response.success) PasswordResetResult.success()
+            else PasswordResetResult.failure(response.message)
+        } catch (e: Exception) {
+            PasswordResetResult.failure("Could not reset password. Check your connection and try again.")
+        }
+    }
+
+    override suspend fun sendOtp(email: String, subject: String): EmailVerificationResult {
+        return try {
+            val response = authService.sendOtp(email, subject)
+            if (response.success) EmailVerificationResult.success()
+            else EmailVerificationResult.failure(response.message)
+        } catch (e: Exception) {
+            EmailVerificationResult.failure("Could not send verification code. Check your connection and try again.")
+        }
+    }
+
+    override suspend fun resendOtp(email: String, subject: String): EmailVerificationResult {
+        return try {
+            val response = authService.resendOtp(email, subject)
+            if (response.success) EmailVerificationResult.success()
+            else EmailVerificationResult.failure(response.message)
+        } catch (e: Exception) {
+            EmailVerificationResult.failure("Could not resend code. Check your connection and try again.")
+        }
+    }
+
+    override suspend fun verifyOtp(email: String, otp: String): EmailVerificationResult {
+        return try {
+            val response = authService.verifyOtp(email, otp)
+            if (response.success) EmailVerificationResult.success()
+            else EmailVerificationResult.failure(response.message)
+        } catch (e: Exception) {
+            EmailVerificationResult.failure("Could not verify code. Check your connection and try again.")
+        }
     }
 }
 

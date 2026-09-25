@@ -1,5 +1,8 @@
 import SwiftUI
 import Combine
+import Shared
+
+private let t = AppColorTokens.shared
 
 struct SignUpView: View {
 
@@ -11,9 +14,9 @@ struct SignUpView: View {
         ZStack {
             LinearGradient(
                 colors: [
-                    Color(hex: "0A0A0A"),
-                    Color(hex: "1A1A2E"),
-                    Color(hex: "16213E")
+                    Color(hex: t.darkBackground),
+                    Color(hex: t.authDarkBlue),
+                    Color(hex: t.authDeepBlue)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -29,23 +32,23 @@ struct SignUpView: View {
 
                     Text("Join RaceHub")
                         .font(.system(size: 32, weight: .heavy))
-                        .foregroundColor(Color(hex: "E63946"))
+                        .foregroundColor(AppColors.racingRed)
                         .padding(.top, 8)
 
                     Text("Start your racing journey")
                         .font(.subheadline)
-                        .foregroundColor(Color(hex: "8D99AE"))
+                        .foregroundColor(Color(hex: t.authMuted))
                         .padding(.top, 4)
 
                     Spacer(minLength: 40)
 
-                    // Name
+                    // Username
                     inputField(
-                        label: "Full Name",
-                        placeholder: "John Doe",
+                        label: "Username",
+                        placeholder: "RaceFan",
                         text: Binding(
-                            get: { viewModel.state.name },
-                            set: { viewModel.send(.nameChanged($0)) }
+                            get: { viewModel.state.username },
+                            set: { viewModel.send(.usernameChanged($0)) }
                         ),
                         keyboardType: .default
                     )
@@ -89,11 +92,16 @@ struct SignUpView: View {
                         onToggle: { viewModel.send(.toggleConfirmPasswordVisibility) }
                     )
 
+                    Spacer(minLength: 14)
+
+                    // Country
+                    countryDropdown()
+
                     // Error
                     if let error = viewModel.state.errorMessage {
                         Text(error)
                             .font(.caption)
-                            .foregroundColor(Color(hex: "E63946"))
+                            .foregroundColor(AppColors.racingRed)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.top, 8)
                     }
@@ -117,7 +125,7 @@ struct SignUpView: View {
                     }
                     .background(
                         RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(hex: "E63946").opacity(viewModel.state.isLoading ? 0.4 : 1.0))
+                            .fill(AppColors.racingRed.opacity(viewModel.state.isLoading ? 0.4 : 1.0))
                     )
                     .disabled(viewModel.state.isLoading)
 
@@ -126,18 +134,18 @@ struct SignUpView: View {
                     HStack(spacing: 4) {
                         Text("Already have an account?")
                             .font(.footnote)
-                            .foregroundColor(Color(hex: "8D99AE"))
+                            .foregroundColor(Color(hex: t.authMuted))
 
                         Button(action: onNavigateToLogin) {
                             Text("Sign In")
                                 .font(.footnote.bold())
-                                .foregroundColor(Color(hex: "E63946"))
+                                .foregroundColor(AppColors.racingRed)
                         }
                     }
 
                     Spacer(minLength: 40)
                 }
-                .padding(.horizontal, 28)
+                .padding(.horizontal, 20)
             }
         }
         .onReceive(viewModel.effectPublisher) { effect in
@@ -151,15 +159,15 @@ struct SignUpView: View {
     // MARK: - Reusable field builders
 
     private func inputField(
-        label: String,
-        placeholder: String,
+        label: LocalizedStringKey,
+        placeholder: LocalizedStringKey,
         text: Binding<String>,
         keyboardType: UIKeyboardType
     ) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label)
                 .font(.caption)
-                .foregroundColor(Color(hex: "8D99AE"))
+                .foregroundColor(Color(hex: t.authMuted))
 
             TextField(placeholder, text: text)
                 .keyboardType(keyboardType)
@@ -171,7 +179,7 @@ struct SignUpView: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
-                            text.wrappedValue.isEmpty ? Color(hex: "444444") : Color(hex: "E63946"),
+                            text.wrappedValue.isEmpty ? Color(hex: t.authDimBorder) : AppColors.racingRed,
                             lineWidth: 1.5
                         )
                 )
@@ -180,7 +188,7 @@ struct SignUpView: View {
     }
 
     private func passwordField(
-        label: String,
+        label: LocalizedStringKey,
         text: Binding<String>,
         isVisible: Bool,
         onToggle: @escaping () -> Void
@@ -188,7 +196,7 @@ struct SignUpView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label)
                 .font(.caption)
-                .foregroundColor(Color(hex: "8D99AE"))
+                .foregroundColor(Color(hex: t.authMuted))
 
             HStack {
                 Group {
@@ -203,9 +211,9 @@ struct SignUpView: View {
                 .autocapitalization(.none)
 
                 Button(action: onToggle) {
-                    Text(isVisible ? "Hide" : "Show")
+                    Text(isVisible ? String(localized: "Hide") : String(localized: "Show"))
                         .font(.caption)
-                        .foregroundColor(Color(hex: "8D99AE"))
+                        .foregroundColor(Color(hex: t.authMuted))
                 }
             }
             .padding()
@@ -213,12 +221,67 @@ struct SignUpView: View {
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(
-                        text.wrappedValue.isEmpty ? Color(hex: "444444") : Color(hex: "E63946"),
+                        text.wrappedValue.isEmpty ? Color(hex: t.authDimBorder) : AppColors.racingRed,
                         lineWidth: 1.5
                     )
             )
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
+    }
+
+    @ViewBuilder
+    private func countryDropdown() -> some View {
+        let code = viewModel.state.country
+        let displayName = Locale.current.localizedString(forRegionCode: code) ?? code
+        let hasSelection = !code.isEmpty
+
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Country")
+                .font(.caption)
+                .foregroundColor(Color(hex: t.authMuted))
+
+            Menu {
+                ForEach(isoCountries, id: \.code) { item in
+                    Button(action: { viewModel.send(.countryChanged(item.code)) }) {
+                        if item.code == code {
+                            Label(item.name, systemImage: "checkmark")
+                        } else {
+                            Text(item.name)
+                        }
+                    }
+                }
+            } label: {
+                HStack {
+                    Text(hasSelection ? displayName : String(localized: "Select country"))
+                        .foregroundColor(hasSelection ? .white : Color(hex: t.authMuted).opacity(0.6))
+                    Spacer()
+                    Image(systemName: "chevron.down")
+                        .font(.caption)
+                        .foregroundColor(Color(hex: t.authMuted))
+                }
+                .padding()
+                .background(Color.white.opacity(0.05))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(hasSelection ? AppColors.racingRed : Color(hex: t.authDimBorder), lineWidth: 1.5)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+        }
+    }
+
+    private static let nonCountryRegions: Set<String> = ["EU", "EZ", "QO", "UN"]
+
+    private var isoCountries: [(name: String, code: String)] {
+        Locale.Region.isoRegions
+            .map(\.identifier)
+            // Keep only two-letter country codes; drop numeric areas (e.g. "001") and groupings (EU, UN, ...)
+            .filter { $0.count == 2 && $0.allSatisfy(\.isLetter) && !Self.nonCountryRegions.contains($0) }
+            .compactMap { code -> (name: String, code: String)? in
+                guard let name = Locale.current.localizedString(forRegionCode: code), !name.isEmpty else { return nil }
+                return (name: name, code: code)
+            }
+            .sorted { $0.name < $1.name }
     }
 }
 

@@ -9,6 +9,9 @@ package org.gce.racehub.signup
  */
 sealed class SignUpEffect {
 
-    /** Instructs the host composable to navigate away from Sign-Up to Home. */
-    data object NavigateToHome : SignUpEffect()
+    /**
+     * Instructs the host composable to navigate to the email-verification step,
+     * carrying the [email] the verification code was sent to.
+     */
+    data class NavigateToEmailVerification(val email: String) : SignUpEffect()
 }

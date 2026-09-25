@@ -8,7 +8,7 @@ package org.gce.racehub.race.domain.model
  */
 data class Race(
 
-    /** Unique identifier for this race event. */
+    /** Unique identifier (slug) for this race event. */
     val id: String,
 
     /** Full official name, e.g. "Australian Grand Prix". */
@@ -17,21 +17,23 @@ data class Race(
     /** Name of the circuit, e.g. "Albert Park Circuit". */
     val circuit: String,
 
-    /** Country or city where the race is held, e.g. "Australia". */
+    /** Country where the race is held, e.g. "Australia". */
     val country: String,
 
-    /** Unicode flag emoji for the host country, e.g. "🇦🇺". */
-    val countryFlag: String,
+    /** City where the race is held, e.g. "Melbourne". */
+    val city: String,
 
-    /** Human-readable date string, e.g. "Mar 16, 2025". */
-    val date: String,
+    /** ISO datetime string for the race start, e.g. "2025-03-16T05:00:00Z". */
+    val dateTime: String,
 
     /** Position in the season calendar (1-indexed). */
     val round: Int,
 
-    /** Days remaining until the race starts. Null for completed races. */
-    val daysRemaining: Int? = null,
+    /** Race status from the API, e.g. "COMPLETED", "UPCOMING", "LIVE". */
+    val status: String,
 
-    /** True once the race has been run; false for future events. */
-    val isCompleted: Boolean
-)
+    /** Weather condition at race time, e.g. "Sunny", "Wet". Null if unknown. */
+    val weather: String? = null
+) {
+    val isCompleted: Boolean get() = status.equals("COMPLETED", ignoreCase = true)
+}

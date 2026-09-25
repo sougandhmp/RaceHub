@@ -3,8 +3,11 @@ package org.gce.racehub.race.domain.repository
 import org.gce.racehub.race.domain.model.ConstructorStanding
 import org.gce.racehub.race.domain.model.DriverStanding
 import org.gce.racehub.race.domain.model.Race
+import org.gce.racehub.race.domain.model.RaceDetail
 import org.gce.racehub.race.domain.model.Thread
+import org.gce.racehub.race.domain.model.ThreadComment
 import org.gce.racehub.race.domain.model.TrendingThread
+import org.gce.racehub.race.domain.model.UserProfile
 
 /**
  * Contract for fetching race and standings data.
@@ -31,6 +34,12 @@ interface HomeRepository {
     suspend fun getTrendingThreads(): List<TrendingThread>
 
     /**
+     * Returns full detail for the race identified by [slug].
+     * @throws Exception if the request fails.
+     */
+    suspend fun getRaceDetail(slug: String): RaceDetail
+
+    /**
      * Returns full forum threads matching the provided filters.
      *
      * @param sort Sort key (e.g., "latest", "top"). `null` lets the server decide.
@@ -55,6 +64,36 @@ interface HomeRepository {
         category: String,
         content: String
     ): Thread
+
+    /**
+     * Fetches the full profile for the signed-in user from the backend.
+     *
+     * @param userId The signed-in user's id.
+     * @param token  The user's auth token, sent as `Authorization: Bearer <token>`.
+     * @return The user's profile data including post/saved counts and thread lists.
+     * @throws Exception if the request fails.
+     */
+    suspend fun getMyProfile(userId: String, token: String): UserProfile
+
+    /**
+     * Posts a new comment on the thread identified by [threadId] on behalf of [userId].
+     *
+     * @return The newly posted comment (content populated by the server).
+     * @throws Exception if the request fails.
+     */
+    suspend fun addComment(
+        userId: String,
+        threadId: String,
+        content: String
+    ): ThreadComment
+
+    /**
+     * Toggles the like on the thread identified by [id].
+     *
+     * @return The updated like count from the server.
+     * @throws Exception if the request fails.
+     */
+    suspend fun likeThread(id: String): Int
 
     // ── Swift-friendly index-based accessors ─────────────────────────────────
 

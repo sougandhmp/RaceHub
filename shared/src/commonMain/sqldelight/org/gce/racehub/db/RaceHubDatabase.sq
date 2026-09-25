@@ -3,11 +3,11 @@ CREATE TABLE RaceEntity (
     name TEXT NOT NULL,
     circuit TEXT NOT NULL,
     country TEXT NOT NULL,
-    countryFlag TEXT NOT NULL,
-    date TEXT NOT NULL,
+    city TEXT NOT NULL,
+    dateTime TEXT NOT NULL,
     round INTEGER NOT NULL,
-    isCompleted INTEGER NOT NULL DEFAULT 0,
-    daysRemaining INTEGER
+    status TEXT NOT NULL,
+    weather TEXT
 );
 
 CREATE TABLE DriverStandingEntity (
@@ -34,11 +34,11 @@ CREATE TABLE TrendingThreadEntity (
 
 -- Race Queries
 insertRace:
-INSERT OR REPLACE INTO RaceEntity(id, name, circuit, country, countryFlag, date, round, isCompleted, daysRemaining)
+INSERT OR REPLACE INTO RaceEntity(id, name, circuit, country, city, dateTime, round, status, weather)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 getAllRaces:
-SELECT * FROM RaceEntity;
+SELECT * FROM RaceEntity ORDER BY round ASC;
 
 deleteAllRaces:
 DELETE FROM RaceEntity;
