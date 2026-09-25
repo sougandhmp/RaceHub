@@ -13,6 +13,10 @@ import org.gce.racehub.signup.SignUpViewModel
 import org.gce.racehub.theme.ThemeManager
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModelOf
+import org.gce.racehub.home.ScheduleViewModel
+import org.gce.racehub.home.StandingsViewModel
+import org.gce.racehub.race.RaceDetailViewModel
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val appModule = module {
@@ -27,4 +31,8 @@ val appModule = module {
     viewModelOf(::ThreadDetailViewModel)
     viewModelOf(::ProfileViewModel)
     viewModelOf(::CreateThreadViewModel)
+    viewModelOf(::ScheduleViewModel)
+    viewModelOf(::StandingsViewModel)
+    // The race slug comes from the navigation key: koinViewModel { parametersOf(slug) }
+    viewModel { (slug: String) -> RaceDetailViewModel(slug, get()) }
 }

@@ -1,6 +1,5 @@
 package org.gce.racehub
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -10,10 +9,17 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.ui.NavDisplay
 import org.gce.racehub.auth.di.createProductionAuthModule
 import org.gce.racehub.auth.domain.session.UserSession
 import org.gce.racehub.di.appModule
@@ -25,14 +31,23 @@ import org.gce.racehub.forum.ThreadDetailScreen
 import org.gce.racehub.home.CreateThreadScreen
 import org.gce.racehub.home.HomeScreen
 import org.gce.racehub.home.ScheduleScreen
+import org.gce.racehub.home.ScheduleViewModel
 import org.gce.racehub.home.StandingsScreen
+import org.gce.racehub.home.StandingsViewModel
 import org.gce.racehub.login.LoginScreen
+import org.gce.racehub.navigation.CreateThreadRoute
+import org.gce.racehub.navigation.EmailVerificationRoute
+import org.gce.racehub.navigation.ForgotPasswordRoute
+import org.gce.racehub.navigation.HomeRoute
+import org.gce.racehub.navigation.LoginRoute
+import org.gce.racehub.navigation.RaceDetailRoute
+import org.gce.racehub.navigation.ScheduleRoute
+import org.gce.racehub.navigation.SignUpRoute
+import org.gce.racehub.navigation.StandingsRoute
+import org.gce.racehub.navigation.ThreadDetailRoute
 import org.gce.racehub.race.RaceDetailScreen
-import org.gce.racehub.race.RaceIntent
-import org.gce.racehub.race.RaceViewModel
+import org.gce.racehub.race.RaceDetailViewModel
 import org.gce.racehub.race.di.createRaceModule
-import org.gce.racehub.race.domain.model.Race
-import org.gce.racehub.race.domain.model.Thread
 import org.gce.racehub.signup.SignUpScreen
 import org.gce.racehub.theme.DarkAppColors
 import org.gce.racehub.theme.LightAppColors
@@ -43,9 +58,8 @@ import org.gce.racehub.theme.ThemeMode
 import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import org.koin.dsl.koinConfiguration
-
-private enum class Screen { Login, SignUp, EmailVerification, ForgotPassword, Home, Schedule, Standings, CreateThread, ThreadDetail, RaceDetail }
 
 @Composable
 fun App() {
@@ -67,143 +81,137 @@ fun App() {
 
     CompositionLocalProvider(LocalAppColors provides appColors) {
         MaterialTheme(colorScheme = materialColorScheme) {
-            val userSession: UserSession = koinInject()
-            var screen by remember { mutableStateOf(if (userSession.currentUser.value != null) Screen.Home else Screen.Login) }
-            var selectedThread by remember { mutableStateOf<Thread?>(null) }
-            var pendingVerificationEmail by remember { mutableStateOf("") }
-
-            val raceViewModel: RaceViewModel = koinViewModel()
-            val forumViewModel: ForumViewModel = koinViewModel()
-            val raceState by raceViewModel.state.collectAsStateWithLifecycle()
-            var selectedRace by remember { mutableStateOf<Race?>(null) }
-            var raceDetailOrigin by remember { mutableStateOf(Screen.Home) }
-
-            // Screens are swapped via `screen` state rather than a nav back stack, so
-            // system Back must be routed explicitly — otherwise it finishes the
-            // activity from any sub-screen. Targets mirror each screen's onBack.
-            val backTarget: Screen? = when (screen) {
-                Screen.Login, Screen.Home -> null
-                Screen.SignUp, Screen.ForgotPassword -> Screen.Login
-                Screen.EmailVerification -> Screen.SignUp
-                Screen.Schedule, Screen.Standings, Screen.CreateThread, Screen.ThreadDetail -> Screen.Home
-                Screen.RaceDetail -> raceDetailOrigin
-            }
-            BackHandler(enabled = backTarget != null) {
-                backTarget?.let { screen = it }
-            }
-
-            LaunchedEffect(Unit) {
-                if (userSession.currentUser.value != null) {
-                    raceViewModel.onIntent(RaceIntent.Refresh)
-                    forumViewModel.onIntent(ForumIntent.Refresh)
-                }
-            }
-
-            when (screen) {
-                Screen.Login -> LoginScreen(
-                    onLoginSuccess = {
-                        raceViewModel.onIntent(RaceIntent.Refresh)
-                        forumViewModel.onIntent(ForumIntent.Refresh)
-                        screen = Screen.Home
-                    },
-                    onNavigateToSignUp = { screen = Screen.SignUp },
-                    onNavigateToForgotPassword = { screen = Screen.ForgotPassword },
-                    onNavigateToEmailVerification = { email ->
-                        pendingVerificationEmail = email
-                        screen = Screen.EmailVerification
-                    }
-                )
-
-                Screen.ForgotPassword -> ForgotPasswordScreen(
-                    onBack = { screen = Screen.Login },
-                    onPasswordResetSuccess = { screen = Screen.Login }
-                )
-
-                Screen.SignUp -> SignUpScreen(
-                    onSignUpSuccess = { email ->
-                        pendingVerificationEmail = email
-                        screen = Screen.EmailVerification
-                    },
-                    onNavigateToLogin = { screen = Screen.Login }
-                )
-
-                Screen.EmailVerification -> EmailVerificationScreen(
-                    email = pendingVerificationEmail,
-                    onBack = { screen = Screen.SignUp },
-                    // Email verified, but the account was never signed in. Send the
-                    // user to Login to obtain a session with their verified account.
-                    onEmailVerified = { screen = Screen.Login }
-                )
-
-                Screen.Home -> HomeScreen(
-                    onViewAllSchedule = { screen = Screen.Schedule },
-                    onViewAllStandings = { screen = Screen.Standings },
-                    onCreateThread = { screen = Screen.CreateThread },
-                    onThreadClick = { thread ->
-                        selectedThread = thread
-                        screen = Screen.ThreadDetail
-                    },
-                    onSignedOut = { screen = Screen.Login },
-                    onViewRaceDetail = { race ->
-                        selectedRace = race
-                        raceDetailOrigin = Screen.Home
-                        raceViewModel.onIntent(RaceIntent.SelectRace(race.id))
-                        screen = Screen.RaceDetail
-                    }
-                )
-
-                Screen.Schedule -> ScheduleScreen(
-                    schedule = raceState.raceSchedule,
-                    onBack = { screen = Screen.Home },
-                    onViewRaceDetail = { race ->
-                        selectedRace = race
-                        raceDetailOrigin = Screen.Schedule
-                        raceViewModel.onIntent(RaceIntent.SelectRace(race.id))
-                        screen = Screen.RaceDetail
-                    }
-                )
-
-                Screen.Standings -> StandingsScreen(
-                    drivers = raceState.driverStandings,
-                    constructors = raceState.constructorStandings,
-                    onBack = { screen = Screen.Home }
-                )
-
-                Screen.CreateThread -> CreateThreadScreen(
-                    onCancel = { screen = Screen.Home },
-                    onThreadCreated = {
-                        forumViewModel.onIntent(ForumIntent.Refresh)
-                        screen = Screen.Home
-                    }
-                )
-
-                Screen.ThreadDetail -> {
-                    val thread = selectedThread
-                    if (thread == null) {
-                        screen = Screen.Home
-                    } else {
-                        ThreadDetailScreen(
-                            thread = thread,
-                            onBack = { screen = Screen.Home }
-                        )
-                    }
-                }
-
-                Screen.RaceDetail -> {
-                    val race = selectedRace
-                    if (race == null) {
-                        screen = Screen.Home
-                    } else {
-                        RaceDetailScreen(
-                            race = race,
-                            raceDetail = raceState.selectedRaceDetail,
-                            onBack = { screen = raceDetailOrigin }
-                        )
-                    }
-                }
-            }
+            RaceHubNavigation()
         }
     }
+}
+
+/**
+ * The app's navigation, built on Navigation 3.
+ *
+ * - The back stack is a saveable list of @Serializable keys (see `navigation/Routes.kt`), so it
+ *   survives rotation and process death. Before, `remember` lost it and rotating the phone
+ *   sent the user back to Home or Login.
+ * - Each entry gets its own ViewModelStore, so `koinViewModel()` inside an entry is scoped to
+ *   that screen and cleared when it's popped (a reopened Create Thread screen starts empty).
+ * - Signing in or out replaces the whole stack, so Back can't return across the auth boundary.
+ *   The Home tabs' ViewModels are only created once Home is shown, not on the Login screen.
+ */
+@Composable
+private fun RaceHubNavigation() {
+    val userSession: UserSession = koinInject()
+    val backStack = rememberNavBackStack(if (userSession.currentUser.value != null) HomeRoute else LoginRoute)
+
+    // Set when a thread is created; the Home entry refreshes the forum and clears it.
+    // Saved, so the refresh isn't lost if the process is recreated in between.
+    var forumNeedsRefresh by rememberSaveable { mutableStateOf(false) }
+
+    NavDisplay(
+        backStack = backStack,
+        onBack = { backStack.removeLastOrNull() },
+        entryDecorators = listOf(
+            rememberSaveableStateHolderNavEntryDecorator(),
+            rememberViewModelStoreNavEntryDecorator()
+        ),
+        entryProvider = entryProvider {
+            entry<LoginRoute> {
+                LoginScreen(
+                    onLoginSuccess = { backStack.replaceAll(HomeRoute) },
+                    onNavigateToSignUp = { backStack.add(SignUpRoute) },
+                    onNavigateToForgotPassword = { backStack.add(ForgotPasswordRoute) },
+                    onNavigateToEmailVerification = { email -> backStack.add(EmailVerificationRoute(email)) }
+                )
+            }
+            entry<ForgotPasswordRoute> {
+                ForgotPasswordScreen(
+                    onBack = { backStack.removeLastOrNull() },
+                    onPasswordResetSuccess = { backStack.removeLastOrNull() }
+                )
+            }
+            entry<SignUpRoute> {
+                SignUpScreen(
+                    onSignUpSuccess = { email -> backStack.add(EmailVerificationRoute(email)) },
+                    onNavigateToLogin = { backStack.replaceAll(LoginRoute) }
+                )
+            }
+            entry<EmailVerificationRoute> { key ->
+                EmailVerificationScreen(
+                    email = key.email,
+                    onBack = { backStack.removeLastOrNull() },
+                    // Email verified, but the account was never signed in. Send the
+                    // user to Login to obtain a session with their verified account.
+                    onEmailVerified = { backStack.replaceAll(LoginRoute) }
+                )
+            }
+
+            entry<HomeRoute> {
+                val forumViewModel: ForumViewModel = koinViewModel()
+                LaunchedEffect(forumNeedsRefresh) {
+                    if (forumNeedsRefresh) {
+                        forumViewModel.onIntent(ForumIntent.Refresh)
+                        forumNeedsRefresh = false
+                    }
+                }
+                HomeScreen(
+                    onViewAllSchedule = { backStack.add(ScheduleRoute) },
+                    onViewAllStandings = { backStack.add(StandingsRoute) },
+                    onCreateThread = { backStack.add(CreateThreadRoute) },
+                    onThreadClick = { thread -> backStack.add(ThreadDetailRoute(thread)) },
+                    onSignedOut = { backStack.replaceAll(LoginRoute) },
+                    onViewRaceDetail = { race -> backStack.add(RaceDetailRoute(race)) }
+                )
+            }
+            entry<ScheduleRoute> {
+                val viewModel: ScheduleViewModel = koinViewModel()
+                val schedule by viewModel.schedule.collectAsStateWithLifecycle()
+                ScheduleScreen(
+                    schedule = schedule,
+                    onBack = { backStack.removeLastOrNull() },
+                    onViewRaceDetail = { race -> backStack.add(RaceDetailRoute(race)) }
+                )
+            }
+            entry<StandingsRoute> {
+                val viewModel: StandingsViewModel = koinViewModel()
+                val drivers by viewModel.drivers.collectAsStateWithLifecycle()
+                val constructors by viewModel.constructors.collectAsStateWithLifecycle()
+                StandingsScreen(
+                    drivers = drivers,
+                    constructors = constructors,
+                    onBack = { backStack.removeLastOrNull() }
+                )
+            }
+            entry<CreateThreadRoute> {
+                CreateThreadScreen(
+                    onCancel = { backStack.removeLastOrNull() },
+                    onThreadCreated = {
+                        forumNeedsRefresh = true
+                        backStack.removeLastOrNull()
+                    }
+                )
+            }
+            entry<ThreadDetailRoute> { key ->
+                ThreadDetailScreen(
+                    thread = key.thread,
+                    onBack = { backStack.removeLastOrNull() }
+                )
+            }
+            entry<RaceDetailRoute> { key ->
+                val viewModel: RaceDetailViewModel = koinViewModel { parametersOf(key.race.id) }
+                val state by viewModel.state.collectAsStateWithLifecycle()
+                RaceDetailScreen(
+                    race = key.race,
+                    raceDetail = state.detail,
+                    onBack = { backStack.removeLastOrNull() }
+                )
+            }
+        }
+    )
+}
+
+/** Replaces the whole back stack with [route], e.g. after signing in or out. */
+private fun NavBackStack<NavKey>.replaceAll(route: NavKey) {
+    clear()
+    add(route)
 }
 
 @Composable

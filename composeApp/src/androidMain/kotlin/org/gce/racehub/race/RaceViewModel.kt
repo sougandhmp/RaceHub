@@ -76,8 +76,6 @@ class RaceViewModel(
         when (intent) {
             is RaceIntent.Refresh ->
                 refresh()
-            is RaceIntent.SelectRace ->
-                fetchSelectedRaceDetail(intent.slug)
             is RaceIntent.DismissError ->
                 _state.update { it.copy(errorMessage = null) }
         }
@@ -97,20 +95,6 @@ class RaceViewModel(
             val result = getRaceDetailUseCase(slug)
             // Detail is optional on the Race tab: keep the card without it if the request fails.
             _state.update { it.copy(isLoadingDetail = false, nextRaceDetail = result.data ?: it.nextRaceDetail) }
-        }
-    }
-
-    private fun fetchSelectedRaceDetail(slug: String) {
-        viewModelScope.launch {
-            _state.update { it.copy(isLoadingSelectedDetail = true, selectedRaceDetail = null) }
-            val result = getRaceDetailUseCase(slug)
-            _state.update {
-                it.copy(
-                    isLoadingSelectedDetail = false,
-                    selectedRaceDetail = result.data,
-                    errorMessage = result.error?.message ?: it.errorMessage
-                )
-            }
         }
     }
 }

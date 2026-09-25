@@ -1,15 +1,20 @@
 package org.gce.racehub.race.domain.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class ThreadAuthor(
     val username: String,
     val avatar: String
 )
 
+@Serializable
 data class ThreadComment(
     val content: String,
     val authorUsername: String
 )
 
+@Serializable
 data class Thread(
     val id: String,
     val title: String,
