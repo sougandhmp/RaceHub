@@ -54,17 +54,17 @@ class CreateThreadViewModel(
 
         viewModelScope.launch {
             _state.update { it.copy(isSubmitting = true, errorMessage = null) }
-            try {
-                createThreadUseCase(
-                    userId = userId,
-                    title = _state.value.title,
-                    category = _state.value.category,
-                    content = _state.value.content
-                )
+            val result = createThreadUseCase(
+                userId = userId,
+                title = _state.value.title,
+                category = _state.value.category,
+                content = _state.value.content
+            )
+            if (result.isSuccess) {
                 _state.update { it.copy(isSubmitting = false) }
                 _effect.send(CreateThreadEffect.ThreadCreated)
-            } catch (_: Exception) {
-                _state.update { it.copy(isSubmitting = false, errorMessage = "Failed to create thread.") }
+            } else {
+                _state.update { it.copy(isSubmitting = false, errorMessage = result.error?.message) }
             }
         }
     }

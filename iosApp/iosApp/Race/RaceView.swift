@@ -46,6 +46,16 @@ struct RaceView: View {
         .refreshable {
             await viewModel.refresh()
         }
+        .overlay(alignment: .top) {
+            if let message = viewModel.state.errorMessage {
+                ErrorBanner(
+                    message: message,
+                    colors: colors,
+                    onRetry: { viewModel.send(.refresh) },
+                    onDismiss: { viewModel.send(.dismissError) }
+                )
+            }
+        }
     }
 }
 
