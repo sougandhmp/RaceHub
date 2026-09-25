@@ -75,3 +75,9 @@ android {
 dependencies {
     debugImplementation(libs.compose.uiTooling)
 }
+
+composeCompiler {
+    // Declares the :shared domain models (and read-only List) stable so composables
+    // taking them can skip recomposition. See the file for the immutability contract.
+    stabilityConfigurationFiles.add(layout.projectDirectory.file("compose_stability.conf"))
+}
