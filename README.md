@@ -103,6 +103,14 @@ Like the auth results, `DataResult` is a plain class rather than a sealed class,
 
 **Caching and refresh.** `RaceRepository` exposes `observe…()` Flows from SQLDelight (used by Android), `getCached…()` snapshots (used by Swift) and `refresh…()` calls. Refreshes go through `SingleFlight`: if several callers ask for the dashboard at the same time, they share one request. `RefreshRaceDataUseCase` refreshes the calendar and the dashboard in parallel.
 
+**Navigation (Android).** The app uses **Navigation 3**. Routes are `@Serializable` `NavKey`s in `navigation/Routes.kt`, and `App.kt` builds the `NavDisplay`:
+
+- The back stack is saved with `rememberNavBackStack`, so it survives rotation, dark-mode switches and process death.
+- `rememberViewModelStoreNavEntryDecorator` gives each entry its own `ViewModelStore`. A `koinViewModel()` inside an entry lives as long as that screen, and arguments come from the key, for example `koinViewModel<RaceDetailViewModel> { parametersOf(key.race.id) }`.
+- Signing in or out replaces the whole back stack, so Back never crosses the auth boundary.
+
+On iOS, SwiftUI's `NavigationStack` path does the same job.
+
 **Platform-specific code** goes through `expect`/`actual`:
 
 | Concern         | Android                                       | iOS                                      |
@@ -146,7 +154,8 @@ RaceHub/
 │       ├── profile/
 │       ├── theme/                  # AppColors, Dimens, ThemeManager
 │       ├── di/AppModule.kt         # Android ViewModels
-│       └── App.kt                  # Theme + navigation root
+│       ├── navigation/Routes.kt    # Navigation 3 keys (@Serializable NavKey)
+│       └── App.kt                  # Theme + NavDisplay (Navigation 3)
 │
 ├── iosApp/                         # iOS app (SwiftUI), mirrors composeApp features
 │   └── iosApp/{Login,SignUp,ForgotPassword,Home,Race,Forum,Profile,Theme}/
