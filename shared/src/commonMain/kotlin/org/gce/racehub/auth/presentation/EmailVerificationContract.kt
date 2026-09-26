@@ -1,5 +1,7 @@
 package org.gce.racehub.auth.presentation
 
+import org.gce.racehub.auth.domain.model.AuthFailure
+
 // MVI contract for the email-verification (OTP) screen.
 
 /** Immutable snapshot of the verification screen. Only [EmailVerificationReducer] produces new values. */
@@ -11,8 +13,8 @@ data class EmailVerificationState(
     val isResending: Boolean = false,
     /** True after a resend succeeded; the view shows its own localized confirmation. */
     val codeResent: Boolean = false,
-    /** Inline error from the server; cleared by the next edit or action. */
-    val errorMessage: String? = null
+    /** Inline error; cleared by the next edit or submit. Each platform localizes it. */
+    val error: AuthFailure? = null
 )
 
 sealed class EmailVerificationIntent {
@@ -35,5 +37,5 @@ internal sealed interface EmailVerificationMutation {
     data object Verified : EmailVerificationMutation
     data object ResendStarted : EmailVerificationMutation
     data object Resent : EmailVerificationMutation
-    data class Failed(val message: String) : EmailVerificationMutation
+    data class Failed(val failure: AuthFailure) : EmailVerificationMutation
 }

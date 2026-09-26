@@ -90,10 +90,9 @@ kover {
     reports {
         filters {
             excludes {
-                // Auth network client/repository: tested in a later change
                 classes(
-                    "org.gce.racehub.auth.data.network.*",
-                    "org.gce.racehub.auth.data.repository.AuthRepositoryNetworkImpl*",
+                    // HTTP client construction (platform engines, logging)
+                    "org.gce.racehub.auth.data.network.HttpClientFactory*",
                     // Platform SQLite driver factory
                     "org.gce.racehub.db.DatabaseDriverFactory*",
                     // Generated SQLDelight code

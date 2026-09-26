@@ -142,3 +142,13 @@
 "Verify Email" = "Verify Email";
 "Didn't get it? Resend code" = "Didn't get it? Resend code";
 "Back" = "Back";
+/* Auth errors */
+"Enter your email." = "Enter your email.";
+"Enter your email and password." = "Enter your email and password.";
+"Enter a valid email address." = "Enter a valid email address.";
+"Password must be at least 6 characters." = "Password must be at least 6 characters.";
+"Passwords don't match." = "Passwords don't match.";
+"Choose a username." = "Choose a username.";
+"Select your country." = "Select your country.";
+"Enter the code we emailed you." = "Enter the code we emailed you.";
+"The request was declined. Please check your details." = "The request was declined. Please check your details.";

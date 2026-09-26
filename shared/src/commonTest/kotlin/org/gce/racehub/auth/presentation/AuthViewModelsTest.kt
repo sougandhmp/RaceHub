@@ -8,6 +8,8 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import org.gce.racehub.auth.domain.model.AuthError
+import org.gce.racehub.auth.domain.model.AuthFailure
 import org.gce.racehub.auth.domain.model.AuthResult
 import org.gce.racehub.auth.domain.model.EmailVerificationResult
 import org.gce.racehub.auth.domain.model.PasswordResetResult
@@ -76,15 +78,15 @@ class AuthViewModelsTest {
 
     @Test
     fun `failed login shows the error inline until the next edit`() = runTest(dispatcher) {
-        repo.loginResult = AuthResult.failure("Invalid credentials")
+        repo.loginResult = AuthResult.failure(AuthError.Rejected, "Invalid credentials")
         val vm = loginVm()
         vm.fillAndSubmit()
         advanceUntilIdle()
-        assertEquals("Invalid credentials", vm.state.value.errorMessage)
+        assertEquals(AuthFailure(AuthError.Rejected, "Invalid credentials"), vm.state.value.error)
         assertFalse(vm.state.value.isLoading)
 
         vm.onIntent(LoginIntent.PasswordChanged("secret2"))
-        assertNull(vm.state.value.errorMessage)
+        assertNull(vm.state.value.error)
     }
 
     // ── Sign up ─────────────────────────────────────────────────────────────
@@ -111,11 +113,11 @@ class AuthViewModelsTest {
 
     @Test
     fun `sign up keeps the form when the code cannot be sent`() = runTest(dispatcher) {
-        repo.sendOtpResult = EmailVerificationResult.failure("Mail server down")
+        repo.sendOtpResult = EmailVerificationResult.failure(AuthError.Rejected, "Mail server down")
         val vm = SignUpViewModel(SignUpUseCase(repo), SendOtpUseCase(repo))
         vm.fillAndSubmit()
         advanceUntilIdle()
-        assertEquals("Mail server down", vm.state.value.errorMessage)
+        assertEquals(AuthFailure(AuthError.Rejected, "Mail server down"), vm.state.value.error)
         assertEquals("ann", vm.state.value.username)
     }
 
@@ -140,13 +142,13 @@ class AuthViewModelsTest {
 
     @Test
     fun `failed reset request stays on the request step with the error`() = runTest(dispatcher) {
-        repo.requestResetResult = PasswordResetResult.failure("No account for that email")
+        repo.requestResetResult = PasswordResetResult.failure(AuthError.Rejected, "No account for that email")
         val vm = ForgotPasswordViewModel(RequestPasswordResetUseCase(repo), ConfirmPasswordResetUseCase(repo))
         vm.onIntent(ForgotPasswordIntent.EmailChanged("x@racehub.com"))
         vm.onIntent(ForgotPasswordIntent.RequestReset)
         advanceUntilIdle()
         assertEquals(ForgotPasswordStep.Request, vm.state.value.step)
-        assertEquals("No account for that email", vm.state.value.errorMessage)
+        assertEquals(AuthFailure(AuthError.Rejected, "No account for that email"), vm.state.value.error)
     }
 
     // ── Email verification ──────────────────────────────────────────────────
@@ -175,18 +177,18 @@ class AuthViewModelsTest {
 
     @Test
     fun `wrong code shows the error and resend confirms`() = runTest(dispatcher) {
-        repo.verifyOtpResult = EmailVerificationResult.failure("Invalid verification code")
+        repo.verifyOtpResult = EmailVerificationResult.failure(AuthError.Rejected, "Invalid verification code")
         val vm = verificationVm()
         vm.onIntent(EmailVerificationIntent.Open("ann@racehub.com"))
         vm.onIntent(EmailVerificationIntent.OtpChanged("000000"))
         vm.onIntent(EmailVerificationIntent.Verify)
         advanceUntilIdle()
-        assertEquals("Invalid verification code", vm.state.value.errorMessage)
+        assertEquals(AuthFailure(AuthError.Rejected, "Invalid verification code"), vm.state.value.error)
 
         vm.onIntent(EmailVerificationIntent.ResendCode)
         advanceUntilIdle()
         assertTrue(vm.state.value.codeResent)
-        assertNull(vm.state.value.errorMessage)
+        assertNull(vm.state.value.error)
         assertEquals("ann@racehub.com", repo.lastResendOtpEmail)
     }
 }

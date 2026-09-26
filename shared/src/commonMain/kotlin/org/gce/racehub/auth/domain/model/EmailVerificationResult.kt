@@ -9,10 +9,12 @@ package org.gce.racehub.auth.domain.model
  */
 class EmailVerificationResult private constructor(
     val isSuccess: Boolean,
-    val error: String? = null
+    /** Why it failed; null on success. */
+    val failure: AuthFailure? = null
 ) {
     companion object {
         fun success(): EmailVerificationResult = EmailVerificationResult(isSuccess = true)
-        fun failure(error: String): EmailVerificationResult = EmailVerificationResult(isSuccess = false, error = error)
+        fun failure(reason: AuthError, serverMessage: String? = null): EmailVerificationResult =
+            EmailVerificationResult(isSuccess = false, failure = AuthFailure(reason, serverMessage))
     }
 }

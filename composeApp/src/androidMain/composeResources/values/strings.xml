@@ -158,4 +158,13 @@
     <string name="error_unknown">Something went wrong. Please try again.</string>
     <string name="error_not_signed_in">Sign in to post or comment.</string>
     <string name="error_like_failed">Couldn\'t update the like. Please try again.</string>
+    <string name="auth_error_email_required">Enter your email.</string>
+    <string name="auth_error_email_password_required">Enter your email and password.</string>
+    <string name="auth_error_invalid_email">Enter a valid email address.</string>
+    <string name="auth_error_password_too_short">Password must be at least 6 characters.</string>
+    <string name="auth_error_passwords_mismatch">Passwords don\'t match.</string>
+    <string name="auth_error_username_required">Choose a username.</string>
+    <string name="auth_error_country_required">Select your country.</string>
+    <string name="auth_error_code_required">Enter the code we emailed you.</string>
+    <string name="auth_error_rejected">The request was declined. Please check your details.</string>
 </resources>

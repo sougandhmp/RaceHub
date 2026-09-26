@@ -4,9 +4,9 @@ package org.gce.racehub.auth.presentation
 internal object SignUpReducer {
     fun reduce(state: SignUpState, mutation: SignUpMutation): SignUpState = when (mutation) {
         // Any edit clears the previous error.
-        is SignUpMutation.FieldsChanged -> mutation.transform(state).copy(errorMessage = null)
-        SignUpMutation.Submitted -> state.copy(isLoading = true, errorMessage = null)
-        is SignUpMutation.Failed -> state.copy(isLoading = false, errorMessage = mutation.message)
+        is SignUpMutation.FieldsChanged -> mutation.transform(state).copy(error = null)
+        SignUpMutation.Submitted -> state.copy(isLoading = true, error = null)
+        is SignUpMutation.Failed -> state.copy(isLoading = false, error = mutation.failure)
         SignUpMutation.Succeeded -> SignUpState()
     }
 }

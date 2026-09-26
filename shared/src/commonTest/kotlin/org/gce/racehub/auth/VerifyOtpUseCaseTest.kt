@@ -1,5 +1,7 @@
 package org.gce.racehub.auth
 
+import org.gce.racehub.auth.domain.model.AuthFailure
+import org.gce.racehub.auth.domain.model.AuthError
 import kotlinx.coroutines.test.runTest
 import org.gce.racehub.auth.domain.model.EmailVerificationResult
 import org.gce.racehub.auth.domain.usecase.VerifyOtpUseCase
@@ -18,7 +20,7 @@ class VerifyOtpUseCaseTest {
     fun `blank email returns failure`() = runTest {
         val result = useCase("", "1234")
         assertFalse(result.isSuccess)
-        assertEquals("Email cannot be empty", result.error)
+        assertEquals(AuthError.EmailRequired, result.failure?.reason)
         assertEquals(null, repository.lastVerifyOtpEmail)
     }
 
@@ -26,7 +28,7 @@ class VerifyOtpUseCaseTest {
     fun `blank otp returns failure`() = runTest {
         val result = useCase("carol@test.com", "   ")
         assertFalse(result.isSuccess)
-        assertEquals("Verification code cannot be empty", result.error)
+        assertEquals(AuthError.CodeRequired, result.failure?.reason)
         assertEquals(null, repository.lastVerifyOtpCode)
     }
 
@@ -45,9 +47,9 @@ class VerifyOtpUseCaseTest {
 
     @Test
     fun `invalid code failure is propagated`() = runTest {
-        repository.verifyOtpResult = EmailVerificationResult.failure("Invalid verification code")
+        repository.verifyOtpResult = EmailVerificationResult.failure(AuthError.Rejected, "Invalid verification code")
         val result = useCase("carol@test.com", "0000")
         assertFalse(result.isSuccess)
-        assertEquals("Invalid verification code", result.error)
+        assertEquals(AuthFailure(AuthError.Rejected, "Invalid verification code"), result.failure)
     }
 }

@@ -1,5 +1,6 @@
 package org.gce.racehub.forgotpassword
 
+import org.gce.racehub.ui.message
 import org.gce.racehub.auth.presentation.ForgotPasswordEffect
 import org.gce.racehub.auth.presentation.ForgotPasswordIntent
 import org.gce.racehub.auth.presentation.ForgotPasswordState
@@ -172,10 +173,10 @@ private fun ForgotPasswordContent(
                 ConfirmStep(state = state, onIntent = onIntent, focusManager = focusManager)
             }
 
-            if (state.errorMessage != null) {
+            if (state.error != null) {
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
-                    text = state.errorMessage.orEmpty(),
+                    text = state.error?.message().orEmpty(),
                     color = RacingRed,
                     style = MaterialTheme.typography.bodySmall
                 )

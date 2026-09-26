@@ -1,5 +1,6 @@
 package org.gce.racehub.signup
 
+import org.gce.racehub.ui.message
 import org.gce.racehub.auth.presentation.SignUpEffect
 import org.gce.racehub.auth.presentation.SignUpIntent
 import org.gce.racehub.auth.presentation.SignUpState
@@ -267,10 +268,10 @@ private fun SignUpScreenContent(
                 onCountrySelected = { onIntent(SignUpIntent.CountryChanged(it)) }
             )
 
-            if (state.errorMessage != null) {
+            if (state.error != null) {
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
-                    text = state.errorMessage.orEmpty(),
+                    text = state.error?.message().orEmpty(),
                     color = RacingRed,
                     style = MaterialTheme.typography.bodySmall
                 )

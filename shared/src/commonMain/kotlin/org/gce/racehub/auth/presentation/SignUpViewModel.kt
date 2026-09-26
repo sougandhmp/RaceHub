@@ -1,5 +1,7 @@
 package org.gce.racehub.auth.presentation
 
+import org.gce.racehub.auth.domain.model.AuthFailure
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutines
@@ -62,7 +64,7 @@ class SignUpViewModel(
         viewModelScope.launch {
             val result = signUp(form.username, form.email, form.password, form.country, form.confirmPassword)
             if (!result.isSuccess) {
-                mutate(SignUpMutation.Failed(result.error ?: "Sign up failed. Please try again."))
+                mutate(SignUpMutation.Failed(result.failure ?: AuthFailure.Unknown))
                 return@launch
             }
             val otp = sendOtp(form.email, OtpPurpose.EMAIL_VERIFICATION)
@@ -70,7 +72,7 @@ class SignUpViewModel(
                 mutate(SignUpMutation.Succeeded)
                 _effects.send(SignUpEffect.NavigateToEmailVerification(form.email))
             } else {
-                mutate(SignUpMutation.Failed(otp.error ?: "Could not send the verification code."))
+                mutate(SignUpMutation.Failed(otp.failure ?: AuthFailure.Unknown))
             }
         }
     }
