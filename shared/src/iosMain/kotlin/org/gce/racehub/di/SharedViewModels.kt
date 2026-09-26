@@ -6,6 +6,10 @@ import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import org.gce.racehub.auth.presentation.EmailVerificationViewModel
+import org.gce.racehub.auth.presentation.ForgotPasswordViewModel
+import org.gce.racehub.auth.presentation.LoginViewModel
+import org.gce.racehub.auth.presentation.SignUpViewModel
 import org.gce.racehub.forum.presentation.CreateThreadViewModel
 import org.gce.racehub.forum.presentation.ForumViewModel
 import org.gce.racehub.forum.presentation.ThreadDetailViewModel
@@ -43,6 +47,15 @@ object SharedViewModels : KoinComponent {
     fun profile(owner: ViewModelOwner): ProfileViewModel = owner.provide { get<ProfileViewModel>() }
 
     fun home(owner: ViewModelOwner): HomeViewModel = owner.provide { get<HomeViewModel>() }
+
+    fun login(owner: ViewModelOwner): LoginViewModel = owner.provide { get<LoginViewModel>() }
+
+    fun signUp(owner: ViewModelOwner): SignUpViewModel = owner.provide { get<SignUpViewModel>() }
+
+    fun forgotPassword(owner: ViewModelOwner): ForgotPasswordViewModel = owner.provide { get<ForgotPasswordViewModel>() }
+
+    fun emailVerification(owner: ViewModelOwner): EmailVerificationViewModel =
+        owner.provide { get<EmailVerificationViewModel>() }
 
     private inline fun <reified VM : ViewModel> ViewModelOwner.provide(crossinline create: () -> VM): VM =
         ViewModelProvider.create(this, viewModelFactory { initializer { create() } })[VM::class]

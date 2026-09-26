@@ -180,3 +180,46 @@ extension SharedViewModelHost where VM == HomeViewModel, State == HomeState, Eff
         viewModel.onIntent(intent: intent)
     }
 }
+
+// MARK: - Auth
+
+typealias LoginModel = SharedViewModelHost<LoginViewModel, LoginState, LoginEffect>
+
+extension SharedViewModelHost where VM == LoginViewModel, State == LoginState, Effect == LoginEffect {
+    static func login() -> LoginModel {
+        LoginModel(create: { SharedViewModels.shared.login(owner: $0) }, value: { $0.state }, flow: { $0.stateFlow }, effects: { $0.effects })
+    }
+
+    func send(_ intent: LoginIntent) { viewModel.onIntent(intent: intent) }
+}
+
+typealias SignUpModel = SharedViewModelHost<SignUpViewModel, SignUpState, SignUpEffect>
+
+extension SharedViewModelHost where VM == SignUpViewModel, State == SignUpState, Effect == SignUpEffect {
+    static func signUp() -> SignUpModel {
+        SignUpModel(create: { SharedViewModels.shared.signUp(owner: $0) }, value: { $0.state }, flow: { $0.stateFlow }, effects: { $0.effects })
+    }
+
+    func send(_ intent: SignUpIntent) { viewModel.onIntent(intent: intent) }
+}
+
+typealias ForgotPasswordModel = SharedViewModelHost<ForgotPasswordViewModel, ForgotPasswordState, ForgotPasswordEffect>
+
+extension SharedViewModelHost where VM == ForgotPasswordViewModel, State == ForgotPasswordState, Effect == ForgotPasswordEffect {
+    static func forgotPassword() -> ForgotPasswordModel {
+        ForgotPasswordModel(create: { SharedViewModels.shared.forgotPassword(owner: $0) }, value: { $0.state }, flow: { $0.stateFlow }, effects: { $0.effects })
+    }
+
+    func send(_ intent: ForgotPasswordIntent) { viewModel.onIntent(intent: intent) }
+}
+
+typealias EmailVerificationModel = SharedViewModelHost<EmailVerificationViewModel, EmailVerificationState, EmailVerificationEffect>
+
+extension SharedViewModelHost where VM == EmailVerificationViewModel, State == EmailVerificationState, Effect == EmailVerificationEffect {
+    /// Send `EmailVerificationIntent.Open` with the address when the screen appears.
+    static func emailVerification() -> EmailVerificationModel {
+        EmailVerificationModel(create: { SharedViewModels.shared.emailVerification(owner: $0) }, value: { $0.state }, flow: { $0.stateFlow }, effects: { $0.effects })
+    }
+
+    func send(_ intent: EmailVerificationIntent) { viewModel.onIntent(intent: intent) }
+}

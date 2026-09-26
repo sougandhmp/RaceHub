@@ -1,5 +1,9 @@
 package org.gce.racehub.di
 
+import org.gce.racehub.auth.presentation.EmailVerificationViewModel
+import org.gce.racehub.auth.presentation.ForgotPasswordViewModel
+import org.gce.racehub.auth.presentation.LoginViewModel
+import org.gce.racehub.auth.presentation.SignUpViewModel
 import org.gce.racehub.forum.presentation.CreateThreadViewModel
 import org.gce.racehub.forum.presentation.ForumViewModel
 import org.gce.racehub.forum.presentation.ThreadDetailViewModel
@@ -19,4 +23,8 @@ val presentationModule = module {
     viewModelOf(::CreateThreadViewModel)
     viewModelOf(::ProfileViewModel)
     viewModelOf(::HomeViewModel)
+    viewModelOf(::LoginViewModel)
+    viewModelOf(::SignUpViewModel)
+    viewModelOf(::ForgotPasswordViewModel)
+    viewModelOf(::EmailVerificationViewModel)
 }

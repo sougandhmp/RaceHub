@@ -133,3 +133,12 @@
 "Something went wrong. Please try again." = "Something went wrong. Please try again.";
 "Sign in to post or comment." = "Sign in to post or comment.";
 "Couldn't update the like. Please try again." = "Couldn't update the like. Please try again.";
+/* Email verification */
+"Verify your email" = "Verify your email";
+"email_verification_subtitle" = "We sent a verification code to %@. Enter it below to activate your account.";
+"Verification Code" = "Verification Code";
+"123456" = "123456";
+"A new code has been sent." = "A new code has been sent.";
+"Verify Email" = "Verify Email";
+"Didn't get it? Resend code" = "Didn't get it? Resend code";
+"Back" = "Back";
