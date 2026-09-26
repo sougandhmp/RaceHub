@@ -1,7 +1,5 @@
 package org.gce.racehub.auth.presentation
 
-import org.gce.racehub.auth.domain.model.AuthFailure
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutines
@@ -17,6 +15,7 @@ import kotlinx.coroutines.launch
 import org.gce.racehub.auth.domain.model.OtpPurpose
 import org.gce.racehub.auth.domain.usecase.ResendOtpUseCase
 import org.gce.racehub.auth.domain.usecase.VerifyOtpUseCase
+import org.gce.racehub.core.domain.DataResult
 
 /**
  * Shared MVI ViewModel for email verification (Android and iOS). Send
@@ -56,12 +55,12 @@ class EmailVerificationViewModel internal constructor(
         if (current.isVerifying) return
         mutate(EmailVerificationMutation.VerifyStarted)
         viewModelScope.launch {
-            val result = verifyOtp(current.email, current.otp)
-            if (result.isSuccess) {
-                mutate(EmailVerificationMutation.Verified)
-                _effects.send(EmailVerificationEffect.EmailVerified)
-            } else {
-                mutate(EmailVerificationMutation.Failed(result.failure ?: AuthFailure.Unknown))
+            when (val result = verifyOtp(current.email, current.otp)) {
+                is DataResult.Success -> {
+                    mutate(EmailVerificationMutation.Verified)
+                    _effects.send(EmailVerificationEffect.EmailVerified)
+                }
+                is DataResult.Failure -> mutate(EmailVerificationMutation.Failed(result.error))
             }
         }
     }
@@ -71,10 +70,11 @@ class EmailVerificationViewModel internal constructor(
         if (current.isResending) return
         mutate(EmailVerificationMutation.ResendStarted)
         viewModelScope.launch {
-            val result = resendOtp(current.email, OtpPurpose.EMAIL_VERIFICATION)
             mutate(
-                if (result.isSuccess) EmailVerificationMutation.Resent
-                else EmailVerificationMutation.Failed(result.failure ?: AuthFailure.Unknown)
+                when (val result = resendOtp(current.email, OtpPurpose.EMAIL_VERIFICATION)) {
+                    is DataResult.Success -> EmailVerificationMutation.Resent
+                    is DataResult.Failure -> EmailVerificationMutation.Failed(result.error)
+                }
             )
         }
     }

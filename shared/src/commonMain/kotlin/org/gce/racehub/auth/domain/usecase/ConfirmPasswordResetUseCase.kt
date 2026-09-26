@@ -1,7 +1,8 @@
 package org.gce.racehub.auth.domain.usecase
 
 import org.gce.racehub.auth.domain.model.AuthError
-import org.gce.racehub.auth.domain.model.PasswordResetResult
+import org.gce.racehub.auth.domain.model.AuthOutcome
+import org.gce.racehub.auth.domain.model.authFailure
 import org.gce.racehub.auth.domain.repository.AuthRepository
 
 internal class ConfirmPasswordResetUseCase(private val authRepository: AuthRepository) {
@@ -11,10 +12,10 @@ internal class ConfirmPasswordResetUseCase(private val authRepository: AuthRepos
         otp: String,
         newPassword: String,
         confirmPassword: String
-    ): PasswordResetResult {
-        if (otp.isBlank()) return PasswordResetResult.failure(AuthError.CodeRequired)
-        if (newPassword.length < 6) return PasswordResetResult.failure(AuthError.PasswordTooShort)
-        if (newPassword != confirmPassword) return PasswordResetResult.failure(AuthError.PasswordsDoNotMatch)
+    ): AuthOutcome<Unit> {
+        if (otp.isBlank()) return authFailure(AuthError.CodeRequired)
+        if (newPassword.length < 6) return authFailure(AuthError.PasswordTooShort)
+        if (newPassword != confirmPassword) return authFailure(AuthError.PasswordsDoNotMatch)
         return authRepository.confirmPasswordReset(email, otp, newPassword)
     }
 }

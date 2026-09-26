@@ -14,7 +14,10 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
+import org.gce.racehub.core.domain.DataError
 import org.gce.racehub.core.domain.DataResult
+import org.gce.racehub.core.domain.dataOrNull
+import org.gce.racehub.core.domain.errorOrNull
 import org.gce.racehub.race.domain.model.Race
 import org.gce.racehub.race.domain.usecase.GetConstructorStandingsUseCase
 import org.gce.racehub.race.domain.usecase.GetDriverStandingsUseCase
@@ -82,11 +85,11 @@ class RaceViewModel internal constructor(
             val constructors = getConstructorStandings()
             val trending = getTrendingThreads()
 
-            val failure = listOf(schedule, drivers, constructors, trending)
-                .firstNotNullOfOrNull { it as? DataResult.Failure }
-            if (failure != null) {
+            val error = listOf(schedule, drivers, constructors, trending)
+                .firstNotNullOfOrNull { it.errorOrNull() }
+            if (error != null) {
                 mutate(RaceMutation.LoadFailed)
-                _effects.send(RaceEffect.ShowLoadError(failure.error))
+                _effects.send(RaceEffect.ShowLoadError(error))
                 return@launch
             }
             mutate(
@@ -116,7 +119,5 @@ class RaceViewModel internal constructor(
         }
     }
 
-    private fun <T> DataResult<T>.dataOrNull(): T? = (this as? DataResult.Success)?.data
-
-    private fun <T> DataResult<List<T>>.dataOrEmpty(): List<T> = dataOrNull().orEmpty()
+    private fun <T> DataResult<List<T>, DataError>.dataOrEmpty(): List<T> = dataOrNull().orEmpty()
 }

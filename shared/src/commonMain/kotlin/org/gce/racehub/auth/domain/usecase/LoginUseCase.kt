@@ -1,7 +1,9 @@
 package org.gce.racehub.auth.domain.usecase
 
 import org.gce.racehub.auth.domain.model.AuthError
-import org.gce.racehub.auth.domain.model.AuthResult
+import org.gce.racehub.auth.domain.model.AuthOutcome
+import org.gce.racehub.auth.domain.model.authFailure
+import org.gce.racehub.core.domain.model.User
 import org.gce.racehub.auth.domain.repository.AuthRepository
 
 /**
@@ -20,18 +22,18 @@ internal class LoginUseCase(private val authRepository: AuthRepository) {
      *
      * @param email    The user's email address.
      * @param password The plain-text password (minimum 6 characters).
-     * @return [AuthResult] with the authenticated [User] on success, or a
-     *         human-readable error message on failure.
+     * @return The authenticated [User] on success, otherwise the
+     *         [org.gce.racehub.auth.domain.model.AuthFailure] explaining why not.
      */
-    suspend operator fun invoke(email: String, password: String): AuthResult {
+    suspend operator fun invoke(email: String, password: String): AuthOutcome<User> {
         if (email.isBlank() || password.isBlank()) {
-            return AuthResult.failure(AuthError.EmailAndPasswordRequired)
+            return authFailure(AuthError.EmailAndPasswordRequired)
         }
         if (!email.contains("@")) {
-            return AuthResult.failure(AuthError.InvalidEmail)
+            return authFailure(AuthError.InvalidEmail)
         }
         if (password.length < 6) {
-            return AuthResult.failure(AuthError.PasswordTooShort)
+            return authFailure(AuthError.PasswordTooShort)
         }
         return authRepository.login(email, password)
     }

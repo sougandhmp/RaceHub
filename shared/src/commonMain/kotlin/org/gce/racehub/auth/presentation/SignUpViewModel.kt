@@ -1,7 +1,5 @@
 package org.gce.racehub.auth.presentation
 
-import org.gce.racehub.auth.domain.model.AuthFailure
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutines
@@ -17,6 +15,8 @@ import kotlinx.coroutines.launch
 import org.gce.racehub.auth.domain.model.OtpPurpose
 import org.gce.racehub.auth.domain.usecase.SendOtpUseCase
 import org.gce.racehub.auth.domain.usecase.SignUpUseCase
+import org.gce.racehub.core.domain.DataResult
+import org.gce.racehub.core.domain.errorOrNull
 
 /**
  * Shared MVI ViewModel for the sign-up form (Android and iOS). Creating the
@@ -59,17 +59,15 @@ class SignUpViewModel internal constructor(
         if (form.isLoading) return
         mutate(SignUpMutation.Submitted)
         viewModelScope.launch {
-            val result = signUp(form.username, form.email, form.password, form.country, form.confirmPassword)
-            if (!result.isSuccess) {
-                mutate(SignUpMutation.Failed(result.failure ?: AuthFailure.Unknown))
-                return@launch
+            signUp(form.username, form.email, form.password, form.country, form.confirmPassword).errorOrNull()?.let {
+                return@launch mutate(SignUpMutation.Failed(it))
             }
-            val otp = sendOtp(form.email, OtpPurpose.EMAIL_VERIFICATION)
-            if (otp.isSuccess) {
-                mutate(SignUpMutation.Succeeded)
-                _effects.send(SignUpEffect.NavigateToEmailVerification(form.email))
-            } else {
-                mutate(SignUpMutation.Failed(otp.failure ?: AuthFailure.Unknown))
+            when (val otp = sendOtp(form.email, OtpPurpose.EMAIL_VERIFICATION)) {
+                is DataResult.Success -> {
+                    mutate(SignUpMutation.Succeeded)
+                    _effects.send(SignUpEffect.NavigateToEmailVerification(form.email))
+                }
+                is DataResult.Failure -> mutate(SignUpMutation.Failed(otp.error))
             }
         }
     }

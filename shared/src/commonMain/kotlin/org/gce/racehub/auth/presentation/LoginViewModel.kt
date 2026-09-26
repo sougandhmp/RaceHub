@@ -1,7 +1,5 @@
 package org.gce.racehub.auth.presentation
 
-import org.gce.racehub.auth.domain.model.AuthFailure
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutines
@@ -18,6 +16,7 @@ import org.gce.racehub.auth.domain.model.OtpPurpose
 import org.gce.racehub.core.domain.session.UserSession
 import org.gce.racehub.auth.domain.usecase.LoginUseCase
 import org.gce.racehub.auth.domain.usecase.SendOtpUseCase
+import org.gce.racehub.core.domain.DataResult
 
 /**
  * Shared MVI ViewModel for the login form (Android and iOS). A verified account
@@ -58,10 +57,11 @@ class LoginViewModel internal constructor(
         if (form.isLoading) return
         mutate(LoginMutation.Submitted)
         viewModelScope.launch {
-            val result = login(form.email, form.password)
-            val user = result.user
+            val user = when (val result = login(form.email, form.password)) {
+                is DataResult.Failure -> return@launch mutate(LoginMutation.Failed(result.error))
+                is DataResult.Success -> result.data
+            }
             when {
-                user == null -> mutate(LoginMutation.Failed(result.failure ?: AuthFailure.Unknown))
                 // A verified email is required to enter the app, even if the server issued a token.
                 !user.isEmailVerified -> {
                     sendOtp(user.email, OtpPurpose.EMAIL_VERIFICATION)

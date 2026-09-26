@@ -11,6 +11,7 @@ import org.gce.racehub.core.data.GraphQLResponse
 import org.gce.racehub.core.data.safeCall
 import org.gce.racehub.core.data.toErrorMessage
 import org.gce.racehub.core.domain.DataResult
+import org.gce.racehub.core.domain.DataError
 import org.gce.racehub.profile.data.dto.*
 import org.gce.racehub.profile.domain.model.UserProfile
 import org.gce.racehub.profile.domain.repository.ProfileRepository
@@ -44,7 +45,7 @@ internal class ProfileRepositoryNetworkImpl(
      * Fetches the signed-in user's profile via GraphQL query.
      * Sends the auth token as an `Authorization: Bearer` header.
      */
-    override suspend fun getMyProfile(userId: String, token: String): DataResult<UserProfile> = safeCall(TAG, "load profile") {
+    override suspend fun getMyProfile(userId: String, token: String): DataResult<UserProfile, DataError> = safeCall(TAG, "load profile") {
         val response: GraphQLResponse<ProfileData> = httpClient.post("$baseUrl/graphql") {
             contentType(ContentType.Application.Json)
             header("Authorization", "Bearer $token")

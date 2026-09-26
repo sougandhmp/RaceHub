@@ -10,6 +10,7 @@ import org.gce.racehub.core.data.GraphQLResponse
 import org.gce.racehub.core.data.safeCall
 import org.gce.racehub.core.data.toErrorMessage
 import org.gce.racehub.core.domain.DataResult
+import org.gce.racehub.core.domain.DataError
 import org.gce.racehub.forum.data.dto.*
 import org.gce.racehub.forum.domain.model.Thread
 import org.gce.racehub.forum.domain.model.ThreadAuthor
@@ -89,7 +90,7 @@ internal class ForumRepositoryNetworkImpl(
         sort: ThreadSort?,
         category: String?,
         userId: String?
-    ): DataResult<List<Thread>> = safeCall(TAG, "fetch threads") {
+    ): DataResult<List<Thread>, DataError> = safeCall(TAG, "fetch threads") {
         val response: GraphQLResponse<ThreadsData> = httpClient.post("$baseUrl/graphql") {
             contentType(ContentType.Application.Json)
             setBody(
@@ -129,7 +130,7 @@ internal class ForumRepositoryNetworkImpl(
         title: String,
         category: String,
         content: String
-    ): DataResult<Thread> = safeCall(TAG, "create thread") {
+    ): DataResult<Thread, DataError> = safeCall(TAG, "create thread") {
         val response: GraphQLResponse<CreateThreadData> = httpClient.post("$baseUrl/graphql") {
             contentType(ContentType.Application.Json)
             setBody(
@@ -162,7 +163,7 @@ internal class ForumRepositoryNetworkImpl(
     /**
      * Posts a comment via GraphQL mutation.
      */
-    override suspend fun addComment(userId: String, threadId: String, content: String): DataResult<ThreadComment> = safeCall(TAG, "add comment") {
+    override suspend fun addComment(userId: String, threadId: String, content: String): DataResult<ThreadComment, DataError> = safeCall(TAG, "add comment") {
         val response: GraphQLResponse<AddCommentData> = httpClient.post("$baseUrl/graphql") {
             contentType(ContentType.Application.Json)
             setBody(
@@ -189,7 +190,7 @@ internal class ForumRepositoryNetworkImpl(
      *
      * @return The updated like count returned by the server.
      */
-    override suspend fun likeThread(id: String): DataResult<Int> = safeCall(TAG, "like thread") {
+    override suspend fun likeThread(id: String): DataResult<Int, DataError> = safeCall(TAG, "like thread") {
         val response: GraphQLResponse<LikeThreadData> = httpClient.post("$baseUrl/graphql") {
             contentType(ContentType.Application.Json)
             setBody(

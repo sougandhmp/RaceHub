@@ -26,26 +26,26 @@ internal class FakeForumRepository : ForumRepository {
     var lastCreateThreadArgs: CreateThreadArgs? = null
     var lastLikedThreadId: String? = null
 
-    override suspend fun getThreads(sort: ThreadSort?, category: String?, userId: String?): DataResult<List<Thread>> {
+    override suspend fun getThreads(sort: ThreadSort?, category: String?, userId: String?): DataResult<List<Thread>, DataError> {
         lastThreadsArgs = Triple(sort, category, userId)
         threadsDelayMs[sort]?.let { kotlinx.coroutines.delay(it) }
         threadsError?.let { return DataResult.Failure(it) }
         return DataResult.Success(threadsResult)
     }
 
-    override suspend fun createThread(userId: String, title: String, category: String, content: String): DataResult<Thread> {
+    override suspend fun createThread(userId: String, title: String, category: String, content: String): DataResult<Thread, DataError> {
         lastCreateThreadArgs = CreateThreadArgs(userId, title, category, content)
         createThreadError?.let { return DataResult.Failure(it) }
         return DataResult.Success(createThreadResult)
     }
 
-    override suspend fun addComment(userId: String, threadId: String, content: String): DataResult<ThreadComment> {
+    override suspend fun addComment(userId: String, threadId: String, content: String): DataResult<ThreadComment, DataError> {
         lastAddCommentArgs = Triple(userId, threadId, content)
         addCommentError?.let { return DataResult.Failure(it) }
         return DataResult.Success(addCommentResult)
     }
 
-    override suspend fun likeThread(id: String): DataResult<Int> {
+    override suspend fun likeThread(id: String): DataResult<Int, DataError> {
         lastLikedThreadId = id
         likeThreadError?.let { return DataResult.Failure(it) }
         return DataResult.Success(likeThreadResult)

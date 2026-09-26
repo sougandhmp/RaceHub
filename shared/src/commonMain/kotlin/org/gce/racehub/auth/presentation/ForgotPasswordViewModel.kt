@@ -1,7 +1,5 @@
 package org.gce.racehub.auth.presentation
 
-import org.gce.racehub.auth.domain.model.AuthFailure
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutines
@@ -16,6 +14,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.gce.racehub.auth.domain.usecase.ConfirmPasswordResetUseCase
 import org.gce.racehub.auth.domain.usecase.RequestPasswordResetUseCase
+import org.gce.racehub.core.domain.DataResult
 
 /** Shared MVI ViewModel for the password-reset flow (Android and iOS). */
 class ForgotPasswordViewModel internal constructor(
@@ -55,10 +54,11 @@ class ForgotPasswordViewModel internal constructor(
         if (form.isLoading) return
         mutate(ForgotPasswordMutation.Submitted)
         viewModelScope.launch {
-            val result = requestPasswordReset(form.email)
             mutate(
-                if (result.isSuccess) ForgotPasswordMutation.CodeSent
-                else ForgotPasswordMutation.Failed(result.failure ?: AuthFailure.Unknown)
+                when (val result = requestPasswordReset(form.email)) {
+                    is DataResult.Success -> ForgotPasswordMutation.CodeSent
+                    is DataResult.Failure -> ForgotPasswordMutation.Failed(result.error)
+                }
             )
         }
     }
@@ -68,12 +68,12 @@ class ForgotPasswordViewModel internal constructor(
         if (form.isLoading) return
         mutate(ForgotPasswordMutation.Submitted)
         viewModelScope.launch {
-            val result = confirmPasswordReset(form.email, form.otp, form.newPassword, form.confirmPassword)
-            if (result.isSuccess) {
-                mutate(ForgotPasswordMutation.ResetCompleted)
-                _effects.send(ForgotPasswordEffect.PasswordResetSuccess)
-            } else {
-                mutate(ForgotPasswordMutation.Failed(result.failure ?: AuthFailure.Unknown))
+            when (val result = confirmPasswordReset(form.email, form.otp, form.newPassword, form.confirmPassword)) {
+                is DataResult.Success -> {
+                    mutate(ForgotPasswordMutation.ResetCompleted)
+                    _effects.send(ForgotPasswordEffect.PasswordResetSuccess)
+                }
+                is DataResult.Failure -> mutate(ForgotPasswordMutation.Failed(result.error))
             }
         }
     }

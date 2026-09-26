@@ -1,6 +1,7 @@
 package org.gce.racehub.race.domain.usecase
 
 import org.gce.racehub.core.domain.DataResult
+import org.gce.racehub.core.domain.DataError
 import org.gce.racehub.core.domain.map
 import org.gce.racehub.race.domain.model.Race
 import org.gce.racehub.race.domain.repository.RaceRepository
@@ -16,6 +17,6 @@ import org.gce.racehub.race.domain.repository.RaceRepository
 internal class GetRaceScheduleUseCase(private val repository: RaceRepository) {
 
     /** The season's races ordered by round, or why they could not be loaded. */
-    suspend operator fun invoke(): DataResult<List<Race>> =
+    suspend operator fun invoke(): DataResult<List<Race>, DataError> =
         repository.getRaceSchedule().map { races -> races.sortedBy { it.round } }
 }

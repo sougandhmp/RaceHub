@@ -1,6 +1,7 @@
 package org.gce.racehub.forum.domain.repository
 
 import org.gce.racehub.core.domain.DataResult
+import org.gce.racehub.core.domain.DataError
 import org.gce.racehub.forum.domain.model.Thread
 import org.gce.racehub.forum.domain.model.ThreadComment
 import org.gce.racehub.forum.domain.model.ThreadSort
@@ -22,14 +23,14 @@ internal interface ForumRepository {
         sort: ThreadSort? = null,
         category: String? = null,
         userId: String? = null
-    ): DataResult<List<Thread>>
+    ): DataResult<List<Thread>, DataError>
 
     /** Creates a thread on behalf of [userId]; returns it with the server's id and timestamp. */
-    suspend fun createThread(userId: String, title: String, category: String, content: String): DataResult<Thread>
+    suspend fun createThread(userId: String, title: String, category: String, content: String): DataResult<Thread, DataError>
 
     /** Posts a comment on [threadId] on behalf of [userId]. */
-    suspend fun addComment(userId: String, threadId: String, content: String): DataResult<ThreadComment>
+    suspend fun addComment(userId: String, threadId: String, content: String): DataResult<ThreadComment, DataError>
 
     /** Toggles the like on thread [id]; returns the updated like count. */
-    suspend fun likeThread(id: String): DataResult<Int>
+    suspend fun likeThread(id: String): DataResult<Int, DataError>
 }
