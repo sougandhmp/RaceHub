@@ -6,7 +6,7 @@ private let t = AppColorTokens.shared
 
 struct ForgotPasswordView: View {
 
-    @StateObject private var viewModel = ForgotPasswordViewModel()
+    @StateObject private var model = ForgotPasswordModel.forgotPassword()
     let onBack: () -> Void
     let onPasswordResetSuccess: () -> Void
 
@@ -39,15 +39,15 @@ struct ForgotPasswordView: View {
 
                     Spacer(minLength: 16)
 
-                    Text(viewModel.state.step == .request ? String(localized: "Forgot Password?") : String(localized: "Reset Password"))
+                    Text(model.state.step == ForgotPasswordStep.request ? String(localized: "Forgot Password?") : String(localized: "Reset Password"))
                         .font(.system(size: 28, weight: .heavy))
                         .foregroundColor(AppColors.racingRed)
 
                     Spacer(minLength: 8)
 
-                    Text(viewModel.state.step == .request
+                    Text(model.state.step == ForgotPasswordStep.request
                          ? String(localized: "forgot_password_request_subtitle")
-                         : String(format: NSLocalizedString("forgot_password_confirm_subtitle", comment: ""), viewModel.state.email))
+                         : String(format: NSLocalizedString("forgot_password_confirm_subtitle", comment: ""), model.state.email))
                         .font(.footnote)
                         .foregroundColor(Color(hex: t.authMuted))
                         .multilineTextAlignment(.center)
@@ -55,13 +55,13 @@ struct ForgotPasswordView: View {
 
                     Spacer(minLength: 40)
 
-                    if viewModel.state.step == .request {
-                        RequestStepView(state: viewModel.state, onIntent: viewModel.send)
+                    if model.state.step == ForgotPasswordStep.request {
+                        RequestStepView(state: model.state, onIntent: model.send)
                     } else {
-                        ConfirmStepView(state: viewModel.state, onIntent: viewModel.send)
+                        ConfirmStepView(state: model.state, onIntent: model.send)
                     }
 
-                    if let error = viewModel.state.errorMessage {
+                    if let error = model.state.errorMessage {
                         Text(error)
                             .font(.caption)
                             .foregroundColor(AppColors.racingRed)
@@ -72,18 +72,18 @@ struct ForgotPasswordView: View {
                     Spacer(minLength: 32)
 
                     Button(action: {
-                        if viewModel.state.step == .request {
-                            viewModel.send(.requestReset)
+                        if model.state.step == ForgotPasswordStep.request {
+                            model.send(ForgotPasswordIntent.RequestReset.shared)
                         } else {
-                            viewModel.send(.confirmReset)
+                            model.send(ForgotPasswordIntent.ConfirmReset.shared)
                         }
                     }) {
                         ZStack {
-                            if viewModel.state.isLoading {
+                            if model.state.isLoading {
                                 ProgressView()
                                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             } else {
-                                Text(viewModel.state.step == .request ? String(localized: "Send Reset Code") : String(localized: "Reset Password"))
+                                Text(model.state.step == ForgotPasswordStep.request ? String(localized: "Send Reset Code") : String(localized: "Reset Password"))
                                     .font(.system(size: 16, weight: .semibold))
                                     .foregroundColor(.white)
                             }
@@ -93,18 +93,18 @@ struct ForgotPasswordView: View {
                     }
                     .background(
                         RoundedRectangle(cornerRadius: 12)
-                            .fill(AppColors.racingRed.opacity(viewModel.state.isLoading ? 0.4 : 1.0))
+                            .fill(AppColors.racingRed.opacity(model.state.isLoading ? 0.4 : 1.0))
                     )
-                    .disabled(viewModel.state.isLoading)
+                    .disabled(model.state.isLoading)
 
                     Spacer(minLength: 32)
                 }
                 .padding(.horizontal, 20)
             }
         }
-        .onReceive(viewModel.effectPublisher) { effect in
-            switch effect {
-            case .passwordResetSuccess:
+        // One-off effects from the shared ViewModel.
+        .onReceive(model.effects) { effect in
+            if effect is ForgotPasswordEffect.PasswordResetSuccess {
                 onPasswordResetSuccess()
             }
         }
@@ -121,7 +121,7 @@ private struct RequestStepView: View {
             placeholder: "driver@racehub.com",
             text: Binding(
                 get: { state.email },
-                set: { onIntent(.emailChanged($0)) }
+                set: { onIntent(ForgotPasswordIntent.EmailChanged(email: $0)) }
             ),
             keyboardType: .emailAddress
         )
@@ -138,7 +138,7 @@ private struct ConfirmStepView: View {
             placeholder: "6-digit code",
             text: Binding(
                 get: { state.otp },
-                set: { onIntent(.otpChanged($0)) }
+                set: { onIntent(ForgotPasswordIntent.OtpChanged(otp: $0)) }
             ),
             keyboardType: .numberPad
         )
@@ -149,10 +149,10 @@ private struct ConfirmStepView: View {
             label: "New Password",
             text: Binding(
                 get: { state.newPassword },
-                set: { onIntent(.newPasswordChanged($0)) }
+                set: { onIntent(ForgotPasswordIntent.NewPasswordChanged(password: $0)) }
             ),
             isVisible: state.isPasswordVisible,
-            onToggle: { onIntent(.togglePasswordVisibility) }
+            onToggle: { onIntent(ForgotPasswordIntent.TogglePasswordVisibility.shared) }
         )
 
         Spacer(minLength: 14)
@@ -161,42 +161,11 @@ private struct ConfirmStepView: View {
             label: "Confirm New Password",
             text: Binding(
                 get: { state.confirmPassword },
-                set: { onIntent(.confirmPasswordChanged($0)) }
+                set: { onIntent(ForgotPasswordIntent.ConfirmPasswordChanged(password: $0)) }
             ),
             isVisible: state.isPasswordVisible,
-            onToggle: { onIntent(.togglePasswordVisibility) }
+            onToggle: { onIntent(ForgotPasswordIntent.TogglePasswordVisibility.shared) }
         )
-    }
-}
-
-private struct AuthTextField: View {
-    let label: LocalizedStringKey
-    let placeholder: LocalizedStringKey
-    @Binding var text: String
-    var keyboardType: UIKeyboardType = .default
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(label)
-                .font(.caption)
-                .foregroundColor(Color(hex: t.authMuted))
-
-            TextField(placeholder, text: $text)
-                .keyboardType(keyboardType)
-                .autocapitalization(.none)
-                .autocorrectionDisabled()
-                .foregroundColor(.white)
-                .padding()
-                .background(Color.white.opacity(0.05))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(
-                            text.isEmpty ? Color(hex: t.authDimBorder) : AppColors.racingRed,
-                            lineWidth: 1.5
-                        )
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-        }
     }
 }
 

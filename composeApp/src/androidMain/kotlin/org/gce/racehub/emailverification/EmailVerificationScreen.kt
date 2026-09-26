@@ -1,5 +1,10 @@
 package org.gce.racehub.emailverification
 
+import org.gce.racehub.auth.presentation.EmailVerificationEffect
+import org.gce.racehub.auth.presentation.EmailVerificationIntent
+import org.gce.racehub.auth.presentation.EmailVerificationState
+import org.gce.racehub.auth.presentation.EmailVerificationViewModel
+import racehub.composeapp.generated.resources.email_verification_code_resent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -74,11 +79,11 @@ fun EmailVerificationScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(email) {
-        viewModel.onIntent(EmailVerificationIntent.SetEmail(email))
+        viewModel.onIntent(EmailVerificationIntent.Open(email))
     }
 
     LaunchedEffect(Unit) {
-        viewModel.effect.collect { effect ->
+        viewModel.effects.collect { effect ->
             when (effect) {
                 is EmailVerificationEffect.EmailVerified -> onEmailVerified()
             }
@@ -170,10 +175,10 @@ private fun EmailVerificationContent(
                 colors = textFieldColors()
             )
 
-            if (state.infoMessage != null) {
+            if (state.codeResent) {
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
-                    text = state.infoMessage,
+                    text = stringResource(Res.string.email_verification_code_resent),
                     color = MutedGray,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -182,7 +187,7 @@ private fun EmailVerificationContent(
             if (state.errorMessage != null) {
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
-                    text = state.errorMessage,
+                    text = state.errorMessage.orEmpty(),
                     color = RacingRed,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -195,7 +200,7 @@ private fun EmailVerificationContent(
                     focusManager.clearFocus()
                     onIntent(EmailVerificationIntent.Verify)
                 },
-                enabled = !state.isLoading,
+                enabled = !state.isVerifying,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
@@ -205,7 +210,7 @@ private fun EmailVerificationContent(
                     disabledContainerColor = RacingRed.copy(alpha = 0.4f)
                 )
             ) {
-                if (state.isLoading) {
+                if (state.isVerifying) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
                         color = Color.White,

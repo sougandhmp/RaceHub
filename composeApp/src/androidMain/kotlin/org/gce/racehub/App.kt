@@ -71,6 +71,7 @@ fun App() {
             var screen by remember { mutableStateOf(if (userSession.currentUser.value != null) Screen.Home else Screen.Login) }
             var selectedThread by remember { mutableStateOf<Thread?>(null) }
             var pendingVerificationEmail by remember { mutableStateOf("") }
+            var verificationOrigin by remember { mutableStateOf(Screen.SignUp) }
 
             val raceViewModel: RaceViewModel = koinViewModel()
             val forumViewModel: ForumViewModel = koinViewModel()
@@ -84,7 +85,7 @@ fun App() {
             val backTarget: Screen? = when (screen) {
                 Screen.Login, Screen.Home -> null
                 Screen.SignUp, Screen.ForgotPassword -> Screen.Login
-                Screen.EmailVerification -> Screen.SignUp
+                Screen.EmailVerification -> verificationOrigin
                 Screen.Schedule, Screen.Standings, Screen.CreateThread, Screen.ThreadDetail -> Screen.Home
                 Screen.RaceDetail -> raceDetailOrigin
             }
@@ -103,6 +104,7 @@ fun App() {
                     onNavigateToForgotPassword = { screen = Screen.ForgotPassword },
                     onNavigateToEmailVerification = { email ->
                         pendingVerificationEmail = email
+                        verificationOrigin = Screen.Login
                         screen = Screen.EmailVerification
                     }
                 )
@@ -115,6 +117,7 @@ fun App() {
                 Screen.SignUp -> SignUpScreen(
                     onSignUpSuccess = { email ->
                         pendingVerificationEmail = email
+                        verificationOrigin = Screen.SignUp
                         screen = Screen.EmailVerification
                     },
                     onNavigateToLogin = { screen = Screen.Login }
@@ -122,7 +125,7 @@ fun App() {
 
                 Screen.EmailVerification -> EmailVerificationScreen(
                     email = pendingVerificationEmail,
-                    onBack = { screen = Screen.SignUp },
+                    onBack = { screen = verificationOrigin },
                     // Email verified, but the account was never signed in. Send the
                     // user to Login to obtain a session with their verified account.
                     onEmailVerified = { screen = Screen.Login }

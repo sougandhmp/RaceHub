@@ -13,6 +13,8 @@ class FakeAuthRepository : AuthRepository {
     var sendOtpResult: EmailVerificationResult = EmailVerificationResult.success()
     var resendOtpResult: EmailVerificationResult = EmailVerificationResult.success()
     var verifyOtpResult: EmailVerificationResult = EmailVerificationResult.success()
+    var requestResetResult: PasswordResetResult = PasswordResetResult.success()
+    var confirmResetResult: PasswordResetResult = PasswordResetResult.success()
 
     var loginCallCount = 0
     var logoutCallCount = 0
@@ -39,10 +41,10 @@ class FakeAuthRepository : AuthRepository {
         return logoutResult
     }
 
-    override suspend fun requestPasswordReset(email: String): PasswordResetResult = PasswordResetResult.success()
+    override suspend fun requestPasswordReset(email: String): PasswordResetResult = requestResetResult
 
     override suspend fun confirmPasswordReset(email: String, otp: String, newPassword: String): PasswordResetResult =
-        PasswordResetResult.success()
+        confirmResetResult
 
     override suspend fun sendOtp(email: String, subject: String): EmailVerificationResult {
         lastSendOtpEmail = email

@@ -79,6 +79,7 @@
     <string name="label_verification_code">Verification Code</string>
     <string name="action_verify_email">Verify Email</string>
     <string name="action_resend_code">Didn\'t get it? Resend code</string>
+    <string name="email_verification_code_resent">A new code has been sent.</string>
 
     <!-- Home screen -->
     <string name="home_title">Race Hub</string>
