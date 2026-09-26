@@ -8,7 +8,6 @@ import org.gce.racehub.auth.domain.repository.AuthRepository
 /** Re-sends an OTP to [email] for the given [OtpPurpose]. */
 internal class ResendOtpUseCase(private val authRepository: AuthRepository) {
 
-    @Throws(Exception::class)
     suspend operator fun invoke(email: String, purpose: OtpPurpose): EmailVerificationResult {
         if (email.isBlank()) return EmailVerificationResult.failure(AuthError.EmailRequired)
         return authRepository.resendOtp(email.trim(), purpose.subject)

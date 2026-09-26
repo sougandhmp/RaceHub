@@ -10,10 +10,10 @@ internal class CreateThreadUseCase(private val repository: ForumRepository) {
     /**
      * Validates the input and posts the new thread.
      *
-     * @throws IllegalArgumentException when input validation fails.
-     * @throws Exception for transport / server errors raised by the repository.
+     * Transport and server errors come back as a [DataResult] failure.
+     *
+     * @throws IllegalArgumentException when input validation fails (callers check first).
      */
-    @Throws(Exception::class)
     suspend operator fun invoke(
         userId: String,
         title: String,

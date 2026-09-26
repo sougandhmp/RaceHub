@@ -6,7 +6,6 @@ import org.gce.racehub.auth.domain.repository.AuthRepository
 
 internal class RequestPasswordResetUseCase(private val authRepository: AuthRepository) {
 
-    @Throws(Exception::class)
     suspend operator fun invoke(email: String): PasswordResetResult {
         if (email.isBlank()) return PasswordResetResult.failure(AuthError.EmailRequired)
         if (!email.contains("@")) return PasswordResetResult.failure(AuthError.InvalidEmail)

@@ -23,7 +23,6 @@ internal class LoginUseCase(private val authRepository: AuthRepository) {
      * @return [AuthResult] with the authenticated [User] on success, or a
      *         human-readable error message on failure.
      */
-    @Throws(Exception::class)
     suspend operator fun invoke(email: String, password: String): AuthResult {
         if (email.isBlank() || password.isBlank()) {
             return AuthResult.failure(AuthError.EmailAndPasswordRequired)
