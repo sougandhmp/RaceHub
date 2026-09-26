@@ -1,13 +1,23 @@
 package org.gce.racehub.race.domain.usecase
 
+import org.gce.racehub.core.domain.DataResult
+import org.gce.racehub.core.domain.DataError
 import org.gce.racehub.race.domain.model.DriverStanding
 import org.gce.racehub.race.domain.repository.RaceRepository
 
 /**
- * Returns the cached rows once. For callers that can't collect a Flow (Swift):
- * run [RefreshRaceDataUseCase] first to get fresh data.
+ * Retrieves the current Drivers' Championship standings from [RaceRepository].
+ *
+ * Kept as a dedicated use case so sorting, filtering by team, or pagination
+ * logic can be added here later without touching the repository or the ViewModel.
+ *
+ * Shared between Android and iOS via the KMP `shared` module.
  */
-class GetDriverStandingsUseCase(private val repository: RaceRepository) {
-    @Throws(Exception::class)
-    suspend operator fun invoke(): List<DriverStanding> = repository.getCachedDriverStandings()
+internal class GetDriverStandingsUseCase(private val repository: RaceRepository) {
+
+    /**
+     * @return The [DriverStanding] list sorted by championship position
+     *         (position 1 at index 0).
+     */
+    suspend operator fun invoke(): DataResult<List<DriverStanding>, DataError> = repository.getDriverStandings()
 }

@@ -22,6 +22,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
@@ -29,6 +31,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -50,15 +54,25 @@ import org.gce.racehub.race.domain.model.ConstructorStanding
 import org.gce.racehub.race.domain.model.DriverStanding
 import org.gce.racehub.race.domain.model.Race
 import org.gce.racehub.race.domain.model.RaceDetail
-import org.gce.racehub.race.domain.model.RaceSession
+import org.gce.racehub.race.presentation.RaceIntent
+import org.gce.racehub.race.presentation.RaceState
+import org.gce.racehub.race.presentation.RaceViewModel
+import org.gce.racehub.race.presentation.WeekendSession
+import org.gce.racehub.race.presentation.raceHeaderDate
 import org.gce.racehub.race.domain.model.TrendingThread
 import org.gce.racehub.theme.AppColorScheme
 import org.gce.racehub.theme.DarkAppColors
 import org.gce.racehub.theme.Dimens
 import org.gce.racehub.theme.LocalAppColors
 import org.gce.racehub.theme.teamColorOf
-import org.gce.racehub.theme.ErrorBanner
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
+import org.gce.racehub.core.domain.DataError
+import org.gce.racehub.race.presentation.RaceEffect
+import racehub.composeapp.generated.resources.race_error_network
+import racehub.composeapp.generated.resources.race_error_server
+import racehub.composeapp.generated.resources.race_error_unknown
 import org.koin.compose.viewmodel.koinViewModel
 import racehub.composeapp.generated.resources.Res
 import racehub.composeapp.generated.resources.action_see_all
@@ -76,7 +90,6 @@ import racehub.composeapp.generated.resources.race_weekend_detail
 import racehub.composeapp.generated.resources.standings_loading
 import racehub.composeapp.generated.resources.tab_constructors
 import racehub.composeapp.generated.resources.tab_drivers
-import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,7 +101,18 @@ fun RaceScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val colors = LocalAppColors.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
+    // One-off effects: shown once, never replayed on recomposition.
+    LaunchedEffect(viewModel) {
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                is RaceEffect.ShowLoadError -> snackbarHostState.showSnackbar(getString(effect.error.message()))
+            }
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
     PullToRefreshBox(
         isRefreshing = state.isLoading,
         onRefresh = { viewModel.onIntent(RaceIntent.Refresh) },
@@ -112,15 +136,15 @@ fun RaceScreen(
                 onViewRaceDetail = onViewRaceDetail
             )
         }
-        state.errorMessage?.let { message ->
-            ErrorBanner(
-                message = message,
-                onRetry = { viewModel.onIntent(RaceIntent.Refresh) },
-                onDismiss = { viewModel.onIntent(RaceIntent.DismissError) },
-                modifier = Modifier.align(Alignment.TopCenter)
-            )
-        }
     }
+    SnackbarHost(snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
+    }
+}
+
+private fun DataError.message(): StringResource = when (this) {
+    DataError.Network -> Res.string.race_error_network
+    DataError.Server -> Res.string.race_error_server
+    DataError.Unknown -> Res.string.race_error_unknown
 }
 
 @Composable
@@ -140,8 +164,8 @@ private fun RaceTabContent(
     ) {
         item {
             NextRaceSection(
-                race = state.raceSchedule.firstOrNull { !it.isCompleted },
-                nextRaceDetail = state.nextRaceDetail,
+                race = state.nextRace,
+                sessions = state.nextRaceSessions,
                 totalRaces = state.raceSchedule.size,
                 colors = colors,
                 onViewAllSchedule = onViewAllSchedule,
@@ -170,7 +194,7 @@ private fun RaceTabContent(
 @Composable
 private fun NextRaceSection(
     race: Race?,
-    nextRaceDetail: RaceDetail?,
+    sessions: List<WeekendSession>,
     totalRaces: Int,
     colors: AppColorScheme,
     onViewAllSchedule: () -> Unit,
@@ -186,7 +210,7 @@ private fun NextRaceSection(
     ) {
         // R9/24 · SUN MAY 24  +  🇨🇦
         val roundLabel = race?.let { "R${it.round}/$totalRaces" } ?: ""
-        val dateLabel = race?.let { formatRaceHeaderDate(it.dateTime) } ?: ""
+        val dateLabel = race?.let { raceHeaderDate(it.dateTime) } ?: ""
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -244,10 +268,6 @@ private fun NextRaceSection(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Session strip: FP1 | FP2 | FP3 | QUAL | RACE
-        val sessions = if (nextRaceDetail?.sessions?.isNotEmpty() == true)
-            sessionsFromDetail(nextRaceDetail.sessions)
-        else
-            sessionsFromRace(race)
         SessionStrip(sessions = sessions, colors = colors)
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -304,11 +324,11 @@ private fun NextRaceSection(
 private data class SessionStripChip(val label: String, val date: String, val time: String)
 
 @Composable
-private fun SessionStrip(sessions: List<RaceSessionChip>, colors: AppColorScheme) {
+private fun SessionStrip(sessions: List<WeekendSession>, colors: AppColorScheme) {
     val chips = sessions.map { chip ->
         SessionStripChip(
-            label = stripLabel(chip.label),
-            date = chip.fullDate,
+            label = chip.shortLabel,
+            date = chip.date,
             time = chip.time
         )
     }
@@ -696,13 +716,6 @@ private fun FeaturedSection(thread: TrendingThread?, colors: AppColorScheme) {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-internal data class RaceSessionChip(
-    val label: String,
-    val fullDate: String,
-    val time: String,
-    val timezone: String
-)
-
 internal fun shortRaceName(name: String): String =
     name.replace("Grand Prix", "GP", ignoreCase = true).trim()
 
@@ -729,129 +742,6 @@ internal fun countryFlag(country: String): String = when {
     country.contains("united states", true) || country.contains("usa", true)  -> "🇺🇸"
     country.contains("italy", true)                                            -> "🇮🇹"
     else                                                                       -> "🏁"
-}
-
-private fun formatRaceHeaderDate(dateTime: String): String {
-    val date = parseIsoToDate(dateTime) ?: return ""
-    return java.text.SimpleDateFormat("EEE MMM d", java.util.Locale.US)
-        .apply { timeZone = java.util.TimeZone.getTimeZone("UTC") }
-        .format(date).uppercase()
-}
-
-internal fun stripLabel(full: String): String = when (full.uppercase().trim()) {
-    "PRACTICE 1" -> "FP1"
-    "PRACTICE 2" -> "FP2"
-    "PRACTICE 3" -> "FP3"
-    "QUALIFYING" -> "QUAL"
-    "RACE" -> "RACE"
-    "SPRINT" -> "SPR"
-    "SPRINT QUAL" -> "SQ"
-    else -> full.take(4)
-}
-
-
-internal fun deviceTimezoneLabel(): String {
-    val tz = java.util.TimeZone.getDefault()
-    val now = java.util.Date()
-    val offset = tz.getOffset(now.time)
-    val sign = if (offset >= 0) "+" else "-"
-    val absOffset = if (offset < 0) -offset else offset
-    val hours = absOffset / 3600000
-    val minutes = (absOffset % 3600000) / 60000
-    return if (minutes == 0) "GMT$sign$hours"
-    else "GMT$sign$hours:${String.format(java.util.Locale.US, "%02d", minutes)}"
-}
-
-internal fun formatSessionDate(cal: Calendar): String =
-    java.text.SimpleDateFormat("MMM d", java.util.Locale.US)
-        .apply { timeZone = java.util.TimeZone.getDefault() }
-        .format(cal.time)
-
-internal fun formatSessionTime(cal: Calendar): String =
-    java.text.SimpleDateFormat("HH:mm", java.util.Locale.US)
-        .apply { timeZone = java.util.TimeZone.getDefault() }
-        .format(cal.time)
-
-internal fun displayLabel(raw: String): String = when (raw.uppercase().trim()) {
-    "FP1", "PRACTICE 1", "P1", "PRACTICE1" -> "PRACTICE 1"
-    "FP2", "PRACTICE 2", "P2", "PRACTICE2" -> "PRACTICE 2"
-    "FP3", "PRACTICE 3", "P3", "PRACTICE3" -> "PRACTICE 3"
-    "QUAL", "QUALIFYING", "Q" -> "QUALIFYING"
-    "RACE", "GRAND PRIX" -> "RACE"
-    "SPRINT QUALIFYING", "SPRINT QUAL", "SQ" -> "SPRINT QUAL"
-    "SPRINT" -> "SPRINT"
-    else -> raw.uppercase()
-}
-
-
-internal fun sessionsFromRace(race: Race?): List<RaceSessionChip> {
-    if (race == null) return emptyList()
-    val raceDate = parseIsoToDate(race.dateTime) ?: return fallbackSessions()
-    val tzLabel = deviceTimezoneLabel()
-
-    fun calAt(days: Int, hours: Int = 0): Calendar =
-        Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC")).apply {
-            time = raceDate
-            add(Calendar.DATE, days)
-            if (hours != 0) add(Calendar.HOUR_OF_DAY, hours)
-        }
-
-    return listOf(
-        RaceSessionChip(
-            "PRACTICE 1",
-            formatSessionDate(calAt(-2, -3)),
-            formatSessionTime(calAt(-2, -3)),
-            tzLabel
-        ),
-        RaceSessionChip(
-            "PRACTICE 2",
-            formatSessionDate(calAt(-2)),
-            formatSessionTime(calAt(-2)),
-            tzLabel
-        ),
-        RaceSessionChip(
-            "PRACTICE 3",
-            formatSessionDate(calAt(-1, -3)),
-            formatSessionTime(calAt(-1, -3)),
-            tzLabel
-        ),
-        RaceSessionChip(
-            "QUALIFYING",
-            formatSessionDate(calAt(-1)),
-            formatSessionTime(calAt(-1)),
-            tzLabel
-        ),
-        RaceSessionChip("RACE", formatSessionDate(calAt(0)), formatSessionTime(calAt(0)), tzLabel),
-    )
-}
-
-internal fun fallbackSessions(): List<RaceSessionChip> {
-    val tz = deviceTimezoneLabel()
-    return listOf(
-        RaceSessionChip("PRACTICE 1", "—", "—", tz),
-        RaceSessionChip("PRACTICE 2", "—", "—", tz),
-        RaceSessionChip("PRACTICE 3", "—", "—", tz),
-        RaceSessionChip("QUALIFYING", "—", "—", tz),
-        RaceSessionChip("RACE", "—", "—", tz),
-    )
-}
-
-internal fun sessionsFromDetail(sessions: List<RaceSession>): List<RaceSessionChip> {
-    val tzLabel = deviceTimezoneLabel()
-    return sessions.map { session ->
-        val date = parseIsoToDate(session.dateTime)
-        val (fullDate, time) = if (date != null) {
-            val cal = Calendar.getInstance(java.util.TimeZone.getDefault())
-                .also { it.time = date }
-            Pair(formatSessionDate(cal), formatSessionTime(cal))
-        } else Pair("—", "—")
-        RaceSessionChip(
-            label = displayLabel(session.label),
-            fullDate = fullDate,
-            time = time,
-            timezone = tzLabel
-        )
-    }
 }
 
 @Preview(showBackground = true)

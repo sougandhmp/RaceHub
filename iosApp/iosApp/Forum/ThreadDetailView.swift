@@ -5,13 +5,14 @@ struct ThreadDetailView: View {
 
     let thread: Shared.Thread
 
-    @StateObject private var viewModel = ThreadDetailViewModel()
+    @StateObject private var model = ThreadDetailModel.threadDetail()
+    @State private var errorMessage: String?
     @FocusState private var commentFieldFocused: Bool
     @Environment(\.colorScheme) private var colorScheme
     private var colors: AppColors { AppColors.forScheme(colorScheme) }
 
     private var allComments: [Shared.ThreadComment] {
-        thread.comments + viewModel.state.postedComments
+        thread.comments + model.state.postedComments
     }
 
     private var shareText: String {
@@ -27,15 +28,15 @@ struct ThreadDetailView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         ThreadPostCard(
                             thread: thread,
-                            likes: viewModel.state.likes,
-                            isLiked: viewModel.state.isLiked,
-                            isLiking: viewModel.state.isLiking,
+                            likes: model.state.likes,
+                            isLiked: model.state.isLiked,
+                            isLiking: model.state.isLiking,
                             colors: colors,
-                            onLikeClick: { viewModel.send(.toggleLike(threadId: thread.id)) },
+                            onLikeClick: { model.send(ThreadDetailIntent.ToggleLike.shared) },
                             onReplyClick: { commentFieldFocused = true },
                             shareText: shareText
                         )
-                        .onAppear { viewModel.initLikes(thread.likes) }
+                        .onAppear { model.send(ThreadDetailIntent.Open(threadId: thread.id, likes: thread.likes)) }
 
                         Text(allComments.count == 1 ? String(localized: "1 Reply") : String(format: NSLocalizedString("thread_replies", comment: ""), allComments.count))
                             .font(.system(size: 13, weight: .bold))
@@ -60,13 +61,13 @@ struct ThreadDetailView: View {
 
                 CommentInputBar(
                     value: Binding(
-                        get: { viewModel.state.commentInput },
-                        set: { viewModel.send(.commentInputChanged($0)) }
+                        get: { model.state.commentInput },
+                        set: { model.send(ThreadDetailIntent.CommentInputChanged(text: $0)) }
                     ),
-                    canSubmit: viewModel.state.canSubmit,
-                    isSubmitting: viewModel.state.isSubmitting,
+                    canSubmit: model.state.canSubmit,
+                    isSubmitting: model.state.isSubmitting,
                     isFocused: $commentFieldFocused,
-                    onSubmit: { viewModel.send(.submitComment(threadId: thread.id)) },
+                    onSubmit: { model.send(ThreadDetailIntent.SubmitComment.shared) },
                     colors: colors
                 )
             }
@@ -76,14 +77,24 @@ struct ThreadDetailView: View {
         .toolbarBackground(colors.background, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(colors.isDark ? .dark : .light, for: .navigationBar)
+        // One-off effects from the shared ViewModel: shown once, never replayed.
+        .onReceive(model.effects) { effect in
+            if effect is ThreadDetailEffect.NotSignedIn {
+                errorMessage = String(localized: "Sign in to post or comment.")
+            } else if let failed = effect as? ThreadDetailEffect.CommentFailed {
+                errorMessage = failed.error.userMessage
+            } else if effect is ThreadDetailEffect.LikeFailed {
+                errorMessage = String(localized: "Couldn't update the like. Please try again.")
+            }
+        }
         .alert(
             "Error",
             isPresented: Binding(
-                get: { viewModel.state.errorMessage != nil },
-                set: { if !$0 { viewModel.send(.dismissError) } }
+                get: { errorMessage != nil },
+                set: { if !$0 { errorMessage = nil } }
             ),
-            actions: { Button("OK") { viewModel.send(.dismissError) } },
-            message: { Text(viewModel.state.errorMessage ?? "") }
+            actions: { Button("OK") { errorMessage = nil } },
+            message: { Text(errorMessage ?? "") }
         )
     }
 }

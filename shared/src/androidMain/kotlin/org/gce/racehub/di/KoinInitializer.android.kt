@@ -1,5 +1,8 @@
 package org.gce.racehub.di
 
+import org.gce.racehub.core.di.createCoreModule
+import org.gce.racehub.forum.di.createForumModule
+import org.gce.racehub.profile.di.createProfileModule
 import android.app.Application
 import org.gce.racehub.auth.di.createProductionAuthModule
 import org.gce.racehub.race.di.createRaceModule
@@ -31,21 +34,11 @@ actual object KoinInitializer {
     }
 
     /** Starts the Koin container with the production auth module. */
-    actual fun init(baseUrl: String, vararg additionalModules: Module) {
+    actual fun init(baseUrl: String, logNetwork: Boolean, vararg additionalModules: Module) {
         startKoin {
             androidApplication?.let { androidContext(it) }
-            modules(createProductionAuthModule(baseUrl), createRaceModule(baseUrl), platformModule, *additionalModules)
+            modules(createCoreModule(logNetwork), createProductionAuthModule(baseUrl), createRaceModule(baseUrl), createForumModule(baseUrl), createProfileModule(baseUrl), platformModule, presentationModule, *additionalModules)
         }
     }
 
-    /**
-     * Starts the Koin container with the fake in-memory auth module.
-     * Useful for Espresso tests or local dev builds without a backend.
-     */
-    actual fun initForTesting(vararg additionalModules: Module) {
-        startKoin {
-            androidApplication?.let { androidContext(it) }
-            modules(org.gce.racehub.auth.di.fakeAuthModule, createRaceModule(""), platformModule, *additionalModules)
-        }
-    }
 }

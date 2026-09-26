@@ -1,13 +1,22 @@
 package org.gce.racehub.race.domain.usecase
 
+import org.gce.racehub.core.domain.DataResult
+import org.gce.racehub.core.domain.DataError
+import org.gce.racehub.core.domain.map
 import org.gce.racehub.race.domain.model.Race
 import org.gce.racehub.race.domain.repository.RaceRepository
 
 /**
- * Returns the cached rows once. For callers that can't collect a Flow (Swift):
- * run [RefreshRaceDataUseCase] first to get fresh data.
+ * Retrieves the full race calendar from [RaceRepository].
+ *
+ * Kept as a dedicated use case so filtering, sorting, or caching logic
+ * can be added here later without touching the repository or the ViewModel.
+ *
+ * Shared between Android and iOS via the KMP `shared` module.
  */
-class GetRaceScheduleUseCase(private val repository: RaceRepository) {
-    @Throws(Exception::class)
-    suspend operator fun invoke(): List<Race> = repository.getCachedRaceSchedule()
+internal class GetRaceScheduleUseCase(private val repository: RaceRepository) {
+
+    /** The season's races ordered by round, or why they could not be loaded. */
+    suspend operator fun invoke(): DataResult<List<Race>, DataError> =
+        repository.getRaceSchedule().map { races -> races.sortedBy { it.round } }
 }

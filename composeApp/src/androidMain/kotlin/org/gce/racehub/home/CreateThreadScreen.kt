@@ -1,5 +1,17 @@
 package org.gce.racehub.home
 
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.remember
+import androidx.compose.ui.zIndex
+import org.gce.racehub.forum.presentation.CreateThreadEffect
+import org.gce.racehub.forum.presentation.CreateThreadIntent
+import org.gce.racehub.forum.presentation.CreateThreadState
+import org.gce.racehub.forum.presentation.CreateThreadViewModel
+import org.gce.racehub.forum.domain.model.ForumCategories
+import org.gce.racehub.ui.message
+import org.jetbrains.compose.resources.getString
+import racehub.composeapp.generated.resources.error_not_signed_in
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -64,10 +76,15 @@ fun CreateThreadScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val colors = LocalAppColors.current
 
-    LaunchedEffect(Unit) {
-        viewModel.effect.collect { effect ->
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // One-off effects: shown once, never replayed on recomposition.
+    LaunchedEffect(viewModel) {
+        viewModel.effects.collect { effect ->
             when (effect) {
                 CreateThreadEffect.ThreadCreated -> onThreadCreated()
+                CreateThreadEffect.NotSignedIn -> snackbarHostState.showSnackbar(getString(Res.string.error_not_signed_in))
+                is CreateThreadEffect.SubmitFailed -> snackbarHostState.showSnackbar(getString(effect.error.message()))
             }
         }
     }
@@ -76,7 +93,8 @@ fun CreateThreadScreen(
         state = state,
         colors = colors,
         onIntent = viewModel::onIntent,
-        onCancel = onCancel
+        onCancel = onCancel,
+        snackbarHostState = snackbarHostState
     )
 }
 
@@ -85,9 +103,11 @@ private fun CreateThreadContent(
     state: CreateThreadState,
     colors: AppColorScheme,
     onIntent: (CreateThreadIntent) -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
     Box(modifier = Modifier.fillMaxSize().background(colors.background)) {
+        SnackbarHost(snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter).zIndex(1f))
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -147,11 +167,6 @@ private fun CreateThreadContent(
                 colors = fieldColors(colors)
             )
 
-            state.errorMessage?.let { message ->
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(text = message, color = colors.racingRed, fontSize = 13.sp)
-            }
-
             Spacer(modifier = Modifier.height(24.dp))
             Button(
                 onClick = { onIntent(CreateThreadIntent.Submit) },
@@ -197,13 +212,6 @@ private fun CreateThreadScreenPreview() {
     }
 }
 
-private val THREAD_TAGS = listOf(
-    "General Discussion",
-    "Race Weekends",
-    "Teams & Drivers",
-    "Technical / Cars"
-)
-
 @Composable
 private fun CategoryPicker(
     selected: String,
@@ -217,7 +225,7 @@ private fun CategoryPicker(
             .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        THREAD_TAGS.forEach { tag ->
+        ForumCategories.all.forEach { tag ->
             TagChip(
                 label = tag,
                 isSelected = selected == tag,

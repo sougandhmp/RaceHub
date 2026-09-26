@@ -1,48 +1,45 @@
 package org.gce.racehub.race
 
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
-import org.gce.racehub.core.DataError
-import org.gce.racehub.core.DataResult
-import org.gce.racehub.fake.*
-import org.gce.racehub.race.domain.model.*
-import org.gce.racehub.race.domain.usecase.*
+import org.gce.racehub.core.domain.DataError
+import org.gce.racehub.core.domain.DataResult
+import org.gce.racehub.fake.FakeRaceRepository
+import org.gce.racehub.race.domain.model.Race
+import org.gce.racehub.race.domain.usecase.GetRaceScheduleUseCase
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertIs
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
 class GetRaceScheduleUseCaseTest {
 
     private val repository = FakeRaceRepository()
-    private val getUseCase = GetRaceScheduleUseCase(repository)
-    private val observeUseCase = ObserveRaceScheduleUseCase(repository)
+    private val useCase = GetRaceScheduleUseCase(repository)
 
-    private fun race(id: String, status: String) = Race(
+    private fun race(id: String, status: String, round: Int = 1) = Race(
         id = id, name = "GP $id", circuit = "C", country = "Country",
-        city = "City", dateTime = "2025-03-16T15:00:00Z", round = 1, status = status
+        city = "City", dateTime = "2025-03-16T15:00:00Z", round = round, status = status
     )
 
     @Test
-    fun `returns empty list when the cache has no races`() = runTest {
-        assertEquals(emptyList(), getUseCase())
+    fun `returns empty list when repository has no races`() = runTest {
+        assertEquals(DataResult.Success(emptyList()), useCase())
     }
 
     @Test
-    fun `returns all cached races in order`() = runTest {
-        val races = (1..5).map { race("r$it", if (it < 3) "COMPLETED" else "UPCOMING") }
-        repository.raceSchedule.value = races
-        assertEquals(races, getUseCase())
+    fun `returns all races from repository`() = runTest {
+        val races = listOf(race("r1", "COMPLETED"), race("r2", "UPCOMING"))
+        repository.raceSchedule = races
+        assertEquals(DataResult.Success(races), useCase())
     }
 
     @Test
-    fun `observe emits the cached races and emits again when the cache changes`() = runTest {
-        repository.raceSchedule.value = listOf(race("r1", "UPCOMING"))
-        assertEquals(listOf(race("r1", "UPCOMING")), observeUseCase().first())
+    fun `orders races by round`() = runTest {
+        repository.raceSchedule = listOf(race("r3", "UPCOMING", 3), race("r1", "COMPLETED", 1), race("r2", "UPCOMING", 2))
+        assertEquals(listOf("r1", "r2", "r3"), (useCase() as DataResult.Success).data.map { it.id })
+    }
 
-        repository.raceSchedule.value = listOf(race("r1", "COMPLETED"), race("r2", "UPCOMING"))
-        assertEquals(2, observeUseCase().first().size)
+    @Test
+    fun `passes a repository failure through`() = runTest {
+        repository.raceScheduleError = DataError.Network
+        assertEquals(DataResult.Failure(DataError.Network), useCase())
     }
 }

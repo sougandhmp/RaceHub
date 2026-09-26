@@ -1,11 +1,12 @@
 package org.gce.racehub.auth.domain.usecase
 
-import org.gce.racehub.auth.domain.model.AuthResult
+import org.gce.racehub.auth.domain.model.AuthError
+import org.gce.racehub.auth.domain.model.AuthOutcome
+import org.gce.racehub.auth.domain.model.authFailure
+import org.gce.racehub.core.domain.model.User
 import org.gce.racehub.auth.domain.repository.AuthRepository
 
-class SignUpUseCase(private val authRepository: AuthRepository) {
-
-    @Throws(Exception::class)
+internal class SignUpUseCase(private val authRepository: AuthRepository) {
 
     suspend operator fun invoke(
         username: String,
@@ -13,13 +14,13 @@ class SignUpUseCase(private val authRepository: AuthRepository) {
         password: String,
         country: String,
         confirmPassword: String
-    ): AuthResult {
-        if (username.isBlank()) return AuthResult.failure("Username cannot be empty")
-        if (email.isBlank()) return AuthResult.failure("Email cannot be empty")
-        if (!email.contains("@")) return AuthResult.failure("Invalid email format")
-        if (password.length < 6) return AuthResult.failure("Password must be at least 6 characters")
-        if (password != confirmPassword) return AuthResult.failure("Passwords do not match")
-        if (country.isBlank()) return AuthResult.failure("Country cannot be empty")
+    ): AuthOutcome<User> {
+        if (username.isBlank()) return authFailure(AuthError.UsernameRequired)
+        if (email.isBlank()) return authFailure(AuthError.EmailRequired)
+        if (!email.contains("@")) return authFailure(AuthError.InvalidEmail)
+        if (password.length < 6) return authFailure(AuthError.PasswordTooShort)
+        if (password != confirmPassword) return authFailure(AuthError.PasswordsDoNotMatch)
+        if (country.isBlank()) return authFailure(AuthError.CountryRequired)
         return authRepository.signUp(username, email, password, country)
     }
 }

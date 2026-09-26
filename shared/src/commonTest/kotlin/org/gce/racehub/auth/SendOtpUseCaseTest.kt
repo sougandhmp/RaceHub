@@ -1,7 +1,8 @@
 package org.gce.racehub.auth
 
+import org.gce.racehub.auth.domain.model.AuthFailure
+import org.gce.racehub.auth.domain.model.AuthError
 import kotlinx.coroutines.test.runTest
-import org.gce.racehub.auth.domain.model.EmailVerificationResult
 import org.gce.racehub.auth.domain.model.OtpPurpose
 import org.gce.racehub.auth.domain.usecase.SendOtpUseCase
 import org.gce.racehub.fake.FakeAuthRepository
@@ -9,6 +10,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import org.gce.racehub.core.domain.DataResult
+import org.gce.racehub.core.domain.errorOrNull
+import org.gce.racehub.auth.domain.model.authFailure
 
 class SendOtpUseCaseTest {
 
@@ -18,8 +22,8 @@ class SendOtpUseCaseTest {
     @Test
     fun `blank email returns failure without hitting repository`() = runTest {
         val result = useCase("   ", OtpPurpose.EMAIL_VERIFICATION)
-        assertFalse(result.isSuccess)
-        assertEquals("Email cannot be empty", result.error)
+        assertFalse(result is DataResult.Success)
+        assertEquals(AuthError.EmailRequired, result.errorOrNull()?.reason)
         assertEquals(null, repository.lastSendOtpEmail)
     }
 
@@ -44,15 +48,15 @@ class SendOtpUseCaseTest {
 
     @Test
     fun `successful send is reported`() = runTest {
-        repository.sendOtpResult = EmailVerificationResult.success()
-        assertTrue(useCase("alice@test.com", OtpPurpose.EMAIL_VERIFICATION).isSuccess)
+        repository.sendOtpResult = DataResult.Success(Unit)
+        assertTrue(useCase("alice@test.com", OtpPurpose.EMAIL_VERIFICATION) is DataResult.Success)
     }
 
     @Test
     fun `repository failure is propagated`() = runTest {
-        repository.sendOtpResult = EmailVerificationResult.failure("Too many requests")
+        repository.sendOtpResult = authFailure(AuthError.Rejected, "Too many requests")
         val result = useCase("alice@test.com", OtpPurpose.EMAIL_VERIFICATION)
-        assertFalse(result.isSuccess)
-        assertEquals("Too many requests", result.error)
+        assertFalse(result is DataResult.Success)
+        assertEquals(AuthFailure(AuthError.Rejected, "Too many requests"), result.errorOrNull())
     }
 }

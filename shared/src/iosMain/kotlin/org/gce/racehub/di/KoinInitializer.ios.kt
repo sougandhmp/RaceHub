@@ -1,5 +1,10 @@
 package org.gce.racehub.di
 
+import org.gce.racehub.core.di.createCoreModule
+import org.gce.racehub.forum.di.createForumModule
+import org.gce.racehub.profile.di.createProfileModule
+import kotlin.experimental.ExperimentalObjCRefinement
+import kotlin.native.HiddenFromObjC
 import org.gce.racehub.auth.di.createProductionAuthModule
 import org.gce.racehub.race.di.createRaceModule
 import org.koin.core.context.startKoin
@@ -15,31 +20,18 @@ actual object KoinInitializer {
     /**
      * Initializes Koin with production configuration.
      *
-     * @param baseUrl The API base URL for authentication
+     * @param baseUrl The API base URL, set per build configuration by each app
+     * @param logNetwork Log requests to the console; pass true only for debug builds
      * @param additionalModules Additional Koin modules to include
      */
-    actual fun init(baseUrl: String, vararg additionalModules: Module) {
+    @OptIn(ExperimentalObjCRefinement::class)
+    @HiddenFromObjC
+    actual fun init(baseUrl: String, logNetwork: Boolean, vararg additionalModules: Module) {
         startKoin {
             modules(
-                createProductionAuthModule(baseUrl),
-                createRaceModule(baseUrl),
-                platformModule,
-                *additionalModules
-            )
-        }
-    }
-
-    /**
-     * Initializes Koin with test configuration (fake repository).
-     *
-     * @param additionalModules Additional Koin modules to include
-     */
-    actual fun initForTesting(vararg additionalModules: Module) {
-        startKoin {
-            modules(
-                org.gce.racehub.auth.di.fakeAuthModule,
-                createRaceModule(""),
-                platformModule,
+                createCoreModule(logNetwork), createProductionAuthModule(baseUrl),
+                createRaceModule(baseUrl), createForumModule(baseUrl), createProfileModule(baseUrl),
+                platformModule, presentationModule,
                 *additionalModules
             )
         }
@@ -47,7 +39,7 @@ actual object KoinInitializer {
 
     // Swift-friendly overload: `vararg` doesn't bridge cleanly from Swift,
     // so iOS callers use this instead of `init(baseUrl:additionalModules:)`.
-    fun start(baseUrl: String) {
-        init(baseUrl = baseUrl)
+    fun start(baseUrl: String, logNetwork: Boolean) {
+        init(baseUrl = baseUrl, logNetwork = logNetwork)
     }
 }

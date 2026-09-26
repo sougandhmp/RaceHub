@@ -6,9 +6,9 @@ struct HomeView: View {
 
     let onSignedOut: () -> Void
 
-    @StateObject private var viewModel = HomeViewModel()
-    @StateObject private var raceViewModel = RaceViewModel()
-    @StateObject private var forumViewModel = ForumViewModel()
+    @StateObject private var homeModel = HomeModel.home()
+    @StateObject private var raceModel = RaceModel.race()
+    @StateObject private var forumModel = ForumModel.forum()
     @State private var path = NavigationPath()
     @Environment(\.colorScheme) private var colorScheme
 
@@ -22,21 +22,21 @@ struct HomeView: View {
                 VStack(spacing: 0) {
                     HomeHeaderView(colors: colors)
 
-                    switch viewModel.state.selectedTab {
-                    case .race:
+                    switch homeModel.state.selectedTab {
+                    case HomeTab.race:
                         RaceView(
-                            viewModel: raceViewModel,
+                            model: raceModel,
                             onViewAllSchedule: { path.append("schedule") },
                             onViewAllStandings: { path.append("standings") },
                             onViewRaceDetail: { race in path.append(race) }
                         )
-                    case .forum:
+                    case HomeTab.forum:
                         ForumView(
-                            viewModel: forumViewModel,
+                            model: forumModel,
                             onCreateThread: { path.append("createThread") },
                             onThreadTap: { thread in path.append(thread) }
                         )
-                    case .profile:
+                    default: // HomeTab.profile (Kotlin enums bridge as classes, so Swift needs a default)
                         ProfileView(onSignedOut: onSignedOut)
                     }
                 }
@@ -45,24 +45,24 @@ struct HomeView: View {
             // content's scroll views inset automatically — no magic bottom padding.
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 HomeBottomBar(
-                    selectedTab: viewModel.state.selectedTab,
+                    selectedTab: homeModel.state.selectedTab,
                     colors: colors,
-                    onTabSelected: { viewModel.send(.tabSelected($0)) }
+                    onTabSelected: { homeModel.send(HomeIntent.TabSelected(tab: $0)) }
                 )
             }
             .navigationDestination(for: String.self) { destination in
                 if destination == "schedule" {
                     ScheduleView(
-                        schedule: raceViewModel.state.raceSchedule
+                        schedule: raceModel.state.raceSchedule
                     )
                 } else if destination == "standings" {
                     StandingsView(
-                        drivers: raceViewModel.state.driverStandings,
-                        constructors: raceViewModel.state.constructorStandings
+                        drivers: raceModel.state.driverStandings,
+                        constructors: raceModel.state.constructorStandings
                     )
                 } else if destination == "createThread" {
                     CreateThreadView(onThreadCreated: {
-                        forumViewModel.send(.refresh)
+                        forumModel.send(ForumIntent.Refresh.shared)
                     })
                 }
             }
@@ -70,7 +70,7 @@ struct HomeView: View {
             // "selected" value: the destination closure can run with a stale
             // snapshot of that state and render nothing.
             .navigationDestination(for: Race.self) { race in
-                RaceDetailView(race: race)
+                RaceDetailView(race: race, model: raceModel)
             }
             .navigationDestination(for: Shared.Thread.self) { thread in
                 ThreadDetailView(thread: thread)
@@ -158,9 +158,9 @@ private struct TabItem: View {
 
     private func iconName(for tab: HomeTab) -> String {
         switch tab {
-        case .race:    return "hexagon.fill"
-        case .forum:   return "bubble.left.fill"
-        case .profile: return "person.fill"
+        case HomeTab.race:  return "hexagon.fill"
+        case HomeTab.forum: return "bubble.left.fill"
+        default:            return "person.fill"
         }
     }
 }

@@ -2,6 +2,6 @@ package org.gce.racehub.util
 
 import android.util.Log
 
-actual fun logError(tag: String, message: String, throwable: Throwable?) {
+internal actual fun logError(tag: String, message: String, throwable: Throwable?) {
     Log.e(tag, message, throwable)
 }

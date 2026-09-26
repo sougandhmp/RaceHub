@@ -1,5 +1,10 @@
 package org.gce.racehub.home
 
+import org.gce.racehub.forum.presentation.ForumViewModel
+import org.gce.racehub.race.presentation.RaceViewModel
+import org.gce.racehub.home.presentation.HomeIntent
+import org.gce.racehub.home.presentation.HomeTab
+import org.gce.racehub.home.presentation.HomeViewModel
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -40,7 +45,7 @@ import org.gce.racehub.profile.ProfileScreen
 import org.gce.racehub.race.RaceScreen
 import org.gce.racehub.race.di.createRaceModule
 import org.gce.racehub.race.domain.model.Race
-import org.gce.racehub.race.domain.model.Thread
+import org.gce.racehub.forum.domain.model.Thread
 import org.gce.racehub.theme.LocalAppColors
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.KoinApplication
@@ -59,6 +64,8 @@ private val HomeTab.icon: ImageVector
 
 @Composable
 fun HomeScreen(
+    raceViewModel: RaceViewModel,
+    forumViewModel: ForumViewModel,
     viewModel: HomeViewModel = koinViewModel(),
     onViewAllSchedule: () -> Unit,
     onViewAllStandings: () -> Unit,
@@ -87,12 +94,14 @@ fun HomeScreen(
         ) {
             when (state.selectedTab) {
                 HomeTab.Race -> RaceScreen(
+                    viewModel = raceViewModel,
                     onViewAllSchedule = onViewAllSchedule,
                     onViewAllStandings = onViewAllStandings,
                     onViewRaceDetail = onViewRaceDetail
                 )
 
                 HomeTab.Forum -> ForumScreen(
+                    viewModel = forumViewModel,
                     onCreateThread = onCreateThread,
                     onThreadClick = onThreadClick
                 )
@@ -185,6 +194,8 @@ fun HomeScreenPreview() {
         )
     }) {
         HomeScreen(
+            raceViewModel = koinViewModel(),
+            forumViewModel = koinViewModel(),
             onViewAllSchedule = {},
             onViewAllStandings = {}
         )

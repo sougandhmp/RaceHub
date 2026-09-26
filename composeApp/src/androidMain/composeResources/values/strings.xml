@@ -52,7 +52,7 @@
 
     <!-- Login screen -->
     <string name="login_tagline">Your Racing Universe</string>
-    <string name="login_no_account">Don\'t have an account?</string>
+    <string name="login_no_account">Don't have an account?</string>
     <string name="action_forgot_password">Forgot Password?</string>
 
     <!-- Sign Up screen -->
@@ -66,7 +66,7 @@
     <!-- Forgot Password screen -->
     <string name="forgot_password_request_title">Forgot Password?</string>
     <string name="forgot_password_reset_title">Reset Password</string>
-    <string name="forgot_password_request_subtitle">Enter your email and we\'ll send you a reset code.</string>
+    <string name="forgot_password_request_subtitle">Enter your email and we'll send you a reset code.</string>
     <string name="forgot_password_confirm_subtitle">Code sent to %1$s. Enter it below with your new password.</string>
     <string name="label_reset_code">Reset Code</string>
     <string name="label_new_password">New Password</string>
@@ -78,7 +78,8 @@
     <string name="email_verification_subtitle">We sent a verification code to %1$s. Enter it below to activate your account.</string>
     <string name="label_verification_code">Verification Code</string>
     <string name="action_verify_email">Verify Email</string>
-    <string name="action_resend_code">Didn\'t get it? Resend code</string>
+    <string name="action_resend_code">Didn't get it? Resend code</string>
+    <string name="email_verification_code_resent">A new code has been sent.</string>
 
     <!-- Home screen -->
     <string name="home_title">Race Hub</string>
@@ -114,7 +115,7 @@
 
     <!-- Create thread screen -->
     <string name="title_new_thread">New Thread</string>
-    <string name="create_thread_title_placeholder">What\'s on your mind?</string>
+    <string name="create_thread_title_placeholder">What's on your mind?</string>
     <string name="create_thread_content_placeholder">Share your thoughts…</string>
 
     <!-- Profile screen -->
@@ -149,6 +150,21 @@
     <string name="label_points_abbr">PTS</string>
     <string name="label_pos">POS</string>
     <string name="label_race_starts">Race starts %1$s local</string>
-    <string name="action_try_again">Try again</string>
-    <string name="contentdesc_dismiss_error">Dismiss error</string>
+    <string name="race_error_network">Can't reach the server. Check your connection and pull to refresh.</string>
+    <string name="race_error_server">The server had a problem loading races. Pull to try again.</string>
+    <string name="race_error_unknown">Something went wrong loading races. Pull to try again.</string>
+    <string name="error_network">Can't reach the server. Check your connection and try again.</string>
+    <string name="error_server">The server had a problem. Please try again.</string>
+    <string name="error_unknown">Something went wrong. Please try again.</string>
+    <string name="error_not_signed_in">Sign in to post or comment.</string>
+    <string name="error_like_failed">Couldn't update the like. Please try again.</string>
+    <string name="auth_error_email_required">Enter your email.</string>
+    <string name="auth_error_email_password_required">Enter your email and password.</string>
+    <string name="auth_error_invalid_email">Enter a valid email address.</string>
+    <string name="auth_error_password_too_short">Password must be at least 6 characters.</string>
+    <string name="auth_error_passwords_mismatch">Passwords don't match.</string>
+    <string name="auth_error_username_required">Choose a username.</string>
+    <string name="auth_error_country_required">Select your country.</string>
+    <string name="auth_error_code_required">Enter the code we emailed you.</string>
+    <string name="auth_error_rejected">The request was declined. Please check your details.</string>
 </resources>

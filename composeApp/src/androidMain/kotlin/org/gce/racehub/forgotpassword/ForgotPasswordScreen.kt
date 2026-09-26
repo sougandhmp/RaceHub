@@ -1,5 +1,11 @@
 package org.gce.racehub.forgotpassword
 
+import org.gce.racehub.ui.message
+import org.gce.racehub.auth.presentation.ForgotPasswordEffect
+import org.gce.racehub.auth.presentation.ForgotPasswordIntent
+import org.gce.racehub.auth.presentation.ForgotPasswordState
+import org.gce.racehub.auth.presentation.ForgotPasswordStep
+import org.gce.racehub.auth.presentation.ForgotPasswordViewModel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -81,7 +87,7 @@ fun ForgotPasswordScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        viewModel.effect.collect { effect ->
+        viewModel.effects.collect { effect ->
             when (effect) {
                 is ForgotPasswordEffect.PasswordResetSuccess -> onPasswordResetSuccess()
             }
@@ -137,7 +143,7 @@ private fun ForgotPasswordContent(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = if (state.step == ForgotPasswordStep.REQUEST)
+                text = if (state.step == ForgotPasswordStep.Request)
                     stringResource(Res.string.forgot_password_request_title)
                 else
                     stringResource(Res.string.forgot_password_reset_title),
@@ -149,7 +155,7 @@ private fun ForgotPasswordContent(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = if (state.step == ForgotPasswordStep.REQUEST)
+                text = if (state.step == ForgotPasswordStep.Request)
                     stringResource(Res.string.forgot_password_request_subtitle)
                 else
                     stringResource(Res.string.forgot_password_confirm_subtitle, state.email),
@@ -161,16 +167,16 @@ private fun ForgotPasswordContent(
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            if (state.step == ForgotPasswordStep.REQUEST) {
+            if (state.step == ForgotPasswordStep.Request) {
                 RequestStep(state = state, onIntent = onIntent, focusManager = focusManager)
             } else {
                 ConfirmStep(state = state, onIntent = onIntent, focusManager = focusManager)
             }
 
-            if (state.errorMessage != null) {
+            if (state.error != null) {
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
-                    text = state.errorMessage,
+                    text = state.error?.message().orEmpty(),
                     color = RacingRed,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -181,7 +187,7 @@ private fun ForgotPasswordContent(
             Button(
                 onClick = {
                     focusManager.clearFocus()
-                    if (state.step == ForgotPasswordStep.REQUEST) onIntent(ForgotPasswordIntent.RequestReset)
+                    if (state.step == ForgotPasswordStep.Request) onIntent(ForgotPasswordIntent.RequestReset)
                     else onIntent(ForgotPasswordIntent.ConfirmReset)
                 },
                 enabled = !state.isLoading,
@@ -202,7 +208,7 @@ private fun ForgotPasswordContent(
                     )
                 } else {
                     Text(
-                        text = if (state.step == ForgotPasswordStep.REQUEST)
+                        text = if (state.step == ForgotPasswordStep.Request)
                             stringResource(Res.string.action_send_reset_code)
                         else
                             stringResource(Res.string.forgot_password_reset_title),
@@ -338,7 +344,7 @@ private fun ForgotPasswordRequestPreview() {
 @Composable
 private fun ForgotPasswordConfirmPreview() {
     ForgotPasswordContent(
-        state = ForgotPasswordState(step = ForgotPasswordStep.CONFIRM, email = "driver@racehub.com"),
+        state = ForgotPasswordState(step = ForgotPasswordStep.Confirm, email = "driver@racehub.com"),
         onIntent = {},
         onBack = {}
     )

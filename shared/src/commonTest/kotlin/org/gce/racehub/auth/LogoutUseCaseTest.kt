@@ -1,8 +1,8 @@
 package org.gce.racehub.auth
 
 import kotlinx.coroutines.test.runTest
-import org.gce.racehub.auth.domain.model.User
-import org.gce.racehub.auth.domain.session.UserSession
+import org.gce.racehub.core.domain.model.User
+import org.gce.racehub.core.domain.session.UserSession
 import org.gce.racehub.auth.domain.usecase.LogoutUseCase
 import org.gce.racehub.fake.FakeAuthRepository
 import org.gce.racehub.fake.FakeSessionStorage
@@ -50,7 +50,7 @@ class LogoutUseCaseTest {
     }
 
     @Test
-    fun `successful server logout clears the session`() = runTest {
+    fun `successful server revoke clears the session and reports it`() = runTest {
         val user = User("1", "a@b.com", "Alice", token = "my-token")
         val (useCase, session) = makeUseCase(user)
         repository.logoutResult = true
@@ -60,12 +60,12 @@ class LogoutUseCaseTest {
     }
 
     @Test
-    fun `failed server logout keeps the session intact`() = runTest {
+    fun `failed server revoke still signs the user out locally`() = runTest {
         val user = User("1", "a@b.com", "Alice", token = "my-token")
         val (useCase, session) = makeUseCase(user)
         repository.logoutResult = false
         val result = useCase()
         assertFalse(result)
-        assertEquals(user, session.currentUser.value)
+        assertNull(session.currentUser.value)
     }
 }

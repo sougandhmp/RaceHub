@@ -2,126 +2,86 @@ package org.gce.racehub.auth.data.repository
 
 import org.gce.racehub.auth.data.dto.toDomainModel
 import org.gce.racehub.auth.data.network.AuthService
-import org.gce.racehub.auth.domain.model.AuthResult
-import org.gce.racehub.auth.domain.model.EmailVerificationResult
-import org.gce.racehub.auth.domain.model.PasswordResetResult
+import org.gce.racehub.auth.domain.model.AuthError
+import org.gce.racehub.auth.domain.model.AuthFailure
+import org.gce.racehub.auth.domain.model.AuthOutcome
+import org.gce.racehub.auth.domain.model.authFailure
 import org.gce.racehub.auth.domain.repository.AuthRepository
+import org.gce.racehub.core.data.safeCall
+import org.gce.racehub.core.domain.DataResult
+import org.gce.racehub.core.domain.dataOrNull
+import org.gce.racehub.core.domain.model.User
+import org.gce.racehub.core.domain.mapError
 
 /**
  * Network-based implementation of [AuthRepository].
  *
  * Makes authenticated HTTP requests to the RaceHub API.
- * Replaces [AuthRepositoryImpl] when the backend is available.
  *
  * @param authService The network service that handles API calls
  */
-class AuthRepositoryNetworkImpl(private val authService: AuthService) : AuthRepository {
+internal class AuthRepositoryNetworkImpl(private val authService: AuthService) : AuthRepository {
 
-    /**
-     * Authenticates a user by calling the login API endpoint.
-     *
-     * Communicates with: POST /api/v1/auth/login
-     * Expected response: [LoginResponseDto] containing token and user data
-     *
-     * @param email The user's email address
-     * @param password The user's password
-     * @return [AuthResult.success] with user data and token on success,
-     *         or [AuthResult.failure] with an error message on failure
-     */
-    override suspend fun login(email: String, password: String): AuthResult {
-        return try {
-            val response = authService.login(email, password)
+    private companion object {
+        const val TAG = "AuthRepository"
+    }
 
-            if (response.success && response.data != null) {
-                val user = response.toDomainModel()
-                if (user != null) {
-                    AuthResult.success(user)
-                } else {
-                    AuthResult.failure("Failed to parse user data from response")
-                }
-            } else {
-                AuthResult.failure(response.message)
-            }
-        } catch (e: Exception) {
-            AuthResult.failure(
-                e.message ?: "An error occurred during login. Please check your connection and try again."
-            )
+    override suspend fun login(email: String, password: String): AuthOutcome<User> = call("log in") {
+        val response = authService.login(email, password)
+        when {
+            !response.success || response.data == null -> authFailure(AuthError.Rejected, response.message)
+            else -> response.toDomainModel()?.let { DataResult.Success(it) } ?: authFailure(AuthError.Server)
         }
     }
 
-    override suspend fun signUp(username: String, email: String, password: String, country: String): AuthResult {
-        return try {
+    override suspend fun signUp(username: String, email: String, password: String, country: String): AuthOutcome<User> =
+        call("sign up") {
             val response = authService.signUp(username, email, password, country)
             if (response.success && response.data != null) {
-                AuthResult.success(response.data.user.toDomainModel(response.data.token))
+                DataResult.Success(response.data.user.toDomainModel(response.data.token))
             } else {
-                AuthResult.failure(response.message)
+                authFailure(AuthError.Rejected, response.message)
             }
-        } catch (_: Exception) {
-            AuthResult.failure("Could not create account. Check your connection and try again.")
         }
-    }
 
-    override suspend fun logout(token: String): Boolean {
-        return try {
-            authService.logout(token).success
-        } catch (e: Exception) {
-            false
-        }
-    }
+    /** Best effort: false on any failure (the caller signs out locally regardless). */
+    override suspend fun logout(token: String): Boolean =
+        safeCall(TAG, "log out") { authService.logout(token).success }.dataOrNull() ?: false
 
-    override suspend fun requestPasswordReset(email: String): PasswordResetResult {
-        return try {
-            val response = authService.requestPasswordReset(email)
-            if (response.success) PasswordResetResult.success()
-            else PasswordResetResult.failure(response.message)
-        } catch (e: Exception) {
-            PasswordResetResult.failure("Could not send reset code. Check your connection and try again.")
+    override suspend fun requestPasswordReset(email: String): AuthOutcome<Unit> =
+        acknowledged("request password reset") {
+            authService.requestPasswordReset(email).let { it.success to it.message }
         }
-    }
 
-    override suspend fun confirmPasswordReset(
-        email: String,
-        otp: String,
-        newPassword: String
-    ): PasswordResetResult {
-        return try {
-            val response = authService.confirmPasswordReset(email, otp, newPassword)
-            if (response.success) PasswordResetResult.success()
-            else PasswordResetResult.failure(response.message)
-        } catch (e: Exception) {
-            PasswordResetResult.failure("Could not reset password. Check your connection and try again.")
+    override suspend fun confirmPasswordReset(email: String, otp: String, newPassword: String): AuthOutcome<Unit> =
+        acknowledged("confirm password reset") {
+            authService.confirmPasswordReset(email, otp, newPassword).let { it.success to it.message }
         }
-    }
 
-    override suspend fun sendOtp(email: String, subject: String): EmailVerificationResult {
-        return try {
-            val response = authService.sendOtp(email, subject)
-            if (response.success) EmailVerificationResult.success()
-            else EmailVerificationResult.failure(response.message)
-        } catch (e: Exception) {
-            EmailVerificationResult.failure("Could not send verification code. Check your connection and try again.")
-        }
-    }
+    override suspend fun sendOtp(email: String, subject: String): AuthOutcome<Unit> =
+        acknowledged("send verification code") { authService.sendOtp(email, subject).let { it.success to it.message } }
 
-    override suspend fun resendOtp(email: String, subject: String): EmailVerificationResult {
-        return try {
-            val response = authService.resendOtp(email, subject)
-            if (response.success) EmailVerificationResult.success()
-            else EmailVerificationResult.failure(response.message)
-        } catch (e: Exception) {
-            EmailVerificationResult.failure("Could not resend code. Check your connection and try again.")
-        }
-    }
+    override suspend fun resendOtp(email: String, subject: String): AuthOutcome<Unit> =
+        acknowledged("resend verification code") { authService.resendOtp(email, subject).let { it.success to it.message } }
 
-    override suspend fun verifyOtp(email: String, otp: String): EmailVerificationResult {
-        return try {
-            val response = authService.verifyOtp(email, otp)
-            if (response.success) EmailVerificationResult.success()
-            else EmailVerificationResult.failure(response.message)
-        } catch (e: Exception) {
-            EmailVerificationResult.failure("Could not verify code. Check your connection and try again.")
+    override suspend fun verifyOtp(email: String, otp: String): AuthOutcome<Unit> =
+        acknowledged("verify code") { authService.verifyOtp(email, otp).let { it.success to it.message } }
+
+    /** For endpoints that answer only yes or no: [request] returns the success flag and the server's message. */
+    private suspend fun acknowledged(what: String, request: suspend () -> Pair<Boolean, String>): AuthOutcome<Unit> =
+        call(what) {
+            val (success, message) = request()
+            if (success) DataResult.Success(Unit) else authFailure(AuthError.Rejected, message)
         }
-    }
+
+    /**
+     * The auth error boundary: a server "no" is returned by [block]; an exception
+     * is logged by [safeCall] and becomes Network / Server / Unknown.
+     * Cancellation propagates.
+     */
+    private suspend fun <T> call(what: String, block: suspend () -> AuthOutcome<T>): AuthOutcome<T> =
+        when (val result = safeCall(TAG, what) { block() }) {
+            is DataResult.Success -> result.data
+            is DataResult.Failure -> result.mapError(AuthFailure::from)
+        }
 }
-

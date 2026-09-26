@@ -3,7 +3,8 @@ import Shared
 
 struct RaceView: View {
 
-    @ObservedObject var viewModel: RaceViewModel
+    @ObservedObject var model: RaceModel
+    @State private var loadErrorMessage: String?
     @Environment(\.colorScheme) private var colorScheme
     let onViewAllSchedule: () -> Void
     let onViewAllStandings: () -> Void
@@ -13,7 +14,7 @@ struct RaceView: View {
 
     var body: some View {
         ScrollView {
-            if viewModel.state.isLoading && viewModel.state.raceSchedule.isEmpty {
+            if model.state.isLoading && model.state.raceSchedule.isEmpty {
                 ProgressView()
                     .progressViewStyle(CircularProgressViewStyle(tint: AppColors.racingRed))
                     .frame(maxWidth: .infinity)
@@ -21,20 +22,21 @@ struct RaceView: View {
             } else {
                 VStack(spacing: 24) {
                     NextRaceSection(
-                        race: viewModel.state.raceSchedule.first { !$0.isCompleted },
-                        totalRaces: viewModel.state.raceSchedule.count,
+                        race: model.state.nextRace,
+                        sessions: model.state.nextRaceSessions.map(SessionChipData.init),
+                        totalRaces: model.state.raceSchedule.count,
                         colors: colors,
                         onViewAllSchedule: onViewAllSchedule,
                         onViewRaceDetail: onViewRaceDetail
                     )
                     StandingsSection(
-                        drivers: Array(viewModel.state.driverStandings.prefix(3)),
-                        constructors: Array(viewModel.state.constructorStandings.prefix(3)),
+                        drivers: Array(model.state.driverStandings.prefix(3)),
+                        constructors: Array(model.state.constructorStandings.prefix(3)),
                         colors: colors,
                         onViewAll: onViewAllStandings
                     )
                     FeaturedSection(
-                        thread: viewModel.state.trendingThreads.first,
+                        thread: model.state.trendingThreads.first,
                         colors: colors
                     )
                 }
@@ -44,18 +46,34 @@ struct RaceView: View {
             }
         }
         .refreshable {
-            await viewModel.refresh()
+            model.send(RaceIntent.Refresh.shared)
         }
-        .overlay(alignment: .top) {
-            if let message = viewModel.state.errorMessage {
-                ErrorBanner(
-                    message: message,
-                    colors: colors,
-                    onRetry: { viewModel.send(.refresh) },
-                    onDismiss: { viewModel.send(.dismissError) }
-                )
+        // One-off effects from the shared ViewModel: shown once, never replayed.
+        .onReceive(model.effects) { effect in
+            if let loadError = effect as? RaceEffect.ShowLoadError {
+                loadErrorMessage = Self.message(for: loadError.error)
             }
         }
+        .alert(
+            String(localized: "Couldn't load races"),
+            isPresented: Binding(
+                get: { loadErrorMessage != nil },
+                set: { if !$0 { loadErrorMessage = nil } }
+            )
+        ) {
+            Button(String(localized: "OK"), role: .cancel) {}
+        } message: {
+            Text(loadErrorMessage ?? "")
+        }
+    }
+
+    private static func message(for error: DataError) -> String {
+        if error == DataError.network {
+            return String(localized: "Can't reach the server. Check your connection and pull to refresh.")
+        } else if error == DataError.server {
+            return String(localized: "The server had a problem loading races. Pull to try again.")
+        }
+        return String(localized: "Something went wrong loading races. Pull to try again.")
     }
 }
 
@@ -65,6 +83,13 @@ struct SessionChipData {
     let label: String
     let date: String
     let time: String
+}
+
+extension SessionChipData {
+    /// Chip for a session formatted by the shared Kotlin code.
+    init(_ session: WeekendSession) {
+        self.init(label: session.shortLabel, date: session.date, time: session.time)
+    }
 }
 
 private func shortRaceName(_ name: String) -> String {
@@ -97,51 +122,9 @@ private func countryFlag(_ country: String) -> String {
     return "🏁"
 }
 
-private func raceHeaderDate(from dateString: String) -> String {
-    guard let date = parseRaceDate(dateString) else { return "" }
-    let fmt = DateFormatter()
-    fmt.dateFormat = "EEE MMM d"
-    fmt.locale = Locale(identifier: "en_US")
-    fmt.timeZone = TimeZone(identifier: "UTC")
-    return fmt.string(from: date).uppercased()
-}
-
-func buildSessionChips(from raceDateString: String?) -> [SessionChipData] {
-    let placeholders = ["FP1", "FP2", "FP3", "QUAL", "RACE"].map {
-        SessionChipData(label: $0, date: "—", time: "—")
-    }
-    guard let s = raceDateString, let raceDate = parseRaceDate(s) else {
-        return placeholders
-    }
-    var utcCal = Calendar(identifier: .gregorian)
-    utcCal.timeZone = TimeZone(identifier: "UTC")!
-
-    let dateFmt = DateFormatter()
-    dateFmt.dateFormat = "MMM d"
-    dateFmt.locale = Locale(identifier: "en_US")
-    // Same zone as timeFmt so a chip's date and time describe the same instant.
-    dateFmt.timeZone = .current
-
-    let timeFmt = DateFormatter()
-    timeFmt.dateFormat = "HH:mm"
-    timeFmt.timeZone = .current
-
-    func dateAt(days: Int, hours: Int = 0) -> Date {
-        var c = DateComponents(); c.day = days; c.hour = hours
-        return utcCal.date(byAdding: c, to: raceDate) ?? raceDate
-    }
-
-    return [
-        SessionChipData(label: "FP1",  date: dateFmt.string(from: dateAt(days: -2, hours: -3)), time: timeFmt.string(from: dateAt(days: -2, hours: -3))),
-        SessionChipData(label: "FP2",  date: dateFmt.string(from: dateAt(days: -2)),             time: timeFmt.string(from: dateAt(days: -2))),
-        SessionChipData(label: "FP3",  date: dateFmt.string(from: dateAt(days: -1, hours: -3)), time: timeFmt.string(from: dateAt(days: -1, hours: -3))),
-        SessionChipData(label: "QUAL", date: dateFmt.string(from: dateAt(days: -1)),             time: timeFmt.string(from: dateAt(days: -1))),
-        SessionChipData(label: "RACE", date: dateFmt.string(from: dateAt(days: 0)),              time: timeFmt.string(from: dateAt(days: 0))),
-    ]
-}
-
 private struct NextRaceSection: View {
     let race: Race?
+    let sessions: [SessionChipData]
     let totalRaces: Int
     let colors: AppColors
     let onViewAllSchedule: () -> Void
@@ -152,7 +135,7 @@ private struct NextRaceSection: View {
             // R9/24 · SUN MAY 24  +  🇨🇦
             HStack {
                 let roundLabel = race.map { "R\(Int($0.round))/\(totalRaces)" } ?? ""
-                let dateLabel = race.flatMap { raceHeaderDate(from: $0.dateTime).isEmpty ? nil : raceHeaderDate(from: $0.dateTime) } ?? ""
+                let dateLabel = race.map { RaceFormattingKt.raceHeaderDate(dateTime: $0.dateTime) } ?? ""
                 Text([roundLabel, dateLabel].filter { !$0.isEmpty }.joined(separator: "  ·  "))
                     .font(.system(size: 12, weight: .bold))
                     .foregroundColor(colors.mutedText)
@@ -193,7 +176,7 @@ private struct NextRaceSection: View {
             Spacer().frame(height: 16)
 
             // Session strip
-            SessionStrip(chips: buildSessionChips(from: race?.dateTime), colors: colors)
+            SessionStrip(chips: sessions, colors: colors)
 
             Spacer().frame(height: 16)
 
@@ -523,7 +506,7 @@ private struct FeaturedSection: View {
 
 #Preview {
     RaceView(
-        viewModel: RaceViewModel(),
+        model: .race(),
         onViewAllSchedule: {},
         onViewAllStandings: {},
         onViewRaceDetail: { _ in }

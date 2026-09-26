@@ -1,7 +1,7 @@
 package org.gce.racehub.auth
 
-import org.gce.racehub.auth.domain.model.User
-import org.gce.racehub.auth.domain.session.UserSession
+import org.gce.racehub.core.domain.model.User
+import org.gce.racehub.core.domain.session.UserSession
 import org.gce.racehub.fake.FakeSessionStorage
 import kotlin.test.Test
 import kotlin.test.assertEquals

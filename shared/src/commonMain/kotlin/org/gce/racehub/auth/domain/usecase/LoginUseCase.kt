@@ -1,6 +1,9 @@
 package org.gce.racehub.auth.domain.usecase
 
-import org.gce.racehub.auth.domain.model.AuthResult
+import org.gce.racehub.auth.domain.model.AuthError
+import org.gce.racehub.auth.domain.model.AuthOutcome
+import org.gce.racehub.auth.domain.model.authFailure
+import org.gce.racehub.core.domain.model.User
 import org.gce.racehub.auth.domain.repository.AuthRepository
 
 /**
@@ -12,26 +15,25 @@ import org.gce.racehub.auth.domain.repository.AuthRepository
  *
  * Shared between Android and iOS via the KMP `shared` module.
  */
-class LoginUseCase(private val authRepository: AuthRepository) {
+internal class LoginUseCase(private val authRepository: AuthRepository) {
 
     /**
      * Validates [email] and [password], then calls [AuthRepository.login].
      *
      * @param email    The user's email address.
      * @param password The plain-text password (minimum 6 characters).
-     * @return [AuthResult] with the authenticated [User] on success, or a
-     *         human-readable error message on failure.
+     * @return The authenticated [User] on success, otherwise the
+     *         [org.gce.racehub.auth.domain.model.AuthFailure] explaining why not.
      */
-    @Throws(Exception::class)
-    suspend operator fun invoke(email: String, password: String): AuthResult {
+    suspend operator fun invoke(email: String, password: String): AuthOutcome<User> {
         if (email.isBlank() || password.isBlank()) {
-            return AuthResult.failure("Email and password cannot be empty")
+            return authFailure(AuthError.EmailAndPasswordRequired)
         }
         if (!email.contains("@")) {
-            return AuthResult.failure("Invalid email format")
+            return authFailure(AuthError.InvalidEmail)
         }
         if (password.length < 6) {
-            return AuthResult.failure("Password must be at least 6 characters")
+            return authFailure(AuthError.PasswordTooShort)
         }
         return authRepository.login(email, password)
     }

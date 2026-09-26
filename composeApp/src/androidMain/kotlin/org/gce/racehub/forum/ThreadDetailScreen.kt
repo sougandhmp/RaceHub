@@ -1,5 +1,13 @@
 package org.gce.racehub.forum
 
+import org.gce.racehub.forum.presentation.ThreadDetailEffect
+import org.gce.racehub.forum.presentation.ThreadDetailIntent
+import org.gce.racehub.forum.presentation.ThreadDetailState
+import org.gce.racehub.forum.presentation.ThreadDetailViewModel
+import org.gce.racehub.ui.message
+import org.jetbrains.compose.resources.getString
+import racehub.composeapp.generated.resources.error_like_failed
+import racehub.composeapp.generated.resources.error_not_signed_in
 import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -56,9 +64,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.gce.racehub.race.domain.model.Thread
-import org.gce.racehub.race.domain.model.ThreadAuthor
-import org.gce.racehub.race.domain.model.ThreadComment
+import org.gce.racehub.forum.domain.model.Thread
+import org.gce.racehub.forum.domain.model.ThreadAuthor
+import org.gce.racehub.forum.domain.model.ThreadComment
 import org.gce.racehub.theme.AppColorScheme
 import org.gce.racehub.theme.DarkAppColors
 import org.gce.racehub.theme.Dimens
@@ -91,7 +99,22 @@ fun ThreadDetailScreen(
     val colors = LocalAppColors.current
     val context = LocalContext.current
 
-    LaunchedEffect(Unit) { viewModel.initLikes(thread.likes) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Resets the ViewModel's state when a different thread opens.
+    LaunchedEffect(thread.id) { viewModel.onIntent(ThreadDetailIntent.Open(thread.id, thread.likes)) }
+
+    // One-off effects: shown once, never replayed on recomposition.
+    LaunchedEffect(viewModel) {
+        viewModel.effects.collect { effect ->
+            val message = when (effect) {
+                ThreadDetailEffect.NotSignedIn -> getString(Res.string.error_not_signed_in)
+                is ThreadDetailEffect.CommentFailed -> getString(effect.error.message())
+                is ThreadDetailEffect.LikeFailed -> getString(Res.string.error_like_failed)
+            }
+            snackbarHostState.showSnackbar(message)
+        }
+    }
 
     val onShare = {
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
@@ -111,7 +134,8 @@ fun ThreadDetailScreen(
         colors = colors,
         onIntent = viewModel::onIntent,
         onBack = onBack,
-        onShare = onShare
+        onShare = onShare,
+        snackbarHostState = snackbarHostState
     )
 }
 
@@ -123,19 +147,11 @@ private fun ThreadDetailContent(
     colors: AppColorScheme,
     onIntent: (ThreadDetailIntent) -> Unit,
     onBack: () -> Unit,
-    onShare: () -> Unit
+    onShare: () -> Unit,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
     val commentFocusRequester = remember { FocusRequester() }
     val allComments = thread.comments + state.postedComments
-
-    LaunchedEffect(state.errorMessage) {
-        val msg = state.errorMessage
-        if (msg != null) {
-            snackbarHostState.showSnackbar(msg)
-            onIntent(ThreadDetailIntent.DismissError)
-        }
-    }
 
     Scaffold(
         snackbarHost = {
@@ -176,7 +192,7 @@ private fun ThreadDetailContent(
                 onValueChange = { onIntent(ThreadDetailIntent.CommentInputChanged(it)) },
                 canSubmit = state.canSubmit,
                 isSubmitting = state.isSubmitting,
-                onSubmit = { onIntent(ThreadDetailIntent.SubmitComment(thread.id)) },
+                onSubmit = { onIntent(ThreadDetailIntent.SubmitComment) },
                 focusRequester = commentFocusRequester,
                 colors = colors
             )
@@ -198,7 +214,7 @@ private fun ThreadDetailContent(
                     isLiked = state.isLiked,
                     isLiking = state.isLiking,
                     colors = colors,
-                    onLikeClick = { onIntent(ThreadDetailIntent.ToggleLike(thread.id)) },
+                    onLikeClick = { onIntent(ThreadDetailIntent.ToggleLike) },
                     onReplyClick = { commentFocusRequester.requestFocus() },
                     onShareClick = onShare
                 )

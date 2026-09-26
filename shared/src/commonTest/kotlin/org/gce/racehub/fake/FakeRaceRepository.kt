@@ -1,48 +1,40 @@
 package org.gce.racehub.fake
 
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import org.gce.racehub.core.DataResult
-import org.gce.racehub.race.domain.model.*
+import org.gce.racehub.core.domain.DataError
+import org.gce.racehub.core.domain.DataResult
+import org.gce.racehub.race.domain.model.ConstructorStanding
+import org.gce.racehub.race.domain.model.DriverStanding
+import org.gce.racehub.race.domain.model.Race
+import org.gce.racehub.race.domain.model.RaceDetail
+import org.gce.racehub.race.domain.model.TrendingThread
 import org.gce.racehub.race.domain.repository.RaceRepository
 
-class FakeRaceRepository : RaceRepository {
-    val raceSchedule = MutableStateFlow<List<Race>>(emptyList())
-    val driverStandings = MutableStateFlow<List<DriverStanding>>(emptyList())
-    val constructorStandings = MutableStateFlow<List<ConstructorStanding>>(emptyList())
-    val trendingThreads = MutableStateFlow<List<TrendingThread>>(emptyList())
+internal class FakeRaceRepository : RaceRepository {
+    var raceSchedule: List<Race> = emptyList()
+    var driverStandings: List<DriverStanding> = emptyList()
+    var constructorStandings: List<ConstructorStanding> = emptyList()
+    var trendingThreads: List<TrendingThread> = emptyList()
+    var raceDetailResult: RaceDetail = RaceDetail("GP", "Circuit", null, null, emptyList(), emptyList(), null)
 
-    var scheduleRefreshResult: DataResult<Unit> = DataResult.success(Unit)
-    var dashboardRefreshResult: DataResult<Unit> = DataResult.success(Unit)
-    var raceDetailResult: DataResult<RaceDetail> =
-        DataResult.success(RaceDetail("GP", "Circuit", null, null, emptyList(), emptyList(), null))
+    /** Returned as a Failure by [getRaceSchedule] / [getRaceDetail] when set. */
+    var raceScheduleError: DataError? = null
+    var raceDetailError: DataError? = null
+    var raceScheduleCalls = 0
+    /** Per-slug detail and artificial latency, overriding [raceDetailResult]. */
+    var raceDetailBySlug: Map<String, RaceDetail> = emptyMap()
+    var raceDetailDelayMs: Map<String, Long> = emptyMap()
 
-    var scheduleRefreshCount = 0
-    var dashboardRefreshCount = 0
-    var lastRaceDetailSlug: String? = null
-
-    override fun observeRaceSchedule(): Flow<List<Race>> = raceSchedule
-    override fun observeDriverStandings(): Flow<List<DriverStanding>> = driverStandings
-    override fun observeConstructorStandings(): Flow<List<ConstructorStanding>> = constructorStandings
-    override fun observeTrendingThreads(): Flow<List<TrendingThread>> = trendingThreads
-
-    override suspend fun getCachedRaceSchedule(): List<Race> = raceSchedule.value
-    override suspend fun getCachedDriverStandings(): List<DriverStanding> = driverStandings.value
-    override suspend fun getCachedConstructorStandings(): List<ConstructorStanding> = constructorStandings.value
-    override suspend fun getCachedTrendingThreads(): List<TrendingThread> = trendingThreads.value
-
-    override suspend fun refreshRaceSchedule(): DataResult<Unit> {
-        scheduleRefreshCount++
-        return scheduleRefreshResult
+    override suspend fun getRaceSchedule(): DataResult<List<Race>, DataError> {
+        raceScheduleCalls++
+        raceScheduleError?.let { return DataResult.Failure(it) }
+        return DataResult.Success(raceSchedule)
     }
-
-    override suspend fun refreshDashboard(): DataResult<Unit> {
-        dashboardRefreshCount++
-        return dashboardRefreshResult
-    }
-
-    override suspend fun getRaceDetail(slug: String): DataResult<RaceDetail> {
-        lastRaceDetailSlug = slug
-        return raceDetailResult
+    override suspend fun getDriverStandings(): DataResult<List<DriverStanding>, DataError> = DataResult.Success(driverStandings)
+    override suspend fun getConstructorStandings(): DataResult<List<ConstructorStanding>, DataError> = DataResult.Success(constructorStandings)
+    override suspend fun getTrendingThreads(): DataResult<List<TrendingThread>, DataError> = DataResult.Success(trendingThreads)
+    override suspend fun getRaceDetail(slug: String): DataResult<RaceDetail, DataError> {
+        raceDetailDelayMs[slug]?.let { kotlinx.coroutines.delay(it) }
+        raceDetailError?.let { return DataResult.Failure(it) }
+        return DataResult.Success(raceDetailBySlug[slug] ?: raceDetailResult)
     }
 }

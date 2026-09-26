@@ -3,7 +3,8 @@ import Shared
 
 struct ProfileView: View {
 
-    @StateObject private var viewModel = ProfileViewModel()
+    @StateObject private var model = ProfileModel.profile()
+    @State private var errorMessage: String?
     @EnvironmentObject private var themeManager: ThemeManager
     @Environment(\.colorScheme) private var colorScheme
     let onSignedOut: () -> Void
@@ -14,40 +15,40 @@ struct ProfileView: View {
         ZStack {
             colors.background.ignoresSafeArea()
 
-            if let user = viewModel.state.user {
+            if let user = model.state.user {
                 ScrollView {
                     VStack(spacing: 24) {
-                        ProfileHeaderView(user: user, state: viewModel.state, colors: colors)
-                        ProfileStatsView(user: user, state: viewModel.state, colors: colors)
+                        ProfileHeaderView(user: user, state: model.state, colors: colors)
+                        ProfileStatsView(user: user, state: model.state, colors: colors)
                         ProfileDetailsView(user: user, colors: colors)
                         ThemeToggleView(themeManager: themeManager, colors: colors)
-                        if !viewModel.state.recentThreadTitles.isEmpty {
+                        if !model.state.recentThreadTitles.isEmpty {
                             ThreadTitleSection(
                                 heading: "RECENT POSTS",
-                                titles: viewModel.state.recentThreadTitles,
+                                titles: model.state.recentThreadTitles,
                                 colors: colors
                             )
                         }
-                        if !viewModel.state.savedThreadTitles.isEmpty {
+                        if !model.state.savedThreadTitles.isEmpty {
                             ThreadTitleSection(
                                 heading: "SAVED",
-                                titles: viewModel.state.savedThreadTitles,
+                                titles: model.state.savedThreadTitles,
                                 colors: colors
                             )
                         }
-                        if viewModel.state.isLoadingProfile {
+                        if model.state.isLoadingProfile {
                             ProgressView()
                                 .progressViewStyle(CircularProgressViewStyle(tint: AppColors.racingRed))
                         }
-                        if let message = viewModel.state.errorMessage {
+                        if let message = errorMessage {
                             Text(message)
                                 .font(.system(size: 13))
                                 .foregroundColor(AppColors.racingRed)
                         }
                         SignOutButton(
-                            isSigningOut: viewModel.state.isSigningOut,
+                            isSigningOut: model.state.isSigningOut,
                             colors: colors,
-                            action: { viewModel.send(.signOut) }
+                            action: { model.send(ProfileIntent.SignOut.shared) }
                         )
                     }
                     .padding(.horizontal, 20)
@@ -55,7 +56,7 @@ struct ProfileView: View {
                     .padding(.bottom, 24)
                 }
                 .refreshable {
-                    await viewModel.refresh()
+                    model.send(ProfileIntent.Refresh.shared)
                 }
             } else {
                 Text("Not signed in.")
@@ -63,10 +64,12 @@ struct ProfileView: View {
                     .foregroundColor(colors.mutedText)
             }
         }
-        .onReceive(viewModel.effectPublisher) { effect in
-            switch effect {
-            case .signedOut:
+        // One-off effects from the shared ViewModel: shown once, never replayed.
+        .onReceive(model.effects) { effect in
+            if effect is ProfileEffect.SignedOut {
                 onSignedOut()
+            } else if let loadError = effect as? ProfileEffect.ShowLoadError {
+                errorMessage = loadError.error.userMessage
             }
         }
     }
@@ -185,9 +188,9 @@ private struct ProfileStatsView: View {
 
     var body: some View {
         HStack {
-            StatCell(label: "POSTS", value: "\(state.postsCount > 0 ? state.postsCount : Int(user.postsCount))", colors: colors)
+            StatCell(label: "POSTS", value: "\(state.postsCount)", colors: colors)
             Spacer()
-            StatCell(label: "SAVED", value: state.isLoadingProfile ? "…" : "\(state.savedCount)", colors: colors)
+            StatCell(label: "SAVED", value: state.savedCount.map { "\($0)" } ?? "—", colors: colors)
             Spacer()
             StatCell(label: "COUNTRY", value: user.country?.uppercased() ?? "—", colors: colors)
         }

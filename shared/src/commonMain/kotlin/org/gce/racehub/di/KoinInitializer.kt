@@ -1,5 +1,7 @@
 package org.gce.racehub.di
 
+import kotlin.experimental.ExperimentalObjCRefinement
+import kotlin.native.HiddenFromObjC
 import org.koin.core.module.Module
 
 /**
@@ -13,15 +15,11 @@ expect object KoinInitializer {
     /**
      * Initializes Koin with production configuration.
      *
-     * @param baseUrl The API base URL for authentication
+     * @param baseUrl The API base URL, set per build configuration by each app
+     * @param logNetwork Log requests to the console; pass true only for debug builds
      * @param additionalModules Additional Koin modules to include
      */
-    fun init(baseUrl: String, vararg additionalModules: Module)
-
-    /**
-     * Initializes Koin with test configuration (fake repository).
-     *
-     * @param additionalModules Additional Koin modules to include
-     */
-    fun initForTesting(vararg additionalModules: Module)
+    @OptIn(ExperimentalObjCRefinement::class)
+    @HiddenFromObjC
+    fun init(baseUrl: String, logNetwork: Boolean, vararg additionalModules: Module)
 }

@@ -8,6 +8,11 @@ plugins {
     alias(libs.plugins.kotlinSerialization)
 }
 
+/** The API base URL for [buildType], from `racehub.apiBaseUrl.<buildType>` in gradle.properties. */
+fun apiBaseUrl(buildType: String): String =
+    providers.gradleProperty("racehub.apiBaseUrl.$buildType").orNull
+        ?: error("Set racehub.apiBaseUrl.$buildType in gradle.properties")
+
 kotlin {
     androidTarget {
         compilerOptions {
@@ -44,6 +49,11 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
+        // Compose UI tests run on the JVM under Robolectric, next to the other unit tests.
+        androidUnitTest.dependencies {
+            implementation(libs.androidx.compose.ui.test.junit4)
+            implementation(libs.robolectric)
+        }
     }
 }
 
@@ -65,10 +75,24 @@ android {
         }
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     buildTypes {
+        getByName("debug") {
+            buildConfigField("String", "API_BASE_URL", "\"${apiBaseUrl("debug")}\"")
+        }
         getByName("release") {
             isMinifyEnabled = false
+            buildConfigField("String", "API_BASE_URL", "\"${apiBaseUrl("release")}\"")
         }
+    }
+
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+        // Robolectric reaches into FileDescriptor internals, which JDK 21 no longer exports.
+        unitTests.all { it.jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED") }
     }
 
     compileOptions {
@@ -79,6 +103,8 @@ android {
 
 dependencies {
     debugImplementation(libs.compose.uiTooling)
+    // Registers the empty activity that Compose UI tests host content in.
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
 
 composeCompiler {

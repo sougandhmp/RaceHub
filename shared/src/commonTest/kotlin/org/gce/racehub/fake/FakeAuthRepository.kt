@@ -1,18 +1,19 @@
 package org.gce.racehub.fake
 
-import org.gce.racehub.auth.domain.model.AuthResult
-import org.gce.racehub.auth.domain.model.EmailVerificationResult
-import org.gce.racehub.auth.domain.model.PasswordResetResult
-import org.gce.racehub.auth.domain.model.User
+import org.gce.racehub.core.domain.model.User
 import org.gce.racehub.auth.domain.repository.AuthRepository
+import org.gce.racehub.core.domain.DataResult
+import org.gce.racehub.auth.domain.model.AuthOutcome
 
-class FakeAuthRepository : AuthRepository {
-    var loginResult: AuthResult = AuthResult.success(User("1", "test@test.com", "Test User", token = "tok"))
-    var signUpResult: AuthResult = AuthResult.success(User("1", "test@test.com", "Test User", token = "tok"))
+internal class FakeAuthRepository : AuthRepository {
+    var loginResult: AuthOutcome<User> = DataResult.Success(User("1", "test@test.com", "Test User", token = "tok"))
+    var signUpResult: AuthOutcome<User> = DataResult.Success(User("1", "test@test.com", "Test User", token = "tok"))
     var logoutResult: Boolean = true
-    var sendOtpResult: EmailVerificationResult = EmailVerificationResult.success()
-    var resendOtpResult: EmailVerificationResult = EmailVerificationResult.success()
-    var verifyOtpResult: EmailVerificationResult = EmailVerificationResult.success()
+    var sendOtpResult: AuthOutcome<Unit> = DataResult.Success(Unit)
+    var resendOtpResult: AuthOutcome<Unit> = DataResult.Success(Unit)
+    var verifyOtpResult: AuthOutcome<Unit> = DataResult.Success(Unit)
+    var requestResetResult: AuthOutcome<Unit> = DataResult.Success(Unit)
+    var confirmResetResult: AuthOutcome<Unit> = DataResult.Success(Unit)
 
     var loginCallCount = 0
     var logoutCallCount = 0
@@ -26,12 +27,12 @@ class FakeAuthRepository : AuthRepository {
     var lastVerifyOtpEmail: String? = null
     var lastVerifyOtpCode: String? = null
 
-    override suspend fun login(email: String, password: String): AuthResult {
+    override suspend fun login(email: String, password: String): AuthOutcome<User> {
         loginCallCount++
         return loginResult
     }
 
-    override suspend fun signUp(username: String, email: String, password: String, country: String): AuthResult = signUpResult
+    override suspend fun signUp(username: String, email: String, password: String, country: String): AuthOutcome<User> = signUpResult
 
     override suspend fun logout(token: String): Boolean {
         logoutCallCount++
@@ -39,24 +40,24 @@ class FakeAuthRepository : AuthRepository {
         return logoutResult
     }
 
-    override suspend fun requestPasswordReset(email: String): PasswordResetResult = PasswordResetResult.success()
+    override suspend fun requestPasswordReset(email: String): AuthOutcome<Unit> = requestResetResult
 
-    override suspend fun confirmPasswordReset(email: String, otp: String, newPassword: String): PasswordResetResult =
-        PasswordResetResult.success()
+    override suspend fun confirmPasswordReset(email: String, otp: String, newPassword: String): AuthOutcome<Unit> =
+        confirmResetResult
 
-    override suspend fun sendOtp(email: String, subject: String): EmailVerificationResult {
+    override suspend fun sendOtp(email: String, subject: String): AuthOutcome<Unit> {
         lastSendOtpEmail = email
         lastSendOtpSubject = subject
         return sendOtpResult
     }
 
-    override suspend fun resendOtp(email: String, subject: String): EmailVerificationResult {
+    override suspend fun resendOtp(email: String, subject: String): AuthOutcome<Unit> {
         lastResendOtpEmail = email
         lastResendOtpSubject = subject
         return resendOtpResult
     }
 
-    override suspend fun verifyOtp(email: String, otp: String): EmailVerificationResult {
+    override suspend fun verifyOtp(email: String, otp: String): AuthOutcome<Unit> {
         lastVerifyOtpEmail = email
         lastVerifyOtpCode = otp
         return verifyOtpResult

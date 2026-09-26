@@ -1,21 +1,21 @@
 package org.gce.racehub.auth.domain.usecase
 
-import org.gce.racehub.auth.domain.model.PasswordResetResult
+import org.gce.racehub.auth.domain.model.AuthError
+import org.gce.racehub.auth.domain.model.AuthOutcome
+import org.gce.racehub.auth.domain.model.authFailure
 import org.gce.racehub.auth.domain.repository.AuthRepository
 
-class ConfirmPasswordResetUseCase(private val authRepository: AuthRepository) {
-
-    @Throws(Exception::class)
+internal class ConfirmPasswordResetUseCase(private val authRepository: AuthRepository) {
 
     suspend operator fun invoke(
         email: String,
         otp: String,
         newPassword: String,
         confirmPassword: String
-    ): PasswordResetResult {
-        if (otp.isBlank()) return PasswordResetResult.failure("Reset code cannot be empty")
-        if (newPassword.length < 6) return PasswordResetResult.failure("Password must be at least 6 characters")
-        if (newPassword != confirmPassword) return PasswordResetResult.failure("Passwords do not match")
+    ): AuthOutcome<Unit> {
+        if (otp.isBlank()) return authFailure(AuthError.CodeRequired)
+        if (newPassword.length < 6) return authFailure(AuthError.PasswordTooShort)
+        if (newPassword != confirmPassword) return authFailure(AuthError.PasswordsDoNotMatch)
         return authRepository.confirmPasswordReset(email, otp, newPassword)
     }
 }

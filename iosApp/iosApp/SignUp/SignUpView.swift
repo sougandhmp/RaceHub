@@ -6,8 +6,9 @@ private let t = AppColorTokens.shared
 
 struct SignUpView: View {
 
-    @StateObject private var viewModel = SignUpViewModel()
-    let onSignUpSuccess: () -> Void
+    @StateObject private var model = SignUpModel.signUp()
+    /// Account created; receives the email the verification code was sent to.
+    let onSignUpSuccess: (String) -> Void
     let onNavigateToLogin: () -> Void
 
     var body: some View {
@@ -47,8 +48,8 @@ struct SignUpView: View {
                         label: "Username",
                         placeholder: "RaceFan",
                         text: Binding(
-                            get: { viewModel.state.username },
-                            set: { viewModel.send(.usernameChanged($0)) }
+                            get: { model.state.username },
+                            set: { model.send(SignUpIntent.UsernameChanged(username: $0)) }
                         ),
                         keyboardType: .default
                     )
@@ -60,8 +61,8 @@ struct SignUpView: View {
                         label: "Email",
                         placeholder: "you@racehub.com",
                         text: Binding(
-                            get: { viewModel.state.email },
-                            set: { viewModel.send(.emailChanged($0)) }
+                            get: { model.state.email },
+                            set: { model.send(SignUpIntent.EmailChanged(email: $0)) }
                         ),
                         keyboardType: .emailAddress
                     )
@@ -72,11 +73,11 @@ struct SignUpView: View {
                     passwordField(
                         label: "Password",
                         text: Binding(
-                            get: { viewModel.state.password },
-                            set: { viewModel.send(.passwordChanged($0)) }
+                            get: { model.state.password },
+                            set: { model.send(SignUpIntent.PasswordChanged(password: $0)) }
                         ),
-                        isVisible: viewModel.state.isPasswordVisible,
-                        onToggle: { viewModel.send(.togglePasswordVisibility) }
+                        isVisible: model.state.isPasswordVisible,
+                        onToggle: { model.send(SignUpIntent.TogglePasswordVisibility.shared) }
                     )
 
                     Spacer(minLength: 14)
@@ -85,11 +86,11 @@ struct SignUpView: View {
                     passwordField(
                         label: "Confirm Password",
                         text: Binding(
-                            get: { viewModel.state.confirmPassword },
-                            set: { viewModel.send(.confirmPasswordChanged($0)) }
+                            get: { model.state.confirmPassword },
+                            set: { model.send(SignUpIntent.ConfirmPasswordChanged(confirmPassword: $0)) }
                         ),
-                        isVisible: viewModel.state.isConfirmPasswordVisible,
-                        onToggle: { viewModel.send(.toggleConfirmPasswordVisibility) }
+                        isVisible: model.state.isConfirmPasswordVisible,
+                        onToggle: { model.send(SignUpIntent.ToggleConfirmPasswordVisibility.shared) }
                     )
 
                     Spacer(minLength: 14)
@@ -98,7 +99,7 @@ struct SignUpView: View {
                     countryDropdown()
 
                     // Error
-                    if let error = viewModel.state.errorMessage {
+                    if let error = model.state.error?.userMessage {
                         Text(error)
                             .font(.caption)
                             .foregroundColor(AppColors.racingRed)
@@ -109,9 +110,9 @@ struct SignUpView: View {
                     Spacer(minLength: 32)
 
                     // Create Account Button
-                    Button(action: { viewModel.send(.signUp) }) {
+                    Button(action: { model.send(SignUpIntent.Submit.shared) }) {
                         ZStack {
-                            if viewModel.state.isLoading {
+                            if model.state.isLoading {
                                 ProgressView()
                                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             } else {
@@ -125,9 +126,9 @@ struct SignUpView: View {
                     }
                     .background(
                         RoundedRectangle(cornerRadius: 12)
-                            .fill(AppColors.racingRed.opacity(viewModel.state.isLoading ? 0.4 : 1.0))
+                            .fill(AppColors.racingRed.opacity(model.state.isLoading ? 0.4 : 1.0))
                     )
-                    .disabled(viewModel.state.isLoading)
+                    .disabled(model.state.isLoading)
 
                     Spacer(minLength: 20)
 
@@ -148,10 +149,10 @@ struct SignUpView: View {
                 .padding(.horizontal, 20)
             }
         }
-        .onReceive(viewModel.effectPublisher) { effect in
-            switch effect {
-            case .navigateToHome:
-                onSignUpSuccess()
+        // One-off effects from the shared ViewModel.
+        .onReceive(model.effects) { effect in
+            if let verify = effect as? SignUpEffect.NavigateToEmailVerification {
+                onSignUpSuccess(verify.email)
             }
         }
     }
@@ -231,7 +232,7 @@ struct SignUpView: View {
 
     @ViewBuilder
     private func countryDropdown() -> some View {
-        let code = viewModel.state.country
+        let code = model.state.country
         let displayName = Locale.current.localizedString(forRegionCode: code) ?? code
         let hasSelection = !code.isEmpty
 
@@ -242,7 +243,7 @@ struct SignUpView: View {
 
             Menu {
                 ForEach(isoCountries, id: \.code) { item in
-                    Button(action: { viewModel.send(.countryChanged(item.code)) }) {
+                    Button(action: { model.send(SignUpIntent.CountryChanged(country: item.code)) }) {
                         if item.code == code {
                             Label(item.name, systemImage: "checkmark")
                         } else {
@@ -286,5 +287,5 @@ struct SignUpView: View {
 }
 
 #Preview {
-    SignUpView(onSignUpSuccess: {}, onNavigateToLogin: {})
+    SignUpView(onSignUpSuccess: { _ in }, onNavigateToLogin: {})
 }

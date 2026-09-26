@@ -6,8 +6,9 @@ private let t = AppColorTokens.shared
 
 struct LoginView: View {
 
-    @StateObject private var viewModel = LoginViewModel()
+    @StateObject private var model = LoginModel.login()
     let onLoginSuccess: () -> Void
+    let onNavigateToEmailVerification: (String) -> Void
     let onNavigateToSignUp: () -> Void
     let onNavigateToForgotPassword: () -> Void
 
@@ -49,9 +50,9 @@ struct LoginView: View {
                             .font(.caption)
                             .foregroundColor(Color(hex: t.authMuted))
 
-                        TextField("driver@racehub.com", text: Binding(
-                            get: { viewModel.state.email },
-                            set: { viewModel.send(.emailChanged($0)) }
+                        TextField("you@racehub.com", text: Binding(
+                            get: { model.state.email },
+                            set: { model.send(LoginIntent.EmailChanged(email: $0)) }
                         ))
                         .keyboardType(.emailAddress)
                         .autocapitalization(.none)
@@ -62,7 +63,7 @@ struct LoginView: View {
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
                                 .stroke(
-                                    viewModel.state.email.isEmpty
+                                    model.state.email.isEmpty
                                         ? Color(hex: t.authDimBorder)
                                         : AppColors.racingRed,
                                     lineWidth: 1.5
@@ -81,15 +82,15 @@ struct LoginView: View {
 
                         HStack {
                             Group {
-                                if viewModel.state.isPasswordVisible {
+                                if model.state.isPasswordVisible {
                                     TextField("••••••", text: Binding(
-                                        get: { viewModel.state.password },
-                                        set: { viewModel.send(.passwordChanged($0)) }
+                                        get: { model.state.password },
+                                        set: { model.send(LoginIntent.PasswordChanged(password: $0)) }
                                     ))
                                 } else {
                                     SecureField("••••••", text: Binding(
-                                        get: { viewModel.state.password },
-                                        set: { viewModel.send(.passwordChanged($0)) }
+                                        get: { model.state.password },
+                                        set: { model.send(LoginIntent.PasswordChanged(password: $0)) }
                                     ))
                                 }
                             }
@@ -97,8 +98,8 @@ struct LoginView: View {
                             .autocorrectionDisabled()
                             .autocapitalization(.none)
 
-                            Button(action: { viewModel.send(.togglePasswordVisibility) }) {
-                                Text(viewModel.state.isPasswordVisible ? String(localized: "Hide") : String(localized: "Show"))
+                            Button(action: { model.send(LoginIntent.TogglePasswordVisibility.shared) }) {
+                                Text(model.state.isPasswordVisible ? String(localized: "Hide") : String(localized: "Show"))
                                     .font(.caption)
                                     .foregroundColor(Color(hex: t.authMuted))
                             }
@@ -108,7 +109,7 @@ struct LoginView: View {
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
                                 .stroke(
-                                    viewModel.state.password.isEmpty
+                                    model.state.password.isEmpty
                                         ? Color(hex: t.authDimBorder)
                                         : AppColors.racingRed,
                                     lineWidth: 1.5
@@ -118,7 +119,7 @@ struct LoginView: View {
                     }
 
                     // Error Message
-                    if let error = viewModel.state.errorMessage {
+                    if let error = model.state.error?.userMessage {
                         Text(error)
                             .font(.caption)
                             .foregroundColor(AppColors.racingRed)
@@ -129,9 +130,9 @@ struct LoginView: View {
                     Spacer(minLength: 36)
 
                     // Sign In Button
-                    Button(action: { viewModel.send(.login) }) {
+                    Button(action: { model.send(LoginIntent.Submit.shared) }) {
                         ZStack {
-                            if viewModel.state.isLoading {
+                            if model.state.isLoading {
                                 ProgressView()
                                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             } else {
@@ -145,9 +146,9 @@ struct LoginView: View {
                     }
                     .background(
                         RoundedRectangle(cornerRadius: 12)
-                            .fill(AppColors.racingRed.opacity(viewModel.state.isLoading ? 0.4 : 1.0))
+                            .fill(AppColors.racingRed.opacity(model.state.isLoading ? 0.4 : 1.0))
                     )
-                    .disabled(viewModel.state.isLoading)
+                    .disabled(model.state.isLoading)
 
                     Button(action: onNavigateToForgotPassword) {
                         Text("Forgot Password?")
@@ -171,20 +172,16 @@ struct LoginView: View {
                     }
 
                     Spacer(minLength: 32)
-
-                    Text("Use driver@racehub.com / race123")
-                        .font(.caption2)
-                        .foregroundColor(Color(hex: t.authMuted).opacity(0.5))
-
-                    Spacer(minLength: 32)
                 }
                 .padding(.horizontal, 20)
             }
         }
-        .onReceive(viewModel.effectPublisher) { effect in
-            switch effect {
-            case .navigateToHome:
+        // One-off effects from the shared ViewModel.
+        .onReceive(model.effects) { effect in
+            if effect is LoginEffect.NavigateToHome {
                 onLoginSuccess()
+            } else if let verify = effect as? LoginEffect.NavigateToEmailVerification {
+                onNavigateToEmailVerification(verify.email)
             }
         }
     }
@@ -192,5 +189,5 @@ struct LoginView: View {
 
 
 #Preview {
-    LoginView(onLoginSuccess: {}, onNavigateToSignUp: {}, onNavigateToForgotPassword: {})
+    LoginView(onLoginSuccess: {}, onNavigateToEmailVerification: { _ in }, onNavigateToSignUp: {}, onNavigateToForgotPassword: {})
 }

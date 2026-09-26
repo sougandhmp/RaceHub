@@ -1,15 +1,15 @@
 package org.gce.racehub.auth.domain.usecase
 
-import org.gce.racehub.auth.domain.model.PasswordResetResult
+import org.gce.racehub.auth.domain.model.AuthError
+import org.gce.racehub.auth.domain.model.AuthOutcome
+import org.gce.racehub.auth.domain.model.authFailure
 import org.gce.racehub.auth.domain.repository.AuthRepository
 
-class RequestPasswordResetUseCase(private val authRepository: AuthRepository) {
+internal class RequestPasswordResetUseCase(private val authRepository: AuthRepository) {
 
-    @Throws(Exception::class)
-
-    suspend operator fun invoke(email: String): PasswordResetResult {
-        if (email.isBlank()) return PasswordResetResult.failure("Email cannot be empty")
-        if (!email.contains("@")) return PasswordResetResult.failure("Invalid email format")
+    suspend operator fun invoke(email: String): AuthOutcome<Unit> {
+        if (email.isBlank()) return authFailure(AuthError.EmailRequired)
+        if (!email.contains("@")) return authFailure(AuthError.InvalidEmail)
         return authRepository.requestPasswordReset(email)
     }
 }

@@ -1,13 +1,10 @@
 package org.gce.racehub.race.domain.usecase
 
+import org.gce.racehub.core.domain.DataResult
+import org.gce.racehub.core.domain.DataError
 import org.gce.racehub.race.domain.model.ConstructorStanding
 import org.gce.racehub.race.domain.repository.RaceRepository
 
-/**
- * Returns the cached rows once. For callers that can't collect a Flow (Swift):
- * run [RefreshRaceDataUseCase] first to get fresh data.
- */
-class GetConstructorStandingsUseCase(private val repository: RaceRepository) {
-    @Throws(Exception::class)
-    suspend operator fun invoke(): List<ConstructorStanding> = repository.getCachedConstructorStandings()
+internal class GetConstructorStandingsUseCase(private val repository: RaceRepository) {
+    suspend operator fun invoke(): DataResult<List<ConstructorStanding>, DataError> = repository.getConstructorStandings()
 }

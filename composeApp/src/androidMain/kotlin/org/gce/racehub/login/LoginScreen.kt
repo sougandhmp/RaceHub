@@ -1,5 +1,12 @@
 package org.gce.racehub.login
 
+import org.gce.racehub.ui.message
+import org.gce.racehub.auth.domain.model.AuthError
+import org.gce.racehub.auth.domain.model.AuthFailure
+import org.gce.racehub.auth.presentation.LoginEffect
+import org.gce.racehub.auth.presentation.LoginIntent
+import org.gce.racehub.auth.presentation.LoginState
+import org.gce.racehub.auth.presentation.LoginViewModel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -74,7 +81,7 @@ fun LoginScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        viewModel.effect.collect { effect ->
+        viewModel.effects.collect { effect ->
             when (effect) {
                 is LoginEffect.NavigateToHome -> onLoginSuccess()
                 is LoginEffect.NavigateToEmailVerification -> onNavigateToEmailVerification(effect.email)
@@ -170,7 +177,7 @@ private fun LoginScreenContent(
                 keyboardActions = KeyboardActions(
                     onDone = {
                         focusManager.clearFocus()
-                        onIntent(LoginIntent.Login)
+                        onIntent(LoginIntent.Submit)
                     }
                 ),
                 trailingIcon = {
@@ -187,10 +194,10 @@ private fun LoginScreenContent(
                 colors = textFieldColors()
             )
 
-            if (state.errorMessage != null) {
+            if (state.error != null) {
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
-                    text = state.errorMessage,
+                    text = state.error?.message().orEmpty(),
                     color = RacingRed,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -199,7 +206,7 @@ private fun LoginScreenContent(
             Spacer(modifier = Modifier.height(36.dp))
 
             Button(
-                onClick = { onIntent(LoginIntent.Login) },
+                onClick = { onIntent(LoginIntent.Submit) },
                 enabled = !state.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -272,7 +279,7 @@ private fun LoginScreenPreview() {
 @Composable
 private fun LoginScreenErrorPreview() {
     LoginScreenContent(
-        state = LoginState(email = "bad@email", password = "wrong", errorMessage = "Invalid credentials"),
+        state = LoginState(email = "bad@email", password = "wrong", error = AuthFailure(AuthError.Rejected, "Invalid credentials")),
         onIntent = {},
         onNavigateToSignUp = {},
         onNavigateToForgotPassword = {}
