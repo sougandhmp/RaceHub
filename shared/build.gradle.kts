@@ -69,6 +69,11 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.ktor.client.mock)
+        }
+        // In-memory SQLite for repository tests on the JVM (iOS uses the native driver).
+        getByName("androidUnitTest").dependencies {
+            implementation(libs.sqldelight.sqlite.driver)
         }
     }
 }
@@ -85,14 +90,12 @@ kover {
     reports {
         filters {
             excludes {
-                // Network clients and service classes (require live HTTP)
+                // Auth network client/repository: tested in a later change
                 classes(
                     "org.gce.racehub.auth.data.network.*",
                     "org.gce.racehub.auth.data.repository.AuthRepositoryNetworkImpl*",
-                    "org.gce.racehub.race.data.repository.HomeRepositoryNetworkImpl*",
-                    // Database infrastructure (requires platform SQLite driver)
+                    // Platform SQLite driver factory
                     "org.gce.racehub.db.DatabaseDriverFactory*",
-                    "org.gce.racehub.db.LocalDataSource*",
                     // Generated SQLDelight code
                     "org.gce.racehub.db.RaceHubDatabase*",
                     "org.gce.racehub.db.shared.*",
@@ -137,5 +140,11 @@ android {
 
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
+    }
+
+    // JVM unit tests exercise code that logs via android.util.Log (logError);
+    // return defaults instead of throwing "not mocked".
+    testOptions {
+        unitTests.isReturnDefaultValues = true
     }
 }

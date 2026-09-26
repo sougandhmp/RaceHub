@@ -37,7 +37,7 @@ internal fun createAuthModule(baseUrl: String, useFakeRepository: Boolean = fals
 
     // HTTP Client - platform-specific engine will be selected automatically
     single {
-        HttpClientFactory.create(baseUrl)
+        HttpClientFactory.create()
     }
 
     // Auth Service - depends on HTTP client

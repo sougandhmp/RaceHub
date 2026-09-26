@@ -1,12 +1,14 @@
 package org.gce.racehub.db
 
+import app.cash.sqldelight.db.SqlDriver
 import org.gce.racehub.race.domain.model.Race
 import org.gce.racehub.race.domain.model.DriverStanding
 import org.gce.racehub.race.domain.model.ConstructorStanding
 import org.gce.racehub.race.domain.model.TrendingThread
 
-internal class LocalDataSource(driverFactory: DatabaseDriverFactory) {
-    private val database = RaceHubDatabase(driverFactory.createDriver())
+/** SQLDelight-backed cache. Takes a driver so tests can use an in-memory database. */
+internal class LocalDataSource(driver: SqlDriver) {
+    private val database = RaceHubDatabase(driver)
     private val dbQuery = database.raceHubDatabaseQueries
 
     fun getAllRaces(): List<Race> {
