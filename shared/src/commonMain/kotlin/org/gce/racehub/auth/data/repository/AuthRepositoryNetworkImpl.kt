@@ -17,7 +17,6 @@ import org.gce.racehub.util.logError
  * Network-based implementation of [AuthRepository].
  *
  * Makes authenticated HTTP requests to the RaceHub API.
- * Replaces [AuthRepositoryImpl] when the backend is available.
  *
  * @param authService The network service that handles API calls
  */
