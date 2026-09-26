@@ -44,6 +44,11 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
+        // Compose UI tests run on the JVM under Robolectric, next to the other unit tests.
+        androidUnitTest.dependencies {
+            implementation(libs.androidx.compose.ui.test.junit4)
+            implementation(libs.robolectric)
+        }
     }
 }
 
@@ -71,6 +76,12 @@ android {
         }
     }
 
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+        // Robolectric reaches into FileDescriptor internals, which JDK 21 no longer exports.
+        unitTests.all { it.jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED") }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -79,6 +90,8 @@ android {
 
 dependencies {
     debugImplementation(libs.compose.uiTooling)
+    // Registers the empty activity that Compose UI tests host content in.
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
 
 composeCompiler {
