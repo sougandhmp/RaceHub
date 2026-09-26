@@ -1,5 +1,14 @@
 package org.gce.racehub.profile
 
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.remember
+import org.gce.racehub.profile.presentation.ProfileEffect
+import org.gce.racehub.profile.presentation.ProfileIntent
+import org.gce.racehub.profile.presentation.ProfileState
+import org.gce.racehub.profile.presentation.ProfileViewModel
+import org.gce.racehub.ui.message
+import org.jetbrains.compose.resources.getString
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -73,21 +82,28 @@ fun ProfileScreen(
     val themeMode by themeManager.themeMode.collectAsStateWithLifecycle()
     val colors = LocalAppColors.current
 
-    LaunchedEffect(Unit) {
-        viewModel.effect.collect { effect ->
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // One-off effects: shown once, never replayed on recomposition.
+    LaunchedEffect(viewModel) {
+        viewModel.effects.collect { effect ->
             when (effect) {
                 ProfileEffect.SignedOut -> onSignedOut()
+                is ProfileEffect.ShowLoadError -> snackbarHostState.showSnackbar(getString(effect.error.message()))
             }
         }
     }
 
-    ProfileContent(
-        state = state,
-        themeMode = themeMode,
-        colors = colors,
-        onThemeSelect = { themeManager.setThemeMode(it) },
-        onIntent = viewModel::onIntent
-    )
+    Box(modifier = Modifier.fillMaxSize()) {
+        ProfileContent(
+            state = state,
+            themeMode = themeMode,
+            colors = colors,
+            onThemeSelect = { themeManager.setThemeMode(it) },
+            onIntent = viewModel::onIntent
+        )
+        SnackbarHost(snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -101,7 +117,7 @@ private fun ProfileContent(
 ) {
     PullToRefreshBox(
         isRefreshing = state.isLoadingProfile,
-        onRefresh = { onIntent(ProfileIntent.RefreshProfile) },
+        onRefresh = { onIntent(ProfileIntent.Refresh) },
         modifier = Modifier.fillMaxSize()
     ) {
         Box(
@@ -127,7 +143,7 @@ private fun ProfileContent(
                 ) {
                     ProfileHeader(user = user, profile = state.profile, colors = colors)
                     Spacer(modifier = Modifier.height(24.dp))
-                    ProfileStats(user = user, profile = state.profile, colors = colors)
+                    ProfileStats(user = user, postsCount = state.postsCount, savedCount = state.savedCount, colors = colors)
                     Spacer(modifier = Modifier.height(24.dp))
                     ProfileDetails(user = user, colors = colors)
                     Spacer(modifier = Modifier.height(24.dp))
@@ -161,10 +177,6 @@ private fun ProfileContent(
                             strokeWidth = 2.dp,
                             modifier = Modifier.size(20.dp)
                         )
-                    }
-                    state.errorMessage?.let { message ->
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(text = message, color = colors.racingRed, fontSize = 13.sp)
                     }
                     Spacer(modifier = Modifier.height(32.dp))
                     SignOutButton(
@@ -332,7 +344,7 @@ private fun ProfileHeader(user: User, profile: UserProfile?, colors: AppColorSch
 }
 
 @Composable
-private fun ProfileStats(user: User, profile: UserProfile?, colors: AppColorScheme) {
+private fun ProfileStats(user: User, postsCount: Int, savedCount: Int?, colors: AppColorScheme) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -342,8 +354,8 @@ private fun ProfileStats(user: User, profile: UserProfile?, colors: AppColorSche
             .padding(vertical = 16.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        StatCell(label = stringResource(Res.string.label_posts), value = (profile?.postsCount ?: user.postsCount).toString(), colors = colors)
-        StatCell(label = stringResource(Res.string.label_saved), value = profile?.savedCount?.toString() ?: "—", colors = colors)
+        StatCell(label = stringResource(Res.string.label_posts), value = postsCount.toString(), colors = colors)
+        StatCell(label = stringResource(Res.string.label_saved), value = savedCount?.toString() ?: "—", colors = colors)
         StatCell(label = stringResource(Res.string.label_country_caps), value = user.country?.uppercase() ?: "—", colors = colors)
     }
 }

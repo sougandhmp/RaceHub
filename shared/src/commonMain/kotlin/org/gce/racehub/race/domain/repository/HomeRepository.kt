@@ -80,10 +80,9 @@ interface HomeRepository {
      * @param userId The signed-in user's id.
      * @param token  The user's auth token, sent as `Authorization: Bearer <token>`.
      * @return The user's profile data including post/saved counts and thread lists.
-     * @throws Exception if the request fails.
      */
     @Throws(Exception::class)
-    suspend fun getMyProfile(userId: String, token: String): UserProfile
+    suspend fun getMyProfile(userId: String, token: String): DataResult<UserProfile>
 
     /**
      * Posts a new comment on the thread identified by [threadId] on behalf of [userId].
