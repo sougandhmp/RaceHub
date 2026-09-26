@@ -15,7 +15,7 @@ import org.gce.racehub.util.logError
  * [DataResult.Success]; any failure is logged under [tag] and returned as a
  * typed [DataResult.Failure]. Cancellation propagates.
  */
-internal suspend fun <T> safeCall(tag: String, what: String, block: suspend () -> T): DataResult<T> = try {
+internal suspend fun <T> safeCall(tag: String, what: String, block: suspend () -> T): DataResult<T, DataError> = try {
     DataResult.Success(block())
 } catch (e: CancellationException) {
     throw e

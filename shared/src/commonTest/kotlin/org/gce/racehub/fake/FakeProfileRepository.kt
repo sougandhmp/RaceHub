@@ -9,7 +9,7 @@ internal class FakeProfileRepository : ProfileRepository {
     var profileResult: UserProfile = UserProfile("user", "u@e.com", "", 0, 0, emptyList(), emptyList())
     var profileError: DataError? = null
 
-    override suspend fun getMyProfile(userId: String, token: String): DataResult<UserProfile> {
+    override suspend fun getMyProfile(userId: String, token: String): DataResult<UserProfile, DataError> {
         profileError?.let { return DataResult.Failure(it) }
         return DataResult.Success(profileResult)
     }

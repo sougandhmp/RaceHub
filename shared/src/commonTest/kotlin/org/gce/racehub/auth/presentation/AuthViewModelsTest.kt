@@ -10,9 +10,6 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.gce.racehub.auth.domain.model.AuthError
 import org.gce.racehub.auth.domain.model.AuthFailure
-import org.gce.racehub.auth.domain.model.AuthResult
-import org.gce.racehub.auth.domain.model.EmailVerificationResult
-import org.gce.racehub.auth.domain.model.PasswordResetResult
 import org.gce.racehub.core.domain.model.User
 import org.gce.racehub.core.domain.session.UserSession
 import org.gce.racehub.auth.domain.usecase.ConfirmPasswordResetUseCase
@@ -31,6 +28,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import org.gce.racehub.core.domain.DataResult
+import org.gce.racehub.auth.domain.model.authFailure
 
 /** Shared auth ViewModels: the auth flow rules both platforms now follow. */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -56,7 +55,7 @@ class AuthViewModelsTest {
 
     @Test
     fun `verified login starts a session and clears the form`() = runTest(dispatcher) {
-        repo.loginResult = AuthResult.success(verified)
+        repo.loginResult = DataResult.Success(verified)
         val vm = loginVm()
         vm.fillAndSubmit()
         advanceUntilIdle()
@@ -67,7 +66,7 @@ class AuthViewModelsTest {
 
     @Test
     fun `unverified login sends a code and never starts a session`() = runTest(dispatcher) {
-        repo.loginResult = AuthResult.success(verified.copy(isEmailVerified = false))
+        repo.loginResult = DataResult.Success(verified.copy(isEmailVerified = false))
         val vm = loginVm()
         vm.fillAndSubmit()
         advanceUntilIdle()
@@ -78,7 +77,7 @@ class AuthViewModelsTest {
 
     @Test
     fun `failed login shows the error inline until the next edit`() = runTest(dispatcher) {
-        repo.loginResult = AuthResult.failure(AuthError.Rejected, "Invalid credentials")
+        repo.loginResult = authFailure(AuthError.Rejected, "Invalid credentials")
         val vm = loginVm()
         vm.fillAndSubmit()
         advanceUntilIdle()
@@ -113,7 +112,7 @@ class AuthViewModelsTest {
 
     @Test
     fun `sign up keeps the form when the code cannot be sent`() = runTest(dispatcher) {
-        repo.sendOtpResult = EmailVerificationResult.failure(AuthError.Rejected, "Mail server down")
+        repo.sendOtpResult = authFailure(AuthError.Rejected, "Mail server down")
         val vm = SignUpViewModel(SignUpUseCase(repo), SendOtpUseCase(repo))
         vm.fillAndSubmit()
         advanceUntilIdle()
@@ -142,7 +141,7 @@ class AuthViewModelsTest {
 
     @Test
     fun `failed reset request stays on the request step with the error`() = runTest(dispatcher) {
-        repo.requestResetResult = PasswordResetResult.failure(AuthError.Rejected, "No account for that email")
+        repo.requestResetResult = authFailure(AuthError.Rejected, "No account for that email")
         val vm = ForgotPasswordViewModel(RequestPasswordResetUseCase(repo), ConfirmPasswordResetUseCase(repo))
         vm.onIntent(ForgotPasswordIntent.EmailChanged("x@racehub.com"))
         vm.onIntent(ForgotPasswordIntent.RequestReset)
@@ -177,7 +176,7 @@ class AuthViewModelsTest {
 
     @Test
     fun `wrong code shows the error and resend confirms`() = runTest(dispatcher) {
-        repo.verifyOtpResult = EmailVerificationResult.failure(AuthError.Rejected, "Invalid verification code")
+        repo.verifyOtpResult = authFailure(AuthError.Rejected, "Invalid verification code")
         val vm = verificationVm()
         vm.onIntent(EmailVerificationIntent.Open("ann@racehub.com"))
         vm.onIntent(EmailVerificationIntent.OtpChanged("000000"))

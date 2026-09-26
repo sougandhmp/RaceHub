@@ -1,6 +1,7 @@
 package org.gce.racehub.race.domain.repository
 
 import org.gce.racehub.core.domain.DataResult
+import org.gce.racehub.core.domain.DataError
 import org.gce.racehub.race.domain.model.ConstructorStanding
 import org.gce.racehub.race.domain.model.DriverStanding
 import org.gce.racehub.race.domain.model.Race
@@ -18,17 +19,17 @@ internal interface RaceRepository {
     // there is nothing to show.
 
     /** The full race calendar for the current season. */
-    suspend fun getRaceSchedule(): DataResult<List<Race>>
+    suspend fun getRaceSchedule(): DataResult<List<Race>, DataError>
 
     /** The current Drivers' Championship standings table. */
-    suspend fun getDriverStandings(): DataResult<List<DriverStanding>>
+    suspend fun getDriverStandings(): DataResult<List<DriverStanding>, DataError>
 
     /** The current Constructors' Championship standings table. */
-    suspend fun getConstructorStandings(): DataResult<List<ConstructorStanding>>
+    suspend fun getConstructorStandings(): DataResult<List<ConstructorStanding>, DataError>
 
     /** The trending threads from the forum. */
-    suspend fun getTrendingThreads(): DataResult<List<TrendingThread>>
+    suspend fun getTrendingThreads(): DataResult<List<TrendingThread>, DataError>
 
     /** Full detail for the race identified by [slug]. Not cached. */
-    suspend fun getRaceDetail(slug: String): DataResult<RaceDetail>
+    suspend fun getRaceDetail(slug: String): DataResult<RaceDetail, DataError>
 }

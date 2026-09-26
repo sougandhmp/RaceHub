@@ -24,15 +24,15 @@ internal class FakeRaceRepository : RaceRepository {
     var raceDetailBySlug: Map<String, RaceDetail> = emptyMap()
     var raceDetailDelayMs: Map<String, Long> = emptyMap()
 
-    override suspend fun getRaceSchedule(): DataResult<List<Race>> {
+    override suspend fun getRaceSchedule(): DataResult<List<Race>, DataError> {
         raceScheduleCalls++
         raceScheduleError?.let { return DataResult.Failure(it) }
         return DataResult.Success(raceSchedule)
     }
-    override suspend fun getDriverStandings(): DataResult<List<DriverStanding>> = DataResult.Success(driverStandings)
-    override suspend fun getConstructorStandings(): DataResult<List<ConstructorStanding>> = DataResult.Success(constructorStandings)
-    override suspend fun getTrendingThreads(): DataResult<List<TrendingThread>> = DataResult.Success(trendingThreads)
-    override suspend fun getRaceDetail(slug: String): DataResult<RaceDetail> {
+    override suspend fun getDriverStandings(): DataResult<List<DriverStanding>, DataError> = DataResult.Success(driverStandings)
+    override suspend fun getConstructorStandings(): DataResult<List<ConstructorStanding>, DataError> = DataResult.Success(constructorStandings)
+    override suspend fun getTrendingThreads(): DataResult<List<TrendingThread>, DataError> = DataResult.Success(trendingThreads)
+    override suspend fun getRaceDetail(slug: String): DataResult<RaceDetail, DataError> {
         raceDetailDelayMs[slug]?.let { kotlinx.coroutines.delay(it) }
         raceDetailError?.let { return DataResult.Failure(it) }
         return DataResult.Success(raceDetailBySlug[slug] ?: raceDetailResult)

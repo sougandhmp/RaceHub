@@ -11,6 +11,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import org.gce.racehub.core.domain.DataResult
+import org.gce.racehub.core.domain.errorOrNull
+import org.gce.racehub.core.domain.dataOrNull
 
 /**
  * The auth repository is the auth error boundary: a server "no" keeps the
@@ -34,7 +37,7 @@ class AuthRepositoryNetworkImplTest {
              "email":"ann@racehub.com","country":"AU","avatar":"A","role":"member","joinedAt":"2026-04-01",
              "postsCount":2,"emailVerified":false}}}
         """.trimIndent()
-        val user = repo.login("ann@racehub.com", "secret1").user!!
+        val user = repo.login("ann@racehub.com", "secret1").dataOrNull()!!
         assertEquals("tok", user.token)
         assertEquals("ann", user.username)
         assertFalse(user.isEmailVerified)
@@ -43,19 +46,19 @@ class AuthRepositoryNetworkImplTest {
     @Test
     fun `a server refusal keeps the server message`() = test {
         api.responses[login] = """{"success":false,"message":"Invalid credentials"}"""
-        assertEquals(AuthFailure(AuthError.Rejected, "Invalid credentials"), repo.login("a@b.c", "secret1").failure)
+        assertEquals(AuthFailure(AuthError.Rejected, "Invalid credentials"), repo.login("a@b.c", "secret1").errorOrNull())
     }
 
     @Test
     fun `offline login is a Network failure without raw exception text`() = test {
         api.failures[login] = FakeApi.Failure.Offline
-        assertEquals(AuthFailure(AuthError.Network), repo.login("a@b.c", "secret1").failure)
+        assertEquals(AuthFailure(AuthError.Network), repo.login("a@b.c", "secret1").errorOrNull())
     }
 
     @Test
     fun `an HTTP 500 without a JSON body is a Server failure`() = test {
         api.failures[login] = FakeApi.Failure.ServerError
-        assertEquals(AuthFailure(AuthError.Server), repo.login("a@b.c", "secret1").failure)
+        assertEquals(AuthFailure(AuthError.Server), repo.login("a@b.c", "secret1").errorOrNull())
     }
 
     @Test
@@ -63,7 +66,7 @@ class AuthRepositoryNetworkImplTest {
         api.responses["/api/v1/auth/signup"] = """{"success":false,"message":"Email already in use"}"""
         assertEquals(
             AuthFailure(AuthError.Rejected, "Email already in use"),
-            repo.signUp("ann", "ann@racehub.com", "secret1", "AU").failure
+            repo.signUp("ann", "ann@racehub.com", "secret1", "AU").errorOrNull()
         )
     }
 
@@ -76,17 +79,17 @@ class AuthRepositoryNetworkImplTest {
     @Test
     fun `verification code refusal and resend offline are typed`() = test {
         api.responses["/api/v1/auth/otp/verify"] = """{"success":false,"message":"Invalid verification code"}"""
-        assertEquals(AuthFailure(AuthError.Rejected, "Invalid verification code"), repo.verifyOtp("a@b.c", "000000").failure)
+        assertEquals(AuthFailure(AuthError.Rejected, "Invalid verification code"), repo.verifyOtp("a@b.c", "000000").errorOrNull())
 
         api.failures["/api/v1/auth/otp/resend"] = FakeApi.Failure.Offline
-        assertEquals(AuthFailure(AuthError.Network), repo.resendOtp("a@b.c", "subject").failure)
+        assertEquals(AuthFailure(AuthError.Network), repo.resendOtp("a@b.c", "subject").errorOrNull())
     }
 
     @Test
     fun `password reset confirm succeeds`() = test {
         api.responses["/api/v1/auth/password-reset/confirm"] = """{"success":true,"message":"Password updated"}"""
         val result = repo.confirmPasswordReset("a@b.c", "123456", "secret9")
-        assertTrue(result.isSuccess)
-        assertNull(result.failure)
+        assertTrue(result is DataResult.Success)
+        assertNull(result.errorOrNull())
     }
 }

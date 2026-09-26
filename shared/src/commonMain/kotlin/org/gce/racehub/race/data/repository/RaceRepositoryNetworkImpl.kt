@@ -280,7 +280,7 @@ internal class RaceRepositoryNetworkImpl(
      * background refresh would leave the screen showing a stale snapshot until the
      * next manual reload.
      */
-    override suspend fun getRaceSchedule(): DataResult<List<Race>> = withContext(ioDispatcher) {
+    override suspend fun getRaceSchedule(): DataResult<List<Race>, DataError> = withContext(ioDispatcher) {
         val syncError = if (localDataSource.getAllRaces().isEmpty()) {
             // Cold cache: block until the first sync populates the DB.
             syncRaceSchedule()
@@ -295,28 +295,28 @@ internal class RaceRepositoryNetworkImpl(
      * Returns driver standings, refreshing from the network if empty.
      * Subsequent calls trigger background syncs without blocking.
      */
-    override suspend fun getDriverStandings(): DataResult<List<DriverStanding>> =
+    override suspend fun getDriverStandings(): DataResult<List<DriverStanding>, DataError> =
         dashboardRead { localDataSource.getAllDriverStandings() }
 
     /**
      * Returns constructor standings, refreshing from the network if empty.
      * Subsequent calls trigger background syncs without blocking.
      */
-    override suspend fun getConstructorStandings(): DataResult<List<ConstructorStanding>> =
+    override suspend fun getConstructorStandings(): DataResult<List<ConstructorStanding>, DataError> =
         dashboardRead { localDataSource.getAllConstructorStandings() }
 
     /**
      * Returns trending threads, refreshing from the network if empty.
      * Subsequent calls trigger background syncs without blocking.
      */
-    override suspend fun getTrendingThreads(): DataResult<List<TrendingThread>> =
+    override suspend fun getTrendingThreads(): DataResult<List<TrendingThread>, DataError> =
         dashboardRead { localDataSource.getAllTrendingThreads() }
 
     /**
      * Reads dashboard-backed rows: on a cold cache waits for a dashboard sync,
      * otherwise returns the cache and refreshes in the background.
      */
-    private suspend fun <T> dashboardRead(read: () -> List<T>): DataResult<List<T>> =
+    private suspend fun <T> dashboardRead(read: () -> List<T>): DataResult<List<T>, DataError> =
         withContext(ioDispatcher) {
             val syncError = if (read().isEmpty()) {
                 dashboardSync().await()
@@ -330,13 +330,13 @@ internal class RaceRepositoryNetworkImpl(
         }
 
     /** Cached rows win over a sync error; only an empty cache surfaces the failure. */
-    private fun <T> cachedOrFailure(rows: List<T>, syncError: DataError?): DataResult<List<T>> =
+    private fun <T> cachedOrFailure(rows: List<T>, syncError: DataError?): DataResult<List<T>, DataError> =
         if (rows.isEmpty() && syncError != null) DataResult.Failure(syncError) else DataResult.Success(rows)
 
     /**
      * Fetches full race detail for the given [slug] via GraphQL query.
      */
-    override suspend fun getRaceDetail(slug: String): DataResult<RaceDetail> =
+    override suspend fun getRaceDetail(slug: String): DataResult<RaceDetail, DataError> =
         safeCall(TAG, "load race detail for $slug") { fetchRaceDetail(slug) }
 
     private suspend fun fetchRaceDetail(slug: String): RaceDetail {
