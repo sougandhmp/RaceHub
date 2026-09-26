@@ -1,5 +1,6 @@
 package org.gce.racehub.emailverification
 
+import org.gce.racehub.ui.message
 import org.gce.racehub.auth.presentation.EmailVerificationEffect
 import org.gce.racehub.auth.presentation.EmailVerificationIntent
 import org.gce.racehub.auth.presentation.EmailVerificationState
@@ -184,10 +185,10 @@ private fun EmailVerificationContent(
                 )
             }
 
-            if (state.errorMessage != null) {
+            if (state.error != null) {
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
-                    text = state.errorMessage.orEmpty(),
+                    text = state.error?.message().orEmpty(),
                     color = RacingRed,
                     style = MaterialTheme.typography.bodySmall
                 )

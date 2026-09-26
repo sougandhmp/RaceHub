@@ -17,7 +17,8 @@ class AuthResult private constructor(
     val user: User? = null,
 
     /** A human-readable error description; non-null only on failure. */
-    val error: String? = null
+    /** Why it failed; null on success. */
+    val failure: AuthFailure? = null
 ) {
     /** True when authentication succeeded and [user] is available. */
     val isSuccess: Boolean get() = user != null
@@ -27,6 +28,7 @@ class AuthResult private constructor(
         fun success(user: User): AuthResult = AuthResult(user = user)
 
         /** Creates a failed result carrying the [error] message to display. */
-        fun failure(error: String): AuthResult = AuthResult(error = error)
+        fun failure(reason: AuthError, serverMessage: String? = null): AuthResult =
+            AuthResult(failure = AuthFailure(reason, serverMessage))
     }
 }

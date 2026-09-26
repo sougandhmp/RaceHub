@@ -61,7 +61,7 @@ struct ForgotPasswordView: View {
                         ConfirmStepView(state: model.state, onIntent: model.send)
                     }
 
-                    if let error = model.state.errorMessage {
+                    if let error = model.state.error?.userMessage {
                         Text(error)
                             .font(.caption)
                             .foregroundColor(AppColors.racingRed)

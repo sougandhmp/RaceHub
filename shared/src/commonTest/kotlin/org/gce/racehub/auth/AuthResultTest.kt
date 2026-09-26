@@ -1,5 +1,7 @@
 package org.gce.racehub.auth
 
+import org.gce.racehub.auth.domain.model.AuthFailure
+import org.gce.racehub.auth.domain.model.AuthError
 import org.gce.racehub.auth.domain.model.AuthResult
 import org.gce.racehub.auth.domain.model.User
 import kotlin.test.Test
@@ -18,14 +20,14 @@ class AuthResultTest {
         val result = AuthResult.success(user)
         assertTrue(result.isSuccess)
         assertEquals(user, result.user)
-        assertNull(result.error)
+        assertNull(result.failure)
     }
 
     @Test
     fun `failure has isSuccess false and carries the error message`() {
-        val result = AuthResult.failure("Something went wrong")
+        val result = AuthResult.failure(AuthError.Rejected, "Something went wrong")
         assertFalse(result.isSuccess)
-        assertEquals("Something went wrong", result.error)
+        assertEquals(AuthFailure(AuthError.Rejected, "Something went wrong"), result.failure)
         assertNull(result.user)
     }
 

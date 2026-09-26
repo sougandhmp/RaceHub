@@ -1,5 +1,7 @@
 package org.gce.racehub.auth
 
+import org.gce.racehub.auth.domain.model.AuthFailure
+import org.gce.racehub.auth.domain.model.AuthError
 import kotlinx.coroutines.test.runTest
 import org.gce.racehub.auth.domain.model.AuthResult
 import org.gce.racehub.auth.domain.usecase.SignUpUseCase
@@ -26,42 +28,42 @@ class SignUpUseCaseTest {
     fun `blank username returns failure`() = runTest {
         val result = invoke(username = "")
         assertFalse(result.isSuccess)
-        assertEquals("Username cannot be empty", result.error)
+        assertEquals(AuthError.UsernameRequired, result.failure?.reason)
     }
 
     @Test
     fun `blank email returns failure`() = runTest {
         val result = invoke(email = "")
         assertFalse(result.isSuccess)
-        assertEquals("Email cannot be empty", result.error)
+        assertEquals(AuthError.EmailRequired, result.failure?.reason)
     }
 
     @Test
     fun `email without at-sign returns failure`() = runTest {
         val result = invoke(email = "notanemail")
         assertFalse(result.isSuccess)
-        assertEquals("Invalid email format", result.error)
+        assertEquals(AuthError.InvalidEmail, result.failure?.reason)
     }
 
     @Test
     fun `short password returns failure before checking mismatch`() = runTest {
         val result = invoke(password = "12345", confirmPassword = "different")
         assertFalse(result.isSuccess)
-        assertEquals("Password must be at least 6 characters", result.error)
+        assertEquals(AuthError.PasswordTooShort, result.failure?.reason)
     }
 
     @Test
     fun `mismatched passwords returns failure`() = runTest {
         val result = invoke(password = "secret1", confirmPassword = "secret2")
         assertFalse(result.isSuccess)
-        assertEquals("Passwords do not match", result.error)
+        assertEquals(AuthError.PasswordsDoNotMatch, result.failure?.reason)
     }
 
     @Test
     fun `blank country returns failure`() = runTest {
         val result = invoke(country = "")
         assertFalse(result.isSuccess)
-        assertEquals("Country cannot be empty", result.error)
+        assertEquals(AuthError.CountryRequired, result.failure?.reason)
     }
 
     @Test
@@ -72,9 +74,9 @@ class SignUpUseCaseTest {
 
     @Test
     fun `repository failure is propagated`() = runTest {
-        repository.signUpResult = AuthResult.failure("Email already in use")
+        repository.signUpResult = AuthResult.failure(AuthError.Rejected, "Email already in use")
         val result = invoke()
         assertFalse(result.isSuccess)
-        assertEquals("Email already in use", result.error)
+        assertEquals(AuthFailure(AuthError.Rejected, "Email already in use"), result.failure)
     }
 }

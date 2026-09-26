@@ -1,5 +1,7 @@
 package org.gce.racehub.auth.presentation
 
+import org.gce.racehub.auth.domain.model.AuthFailure
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutines
@@ -59,7 +61,7 @@ class LoginViewModel(
             val result = login(form.email, form.password)
             val user = result.user
             when {
-                user == null -> mutate(LoginMutation.Failed(result.error ?: "Login failed. Please try again."))
+                user == null -> mutate(LoginMutation.Failed(result.failure ?: AuthFailure.Unknown))
                 // A verified email is required to enter the app, even if the server issued a token.
                 !user.isEmailVerified -> {
                     sendOtp(user.email, OtpPurpose.EMAIL_VERIFICATION)

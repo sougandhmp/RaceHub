@@ -1,5 +1,6 @@
 package org.gce.racehub.auth.domain.usecase
 
+import org.gce.racehub.auth.domain.model.AuthError
 import org.gce.racehub.auth.domain.model.AuthResult
 import org.gce.racehub.auth.domain.repository.AuthRepository
 
@@ -25,13 +26,13 @@ class LoginUseCase(private val authRepository: AuthRepository) {
     @Throws(Exception::class)
     suspend operator fun invoke(email: String, password: String): AuthResult {
         if (email.isBlank() || password.isBlank()) {
-            return AuthResult.failure("Email and password cannot be empty")
+            return AuthResult.failure(AuthError.EmailAndPasswordRequired)
         }
         if (!email.contains("@")) {
-            return AuthResult.failure("Invalid email format")
+            return AuthResult.failure(AuthError.InvalidEmail)
         }
         if (password.length < 6) {
-            return AuthResult.failure("Password must be at least 6 characters")
+            return AuthResult.failure(AuthError.PasswordTooShort)
         }
         return authRepository.login(email, password)
     }

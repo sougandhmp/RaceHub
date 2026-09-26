@@ -99,7 +99,7 @@ struct SignUpView: View {
                     countryDropdown()
 
                     // Error
-                    if let error = model.state.errorMessage {
+                    if let error = model.state.error?.userMessage {
                         Text(error)
                             .font(.caption)
                             .foregroundColor(AppColors.racingRed)

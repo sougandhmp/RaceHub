@@ -8,10 +8,12 @@ package org.gce.racehub.auth.domain.model
  */
 class PasswordResetResult private constructor(
     val isSuccess: Boolean,
-    val error: String? = null
+    /** Why it failed; null on success. */
+    val failure: AuthFailure? = null
 ) {
     companion object {
         fun success(): PasswordResetResult = PasswordResetResult(isSuccess = true)
-        fun failure(error: String): PasswordResetResult = PasswordResetResult(isSuccess = false, error = error)
+        fun failure(reason: AuthError, serverMessage: String? = null): PasswordResetResult =
+            PasswordResetResult(isSuccess = false, failure = AuthFailure(reason, serverMessage))
     }
 }

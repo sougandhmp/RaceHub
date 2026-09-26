@@ -6,12 +6,12 @@ internal object EmailVerificationReducer {
         when (mutation) {
             is EmailVerificationMutation.Opened ->
                 if (mutation.email == state.email) state else EmailVerificationState(email = mutation.email)
-            is EmailVerificationMutation.OtpChanged -> state.copy(otp = mutation.otp, errorMessage = null)
-            EmailVerificationMutation.VerifyStarted -> state.copy(isVerifying = true, errorMessage = null, codeResent = false)
+            is EmailVerificationMutation.OtpChanged -> state.copy(otp = mutation.otp, error = null)
+            EmailVerificationMutation.VerifyStarted -> state.copy(isVerifying = true, error = null, codeResent = false)
             EmailVerificationMutation.Verified -> EmailVerificationState()
-            EmailVerificationMutation.ResendStarted -> state.copy(isResending = true, errorMessage = null, codeResent = false)
+            EmailVerificationMutation.ResendStarted -> state.copy(isResending = true, error = null, codeResent = false)
             EmailVerificationMutation.Resent -> state.copy(isResending = false, codeResent = true)
             is EmailVerificationMutation.Failed ->
-                state.copy(isVerifying = false, isResending = false, errorMessage = mutation.message)
+                state.copy(isVerifying = false, isResending = false, error = mutation.failure)
         }
 }

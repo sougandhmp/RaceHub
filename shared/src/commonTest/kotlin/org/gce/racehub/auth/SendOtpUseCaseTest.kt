@@ -1,5 +1,7 @@
 package org.gce.racehub.auth
 
+import org.gce.racehub.auth.domain.model.AuthFailure
+import org.gce.racehub.auth.domain.model.AuthError
 import kotlinx.coroutines.test.runTest
 import org.gce.racehub.auth.domain.model.EmailVerificationResult
 import org.gce.racehub.auth.domain.model.OtpPurpose
@@ -19,7 +21,7 @@ class SendOtpUseCaseTest {
     fun `blank email returns failure without hitting repository`() = runTest {
         val result = useCase("   ", OtpPurpose.EMAIL_VERIFICATION)
         assertFalse(result.isSuccess)
-        assertEquals("Email cannot be empty", result.error)
+        assertEquals(AuthError.EmailRequired, result.failure?.reason)
         assertEquals(null, repository.lastSendOtpEmail)
     }
 
@@ -50,9 +52,9 @@ class SendOtpUseCaseTest {
 
     @Test
     fun `repository failure is propagated`() = runTest {
-        repository.sendOtpResult = EmailVerificationResult.failure("Too many requests")
+        repository.sendOtpResult = EmailVerificationResult.failure(AuthError.Rejected, "Too many requests")
         val result = useCase("alice@test.com", OtpPurpose.EMAIL_VERIFICATION)
         assertFalse(result.isSuccess)
-        assertEquals("Too many requests", result.error)
+        assertEquals(AuthFailure(AuthError.Rejected, "Too many requests"), result.failure)
     }
 }

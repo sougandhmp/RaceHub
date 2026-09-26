@@ -1,5 +1,8 @@
 package org.gce.racehub.login
 
+import org.gce.racehub.ui.message
+import org.gce.racehub.auth.domain.model.AuthError
+import org.gce.racehub.auth.domain.model.AuthFailure
 import org.gce.racehub.auth.presentation.LoginEffect
 import org.gce.racehub.auth.presentation.LoginIntent
 import org.gce.racehub.auth.presentation.LoginState
@@ -191,10 +194,10 @@ private fun LoginScreenContent(
                 colors = textFieldColors()
             )
 
-            if (state.errorMessage != null) {
+            if (state.error != null) {
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
-                    text = state.errorMessage.orEmpty(),
+                    text = state.error?.message().orEmpty(),
                     color = RacingRed,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -276,7 +279,7 @@ private fun LoginScreenPreview() {
 @Composable
 private fun LoginScreenErrorPreview() {
     LoginScreenContent(
-        state = LoginState(email = "bad@email", password = "wrong", errorMessage = "Invalid credentials"),
+        state = LoginState(email = "bad@email", password = "wrong", error = AuthFailure(AuthError.Rejected, "Invalid credentials")),
         onIntent = {},
         onNavigateToSignUp = {},
         onNavigateToForgotPassword = {}

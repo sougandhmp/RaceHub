@@ -1,5 +1,7 @@
 package org.gce.racehub.auth.presentation
 
+import org.gce.racehub.auth.domain.model.AuthFailure
+
 // MVI contract for the two-step password reset (request a code, then confirm it).
 
 enum class ForgotPasswordStep { Request, Confirm }
@@ -13,8 +15,8 @@ data class ForgotPasswordState(
     val confirmPassword: String = "",
     val isPasswordVisible: Boolean = false,
     val isLoading: Boolean = false,
-    /** Inline error from validation or the server; cleared by the next edit or submit. */
-    val errorMessage: String? = null
+    /** Inline error; cleared by the next edit or submit. Each platform localizes it. */
+    val error: AuthFailure? = null
 )
 
 sealed class ForgotPasswordIntent {
@@ -35,7 +37,7 @@ sealed class ForgotPasswordEffect {
 internal sealed interface ForgotPasswordMutation {
     data class FieldsChanged(val transform: (ForgotPasswordState) -> ForgotPasswordState) : ForgotPasswordMutation
     data object Submitted : ForgotPasswordMutation
-    data class Failed(val message: String) : ForgotPasswordMutation
+    data class Failed(val failure: AuthFailure) : ForgotPasswordMutation
     data object CodeSent : ForgotPasswordMutation
     data object ResetCompleted : ForgotPasswordMutation
 }

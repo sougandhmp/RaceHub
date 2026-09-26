@@ -1,5 +1,7 @@
 package org.gce.racehub.auth.presentation
 
+import org.gce.racehub.auth.domain.model.AuthFailure
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutines
@@ -58,7 +60,7 @@ class ForgotPasswordViewModel(
             val result = requestPasswordReset(form.email)
             mutate(
                 if (result.isSuccess) ForgotPasswordMutation.CodeSent
-                else ForgotPasswordMutation.Failed(result.error ?: "Could not send the reset code.")
+                else ForgotPasswordMutation.Failed(result.failure ?: AuthFailure.Unknown)
             )
         }
     }
@@ -73,7 +75,7 @@ class ForgotPasswordViewModel(
                 mutate(ForgotPasswordMutation.ResetCompleted)
                 _effects.send(ForgotPasswordEffect.PasswordResetSuccess)
             } else {
-                mutate(ForgotPasswordMutation.Failed(result.error ?: "Could not reset the password."))
+                mutate(ForgotPasswordMutation.Failed(result.failure ?: AuthFailure.Unknown))
             }
         }
     }

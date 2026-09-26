@@ -1,5 +1,7 @@
 package org.gce.racehub.auth.presentation
 
+import org.gce.racehub.auth.domain.model.AuthFailure
+
 // MVI contract for the sign-up form.
 
 /** Immutable snapshot of the sign-up form. Only [SignUpReducer] produces new values. */
@@ -13,8 +15,8 @@ data class SignUpState(
     val isPasswordVisible: Boolean = false,
     val isConfirmPasswordVisible: Boolean = false,
     val isLoading: Boolean = false,
-    /** Inline error from validation or the server; cleared by the next edit or submit. */
-    val errorMessage: String? = null
+    /** Inline error; cleared by the next edit or submit. Each platform localizes it. */
+    val error: AuthFailure? = null
 )
 
 sealed class SignUpIntent {
@@ -36,6 +38,6 @@ sealed class SignUpEffect {
 internal sealed interface SignUpMutation {
     data class FieldsChanged(val transform: (SignUpState) -> SignUpState) : SignUpMutation
     data object Submitted : SignUpMutation
-    data class Failed(val message: String) : SignUpMutation
+    data class Failed(val failure: AuthFailure) : SignUpMutation
     data object Succeeded : SignUpMutation
 }

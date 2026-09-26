@@ -1,5 +1,7 @@
 package org.gce.racehub.auth
 
+import org.gce.racehub.auth.domain.model.AuthFailure
+import org.gce.racehub.auth.domain.model.AuthError
 import kotlinx.coroutines.test.runTest
 import org.gce.racehub.auth.data.repository.AuthRepositoryImpl
 import kotlin.test.Test
@@ -27,7 +29,7 @@ class AuthRepositoryImplTest {
     fun `login with wrong password returns failure`() = runTest {
         val result = repository.login("driver@racehub.com", "wrongpassword")
         assertFalse(result.isSuccess)
-        assertEquals("Invalid email or password", result.error)
+        assertEquals(AuthFailure(AuthError.Rejected, "Invalid email or password"), result.failure)
         assertNull(result.user)
     }
 
@@ -35,7 +37,7 @@ class AuthRepositoryImplTest {
     fun `login with unknown email returns failure`() = runTest {
         val result = repository.login("unknown@test.com", "race123")
         assertFalse(result.isSuccess)
-        assertEquals("Invalid email or password", result.error)
+        assertEquals(AuthFailure(AuthError.Rejected, "Invalid email or password"), result.failure)
     }
 
     @Test

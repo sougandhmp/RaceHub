@@ -1,5 +1,7 @@
 package org.gce.racehub.auth
 
+import org.gce.racehub.auth.domain.model.AuthFailure
+import org.gce.racehub.auth.domain.model.AuthError
 import kotlinx.coroutines.test.runTest
 import org.gce.racehub.auth.domain.usecase.LoginUseCase
 import org.gce.racehub.fake.FakeAuthRepository
@@ -17,7 +19,7 @@ class LoginUseCaseTest {
     fun `blank email returns failure without calling repository`() = runTest {
         val result = useCase("", "password123")
         assertFalse(result.isSuccess)
-        assertEquals("Email and password cannot be empty", result.error)
+        assertEquals(AuthError.EmailAndPasswordRequired, result.failure?.reason)
         assertEquals(0, repository.loginCallCount)
     }
 
@@ -25,7 +27,7 @@ class LoginUseCaseTest {
     fun `blank password returns failure without calling repository`() = runTest {
         val result = useCase("user@test.com", "")
         assertFalse(result.isSuccess)
-        assertEquals("Email and password cannot be empty", result.error)
+        assertEquals(AuthError.EmailAndPasswordRequired, result.failure?.reason)
         assertEquals(0, repository.loginCallCount)
     }
 
@@ -33,7 +35,7 @@ class LoginUseCaseTest {
     fun `email without at-sign returns failure`() = runTest {
         val result = useCase("notanemail", "password123")
         assertFalse(result.isSuccess)
-        assertEquals("Invalid email format", result.error)
+        assertEquals(AuthError.InvalidEmail, result.failure?.reason)
         assertEquals(0, repository.loginCallCount)
     }
 
@@ -41,7 +43,7 @@ class LoginUseCaseTest {
     fun `password shorter than 6 characters returns failure`() = runTest {
         val result = useCase("user@test.com", "12345")
         assertFalse(result.isSuccess)
-        assertEquals("Password must be at least 6 characters", result.error)
+        assertEquals(AuthError.PasswordTooShort, result.failure?.reason)
         assertEquals(0, repository.loginCallCount)
     }
 
@@ -61,9 +63,9 @@ class LoginUseCaseTest {
 
     @Test
     fun `repository failure is propagated`() = runTest {
-        repository.loginResult = org.gce.racehub.auth.domain.model.AuthResult.failure("Invalid credentials")
+        repository.loginResult = org.gce.racehub.auth.domain.model.AuthResult.failure(AuthError.Rejected, "Invalid credentials")
         val result = useCase("user@test.com", "password123")
         assertFalse(result.isSuccess)
-        assertEquals("Invalid credentials", result.error)
+        assertEquals(AuthFailure(AuthError.Rejected, "Invalid credentials"), result.failure)
     }
 }

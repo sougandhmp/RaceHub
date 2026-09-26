@@ -1,5 +1,7 @@
 package org.gce.racehub.auth.presentation
 
+import org.gce.racehub.auth.domain.model.AuthFailure
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutines
@@ -59,7 +61,7 @@ class EmailVerificationViewModel(
                 mutate(EmailVerificationMutation.Verified)
                 _effects.send(EmailVerificationEffect.EmailVerified)
             } else {
-                mutate(EmailVerificationMutation.Failed(result.error ?: "Invalid verification code."))
+                mutate(EmailVerificationMutation.Failed(result.failure ?: AuthFailure.Unknown))
             }
         }
     }
@@ -72,7 +74,7 @@ class EmailVerificationViewModel(
             val result = resendOtp(current.email, OtpPurpose.EMAIL_VERIFICATION)
             mutate(
                 if (result.isSuccess) EmailVerificationMutation.Resent
-                else EmailVerificationMutation.Failed(result.error ?: "Could not resend the code.")
+                else EmailVerificationMutation.Failed(result.failure ?: AuthFailure.Unknown)
             )
         }
     }
