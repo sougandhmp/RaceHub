@@ -6,7 +6,7 @@ import org.gce.racehub.auth.domain.model.PasswordResetResult
 import org.gce.racehub.core.domain.model.User
 import org.gce.racehub.auth.domain.repository.AuthRepository
 
-class FakeAuthRepository : AuthRepository {
+internal class FakeAuthRepository : AuthRepository {
     var loginResult: AuthResult = AuthResult.success(User("1", "test@test.com", "Test User", token = "tok"))
     var signUpResult: AuthResult = AuthResult.success(User("1", "test@test.com", "Test User", token = "tok"))
     var logoutResult: Boolean = true

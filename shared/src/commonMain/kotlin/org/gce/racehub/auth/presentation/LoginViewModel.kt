@@ -24,7 +24,7 @@ import org.gce.racehub.auth.domain.usecase.SendOtpUseCase
  * starts a session; an unverified one gets a fresh code and goes to verification
  * without a session being started.
  */
-class LoginViewModel(
+class LoginViewModel internal constructor(
     private val login: LoginUseCase,
     private val userSession: UserSession,
     private val sendOtp: SendOtpUseCase

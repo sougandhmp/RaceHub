@@ -11,7 +11,7 @@ import org.gce.racehub.race.domain.model.TrendingThread
  * Contract for race data: schedule, standings, trending threads and race detail. Implementations are the
  * error boundary: failures come back as [DataResult.Failure], never as exceptions.
  */
-interface RaceRepository {
+internal interface RaceRepository {
 
     // ── Race reads: offline-first, errors as values ─────────────────────────
     // Each returns cached rows when a refresh fails, and a Failure only when

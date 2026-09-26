@@ -4,7 +4,7 @@ import org.gce.racehub.auth.domain.model.AuthError
 import org.gce.racehub.auth.domain.model.AuthResult
 import org.gce.racehub.auth.domain.repository.AuthRepository
 
-class SignUpUseCase(private val authRepository: AuthRepository) {
+internal class SignUpUseCase(private val authRepository: AuthRepository) {
 
     @Throws(Exception::class)
     suspend operator fun invoke(

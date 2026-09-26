@@ -22,7 +22,7 @@ import org.gce.racehub.profile.domain.usecase.GetMyProfileUseCase
  * Shared MVI ViewModel for the Profile tab (Android and iOS). Follows the
  * session: whenever the signed-in user changes it shows them and loads their profile.
  */
-class ProfileViewModel(
+class ProfileViewModel internal constructor(
     private val userSession: UserSession,
     private val logout: LogoutUseCase,
     private val getMyProfile: GetMyProfileUseCase

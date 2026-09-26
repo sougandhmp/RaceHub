@@ -5,7 +5,7 @@ import org.gce.racehub.forum.domain.model.ForumCategories
 import org.gce.racehub.forum.domain.model.Thread
 import org.gce.racehub.forum.domain.repository.ForumRepository
 
-class CreateThreadUseCase(private val repository: ForumRepository) {
+internal class CreateThreadUseCase(private val repository: ForumRepository) {
 
     /**
      * Validates the input and posts the new thread.

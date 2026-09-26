@@ -4,7 +4,7 @@ import org.gce.racehub.core.domain.DataResult
 import org.gce.racehub.profile.domain.model.UserProfile
 import org.gce.racehub.profile.domain.repository.ProfileRepository
 
-class GetMyProfileUseCase(private val repository: ProfileRepository) {
+internal class GetMyProfileUseCase(private val repository: ProfileRepository) {
 
     @Throws(Exception::class)
     suspend operator fun invoke(userId: String, token: String): DataResult<UserProfile> {

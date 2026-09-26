@@ -9,7 +9,7 @@ import org.gce.racehub.race.domain.model.RaceDetail
 import org.gce.racehub.race.domain.model.TrendingThread
 import org.gce.racehub.race.domain.repository.RaceRepository
 
-class FakeRaceRepository : RaceRepository {
+internal class FakeRaceRepository : RaceRepository {
     var raceSchedule: List<Race> = emptyList()
     var driverStandings: List<DriverStanding> = emptyList()
     var constructorStandings: List<ConstructorStanding> = emptyList()

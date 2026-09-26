@@ -37,20 +37,8 @@ class RaceViewModel internal constructor(
     private val getTrendingThreads: GetTrendingThreadsUseCase,
     private val getRaceDetail: GetRaceDetailUseCase,
     /** Zone sessions are shown in; tests pass a fixed one. */
-    timeZone: TimeZone
+    timeZone: TimeZone = TimeZone.currentSystemDefault()
 ) : ViewModel() {
-
-    /** Shows sessions in the device's time zone. (Internal ctor keeps kotlinx-datetime out of the Swift API.) */
-    constructor(
-        getRaceSchedule: GetRaceScheduleUseCase,
-        getDriverStandings: GetDriverStandingsUseCase,
-        getConstructorStandings: GetConstructorStandingsUseCase,
-        getTrendingThreads: GetTrendingThreadsUseCase,
-        getRaceDetail: GetRaceDetailUseCase
-    ) : this(
-        getRaceSchedule, getDriverStandings, getConstructorStandings, getTrendingThreads, getRaceDetail,
-        TimeZone.currentSystemDefault()
-    )
 
     private val reducer = RaceReducer(timeZone)
 

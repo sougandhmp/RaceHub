@@ -12,7 +12,7 @@ import org.gce.racehub.race.domain.repository.RaceRepository
  *
  * Shared between Android and iOS via the KMP `shared` module.
  */
-class GetDriverStandingsUseCase(private val repository: RaceRepository) {
+internal class GetDriverStandingsUseCase(private val repository: RaceRepository) {
 
     /**
      * @return The [DriverStanding] list sorted by championship position

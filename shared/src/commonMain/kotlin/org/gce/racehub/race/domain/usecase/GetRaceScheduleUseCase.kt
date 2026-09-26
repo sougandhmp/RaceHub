@@ -13,7 +13,7 @@ import org.gce.racehub.race.domain.repository.RaceRepository
  *
  * Shared between Android and iOS via the KMP `shared` module.
  */
-class GetRaceScheduleUseCase(private val repository: RaceRepository) {
+internal class GetRaceScheduleUseCase(private val repository: RaceRepository) {
 
     /** The season's races ordered by round, or why they could not be loaded. */
     @Throws(Exception::class)

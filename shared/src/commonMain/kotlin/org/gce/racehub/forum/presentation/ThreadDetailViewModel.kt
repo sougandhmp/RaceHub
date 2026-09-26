@@ -22,7 +22,7 @@ import org.gce.racehub.forum.domain.usecase.LikeThreadUseCase
  * Shared MVI ViewModel for a thread's detail screen (Android and iOS).
  * Send [ThreadDetailIntent.Open] when the screen shows a thread.
  */
-class ThreadDetailViewModel(
+class ThreadDetailViewModel internal constructor(
     private val addComment: AddCommentUseCase,
     private val likeThread: LikeThreadUseCase,
     private val userSession: UserSession
