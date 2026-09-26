@@ -22,6 +22,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
@@ -29,6 +31,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -55,14 +59,20 @@ import org.gce.racehub.race.presentation.RaceState
 import org.gce.racehub.race.presentation.RaceViewModel
 import org.gce.racehub.race.presentation.WeekendSession
 import org.gce.racehub.race.presentation.raceHeaderDate
-import org.gce.racehub.race.presentation.weekendSessions
 import org.gce.racehub.race.domain.model.TrendingThread
 import org.gce.racehub.theme.AppColorScheme
 import org.gce.racehub.theme.DarkAppColors
 import org.gce.racehub.theme.Dimens
 import org.gce.racehub.theme.LocalAppColors
 import org.gce.racehub.theme.teamColorOf
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
+import org.gce.racehub.core.domain.DataError
+import org.gce.racehub.race.presentation.RaceEffect
+import racehub.composeapp.generated.resources.race_error_network
+import racehub.composeapp.generated.resources.race_error_server
+import racehub.composeapp.generated.resources.race_error_unknown
 import org.koin.compose.viewmodel.koinViewModel
 import racehub.composeapp.generated.resources.Res
 import racehub.composeapp.generated.resources.action_see_all
@@ -91,7 +101,18 @@ fun RaceScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val colors = LocalAppColors.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
+    // One-off effects: shown once, never replayed on recomposition.
+    LaunchedEffect(viewModel) {
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                is RaceEffect.ShowLoadError -> snackbarHostState.showSnackbar(getString(effect.error.message()))
+            }
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
     PullToRefreshBox(
         isRefreshing = state.isLoading,
         onRefresh = { viewModel.onIntent(RaceIntent.Refresh) },
@@ -116,6 +137,14 @@ fun RaceScreen(
             )
         }
     }
+    SnackbarHost(snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
+    }
+}
+
+private fun DataError.message(): StringResource = when (this) {
+    DataError.Network -> Res.string.race_error_network
+    DataError.Server -> Res.string.race_error_server
+    DataError.Unknown -> Res.string.race_error_unknown
 }
 
 @Composable

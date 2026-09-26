@@ -4,6 +4,7 @@ import Shared
 struct RaceView: View {
 
     @ObservedObject var model: RaceModel
+    @State private var loadErrorMessage: String?
     @Environment(\.colorScheme) private var colorScheme
     let onViewAllSchedule: () -> Void
     let onViewAllStandings: () -> Void
@@ -47,6 +48,32 @@ struct RaceView: View {
         .refreshable {
             model.send(RaceIntent.Refresh.shared)
         }
+        // One-off effects from the shared ViewModel: shown once, never replayed.
+        .onReceive(model.effects) { effect in
+            if let loadError = effect as? RaceEffect.ShowLoadError {
+                loadErrorMessage = Self.message(for: loadError.error)
+            }
+        }
+        .alert(
+            String(localized: "Couldn't load races"),
+            isPresented: Binding(
+                get: { loadErrorMessage != nil },
+                set: { if !$0 { loadErrorMessage = nil } }
+            )
+        ) {
+            Button(String(localized: "OK"), role: .cancel) {}
+        } message: {
+            Text(loadErrorMessage ?? "")
+        }
+    }
+
+    private static func message(for error: DataError) -> String {
+        if error == DataError.network {
+            return String(localized: "Can't reach the server. Check your connection and pull to refresh.")
+        } else if error == DataError.server {
+            return String(localized: "The server had a problem loading races. Pull to try again.")
+        }
+        return String(localized: "Something went wrong loading races. Pull to try again.")
     }
 }
 
@@ -108,7 +135,7 @@ private struct NextRaceSection: View {
             // R9/24 · SUN MAY 24  +  🇨🇦
             HStack {
                 let roundLabel = race.map { "R\(Int($0.round))/\(totalRaces)" } ?? ""
-                let dateLabel = race.map { RaceDatesKt.raceHeaderDate(dateTime: $0.dateTime) } ?? ""
+                let dateLabel = race.map { RaceFormattingKt.raceHeaderDate(dateTime: $0.dateTime) } ?? ""
                 Text([roundLabel, dateLabel].filter { !$0.isEmpty }.joined(separator: "  ·  "))
                     .font(.system(size: 12, weight: .bold))
                     .foregroundColor(colors.mutedText)

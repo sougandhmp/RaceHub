@@ -2,11 +2,14 @@ package org.gce.racehub.race
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.datetime.TimeZone
+import org.gce.racehub.core.domain.DataError
 import org.gce.racehub.fake.FakeHomeRepository
 import org.gce.racehub.race.domain.model.Race
 import org.gce.racehub.race.domain.model.RaceDetail
@@ -16,7 +19,7 @@ import org.gce.racehub.race.domain.usecase.GetDriverStandingsUseCase
 import org.gce.racehub.race.domain.usecase.GetRaceDetailUseCase
 import org.gce.racehub.race.domain.usecase.GetRaceScheduleUseCase
 import org.gce.racehub.race.domain.usecase.GetTrendingThreadsUseCase
-import org.gce.racehub.race.presentation.RaceError
+import org.gce.racehub.race.presentation.RaceEffect
 import org.gce.racehub.race.presentation.RaceIntent
 import org.gce.racehub.race.presentation.RaceViewModel
 import kotlin.test.AfterTest
@@ -24,8 +27,8 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertNull
 
+/** Intent handling, async orchestration and effects; state transitions are covered by [RaceReducerTest]. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class RaceViewModelTest {
 
@@ -42,46 +45,52 @@ class RaceViewModelTest {
 
     private fun viewModel() = RaceViewModel(
         GetRaceScheduleUseCase(repo), GetDriverStandingsUseCase(repo), GetConstructorStandingsUseCase(repo),
-        GetTrendingThreadsUseCase(repo), GetRaceDetailUseCase(repo)
+        GetTrendingThreadsUseCase(repo), GetRaceDetailUseCase(repo), TimeZone.UTC
     )
 
     @BeforeTest fun setUp() = Dispatchers.setMain(dispatcher)
     @AfterTest fun tearDown() = Dispatchers.resetMain()
 
     @Test
-    fun `loads once on creation and sorts by round and picks the first uncompleted race`() = runTest(dispatcher) {
+    fun `loads once on creation and orders the schedule by round`() = runTest(dispatcher) {
         repo.raceSchedule = listOf(race(3, "Upcoming"), race(1, "Completed"), race(2, "Upcoming"))
         val vm = viewModel()
         advanceUntilIdle()
 
-        val state = vm.state.value
         assertEquals(1, repo.raceScheduleCalls)
-        assertEquals(listOf(1, 2, 3), state.raceSchedule.map { it.round })
-        assertEquals("race-2", state.nextRace?.id)
-        assertFalse(state.isLoading)
-        assertNull(state.error)
+        assertEquals(listOf(1, 2, 3), vm.state.value.raceSchedule.map { it.round })
+        assertEquals("race-2", vm.state.value.nextRace?.id)
+        assertFalse(vm.state.value.isLoading)
     }
 
     @Test
-    fun `next race sessions switch from estimate to real once detail loads`() = runTest(dispatcher) {
+    fun `fetches the next race detail after loading`() = runTest(dispatcher) {
         repo.raceSchedule = listOf(race(1, "Upcoming"))
         repo.raceDetailBySlug = mapOf("race-1" to detail("GP 1", RaceSession("Sprint", "2026-05-10T12:00")))
         val vm = viewModel()
         advanceUntilIdle()
 
-        assertEquals(listOf("SPRINT"), vm.state.value.nextRaceSessions.map { it.label })
         assertEquals("GP 1", vm.state.value.nextRaceDetail?.grandPrix)
+        assertEquals(listOf("SPRINT"), vm.state.value.nextRaceSessions.map { it.label })
     }
 
     @Test
-    fun `failed load reports an error and dismiss clears it`() = runTest(dispatcher) {
-        repo.raceScheduleError = IllegalStateException("offline")
+    fun `failed load emits a one-off error effect and stops loading`() = runTest(dispatcher) {
+        repo.raceScheduleError = DataError.Network
         val vm = viewModel()
         advanceUntilIdle()
-        assertEquals(RaceError.LoadFailed, vm.state.value.error)
 
-        vm.onIntent(RaceIntent.DismissError)
-        assertNull(vm.state.value.error)
+        assertEquals(RaceEffect.ShowLoadError(DataError.Network), vm.effects.first())
+        assertFalse(vm.state.value.isLoading)
+    }
+
+    @Test
+    fun `refresh reloads`() = runTest(dispatcher) {
+        val vm = viewModel()
+        advanceUntilIdle()
+        vm.onIntent(RaceIntent.Refresh)
+        advanceUntilIdle()
+        assertEquals(2, repo.raceScheduleCalls)
     }
 
     @Test

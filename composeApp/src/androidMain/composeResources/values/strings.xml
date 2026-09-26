@@ -149,4 +149,7 @@
     <string name="label_points_abbr">PTS</string>
     <string name="label_pos">POS</string>
     <string name="label_race_starts">Race starts %1$s local</string>
+    <string name="race_error_network">Can\'t reach the server. Check your connection and pull to refresh.</string>
+    <string name="race_error_server">The server had a problem loading races. Pull to try again.</string>
+    <string name="race_error_unknown">Something went wrong loading races. Pull to try again.</string>
 </resources>
