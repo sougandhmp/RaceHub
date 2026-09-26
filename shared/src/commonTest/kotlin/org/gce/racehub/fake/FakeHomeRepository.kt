@@ -89,10 +89,6 @@ class FakeHomeRepository : HomeRepository {
         return DataResult.Success(likeThreadResult)
     }
 
-    override fun getRaceCount(): Int = raceSchedule.size
-    override fun getRace(index: Int): Race = raceSchedule[index]
-    override fun getStandingCount(): Int = driverStandings.size
-    override fun getStanding(index: Int): DriverStanding = driverStandings[index]
 
     data class CreateThreadArgs(
         val userId: String,

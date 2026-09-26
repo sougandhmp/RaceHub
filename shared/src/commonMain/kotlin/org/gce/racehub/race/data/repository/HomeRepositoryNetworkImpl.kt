@@ -598,40 +598,4 @@ class HomeRepositoryNetworkImpl(
             }
         }
     }
-
-    /**
-     * Synchronous accessor for race count (for compatibility with the interface).
-     *
-     * WARNING: This blocks the current thread. Migrate callers to use
-     * [getRaceSchedule] with suspend/async instead.
-     *
-     * @return The number of races in the local cache
-     */
-    override fun getRaceCount(): Int = localDataSource.getAllRaces().size
-
-    /**
-     * Synchronous accessor for a specific race (for compatibility with the interface).
-     *
-     * WARNING: This blocks the current thread. Migrate callers to use
-     * [getRaceSchedule] with suspend/async instead.
-     */
-    override fun getRace(index: Int): Race = localDataSource.getAllRaces().getOrNull(index)
-        ?: throw IndexOutOfBoundsException("Race at index $index not found")
-
-    /**
-     * Synchronous accessor for standing count (for compatibility with the interface).
-     *
-     * WARNING: This blocks the current thread. Migrate callers to use
-     * [getDriverStandings] with suspend/async instead.
-     */
-    override fun getStandingCount(): Int = localDataSource.getAllDriverStandings().size
-
-    /**
-     * Synchronous accessor for a specific standing (for compatibility with the interface).
-     *
-     * WARNING: This blocks the current thread. Migrate callers to use
-     * [getDriverStandings] with suspend/async instead.
-     */
-    override fun getStanding(index: Int): DriverStanding = localDataSource.getAllDriverStandings().getOrNull(index)
-        ?: throw IndexOutOfBoundsException("Standing at index $index not found")
 }

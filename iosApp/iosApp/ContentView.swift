@@ -15,8 +15,7 @@ struct ContentView: View {
     @State private var screen: Screen
 
     init() {
-        let hasSession = RaceDependencyProvider.companion.shared.userSession.currentUser.value is User
-        _screen = State(initialValue: hasSession ? .home : .login)
+        _screen = State(initialValue: AppSession.shared.isSignedIn ? .home : .login)
     }
 
     var body: some View {
