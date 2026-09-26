@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.gce.racehub.auth.domain.model.OtpPurpose
-import org.gce.racehub.auth.domain.session.UserSession
+import org.gce.racehub.core.domain.session.UserSession
 import org.gce.racehub.auth.domain.usecase.LoginUseCase
 import org.gce.racehub.auth.domain.usecase.SendOtpUseCase
 

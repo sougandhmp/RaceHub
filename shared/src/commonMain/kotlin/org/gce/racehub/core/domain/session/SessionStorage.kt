@@ -1,6 +1,6 @@
-package org.gce.racehub.auth.domain.session
+package org.gce.racehub.core.domain.session
 
-import org.gce.racehub.auth.domain.model.User
+import org.gce.racehub.core.domain.model.User
 
 /**
  * Persists the signed-in user across launches. Declared in the domain so

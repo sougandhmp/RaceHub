@@ -3,7 +3,7 @@ package org.gce.racehub.auth
 import org.gce.racehub.auth.domain.model.AuthFailure
 import org.gce.racehub.auth.domain.model.AuthError
 import org.gce.racehub.auth.domain.model.AuthResult
-import org.gce.racehub.auth.domain.model.User
+import org.gce.racehub.core.domain.model.User
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

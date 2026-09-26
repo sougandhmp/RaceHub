@@ -1,4 +1,4 @@
-package org.gce.racehub.auth.domain.model
+package org.gce.racehub.core.domain.model
 
 /**
  * Core domain entity representing an authenticated RaceHub user.

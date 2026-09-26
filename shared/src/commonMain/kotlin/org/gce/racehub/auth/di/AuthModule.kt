@@ -3,10 +3,8 @@ package org.gce.racehub.auth.di
 import kotlin.experimental.ExperimentalObjCRefinement
 import kotlin.native.HiddenFromObjC
 import org.gce.racehub.auth.data.network.AuthService
-import org.gce.racehub.auth.data.network.HttpClientFactory
 import org.gce.racehub.auth.data.repository.AuthRepositoryNetworkImpl
 import org.gce.racehub.auth.domain.repository.AuthRepository
-import org.gce.racehub.auth.domain.session.UserSession
 import org.gce.racehub.auth.domain.usecase.ConfirmPasswordResetUseCase
 import org.gce.racehub.auth.domain.usecase.LoginUseCase
 import org.gce.racehub.auth.domain.usecase.LogoutUseCase
@@ -31,20 +29,12 @@ import org.koin.dsl.module
  */
 internal fun createAuthModule(baseUrl: String): Module = module {
 
-    // HTTP Client - platform-specific engine will be selected automatically
-    single {
-        HttpClientFactory.create()
-    }
-
-    // Auth Service - depends on HTTP client
+    // Uses the shared HttpClient from coreModule.
     single {
         AuthService(get(), baseUrl)
     }
 
     single<AuthRepository> { AuthRepositoryNetworkImpl(get()) }
-
-    // Process-wide holder for the currently authenticated user (backed by SessionStorage)
-    single { UserSession(get()) }
 
     factory { LoginUseCase(get()) }
     factory { SignUpUseCase(get()) }

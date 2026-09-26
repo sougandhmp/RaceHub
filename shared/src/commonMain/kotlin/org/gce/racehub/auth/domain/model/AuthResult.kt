@@ -1,5 +1,6 @@
 package org.gce.racehub.auth.domain.model
 
+import org.gce.racehub.core.domain.model.User
 /**
  * The outcome of an authentication operation (login or sign-up).
  *

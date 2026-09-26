@@ -1,6 +1,6 @@
 package org.gce.racehub.auth.data.dto
 
-import org.gce.racehub.auth.domain.model.User
+import org.gce.racehub.core.domain.model.User
 
 /**
  * Converts a [UserResponseDto] to a domain [User] model.

@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.gce.racehub.auth.domain.session.UserSession
+import org.gce.racehub.core.domain.session.UserSession
 import org.gce.racehub.core.domain.DataResult
 import org.gce.racehub.forum.domain.usecase.CreateThreadUseCase
 

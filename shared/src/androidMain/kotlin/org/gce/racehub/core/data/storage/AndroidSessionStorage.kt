@@ -2,13 +2,13 @@
 // would invalidate every persisted session, so keep it until that migration is planned.
 @file:Suppress("DEPRECATION")
 
-package org.gce.racehub.auth.data.storage
+package org.gce.racehub.core.data.storage
 
-import org.gce.racehub.auth.domain.session.SessionStorage
+import org.gce.racehub.core.domain.session.SessionStorage
 import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
-import org.gce.racehub.auth.domain.model.User
+import org.gce.racehub.core.domain.model.User
 import androidx.core.content.edit
 
 internal class AndroidSessionStorage(context: Context) : SessionStorage {

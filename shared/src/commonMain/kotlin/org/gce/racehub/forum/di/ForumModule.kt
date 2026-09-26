@@ -8,7 +8,7 @@ import org.gce.racehub.forum.domain.usecase.GetThreadsUseCase
 import org.gce.racehub.forum.domain.usecase.LikeThreadUseCase
 import org.koin.dsl.module
 
-/** Forum data and use cases. Reuses the app's single HttpClient. */
+/** Forum data and use cases. Needs coreModule (HttpClient). */
 internal fun createForumModule(baseUrl: String) = module {
     single<ForumRepository> { ForumRepositoryNetworkImpl(get(), baseUrl) }
     factory { GetThreadsUseCase(get()) }

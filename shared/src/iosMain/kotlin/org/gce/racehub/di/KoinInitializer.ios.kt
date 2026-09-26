@@ -1,5 +1,6 @@
 package org.gce.racehub.di
 
+import org.gce.racehub.core.di.coreModule
 import org.gce.racehub.forum.di.createForumModule
 import org.gce.racehub.profile.di.createProfileModule
 import kotlin.experimental.ExperimentalObjCRefinement
@@ -27,7 +28,7 @@ actual object KoinInitializer {
     actual fun init(baseUrl: String, vararg additionalModules: Module) {
         startKoin {
             modules(
-                createProductionAuthModule(baseUrl),
+                coreModule, createProductionAuthModule(baseUrl),
                 createRaceModule(baseUrl), createForumModule(baseUrl), createProfileModule(baseUrl),
                 platformModule, presentationModule,
                 *additionalModules
