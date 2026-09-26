@@ -5,6 +5,7 @@ import org.gce.racehub.auth.domain.repository.AuthRepository
 
 class ConfirmPasswordResetUseCase(private val authRepository: AuthRepository) {
 
+    @Throws(Exception::class)
     suspend operator fun invoke(
         email: String,
         otp: String,
