@@ -35,8 +35,19 @@
 		A1C0DE000000000000000005 /* KMPNativeCoroutinesCore in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000003 /* KMPNativeCoroutinesCore */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		7E5700000000000000000007 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0E5C98043399750D830BB2D0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 1FA14F6345DD07B7C0EC35BB;
+			remoteInfo = iosApp;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		223393CFAC5931295932408F /* RaceHub.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RaceHub.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7E5700000000000000000001 /* iosAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iosAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -61,6 +72,11 @@
 				B7F118A102BEDB0C9A5D63E3 /* Exceptions for "iosApp" folder in "iosApp" target */,
 			);
 			path = iosApp;
+			sourceTree = "<group>";
+		};
+		7E5700000000000000000002 /* iosAppTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = iosAppTests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -99,6 +115,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		7E5700000000000000000004 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -106,6 +129,7 @@
 			isa = PBXGroup;
 			children = (
 				223393CFAC5931295932408F /* RaceHub.app */,
+				7E5700000000000000000001 /* iosAppTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -115,6 +139,7 @@
 			children = (
 				A1D1B126D818206609D7922D /* Configuration */,
 				DC8C6925651B9C9AF3E3E9E3 /* iosApp */,
+				7E5700000000000000000002 /* iosAppTests */,
 				25A116BFDA278562124B4F2F /* Products */,
 			);
 			sourceTree = "<group>";
@@ -171,6 +196,27 @@
 			productReference = 223393CFAC5931295932408F /* RaceHub.app */;
 			productType = "com.apple.product-type.application";
 		};
+		7E570000000000000000000B /* iosAppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7E5700000000000000000008 /* Build configuration list for PBXNativeTarget "iosAppTests" */;
+			buildPhases = (
+				7E5700000000000000000003 /* Sources */,
+				7E5700000000000000000004 /* Frameworks */,
+				7E5700000000000000000005 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				7E5700000000000000000006 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				7E5700000000000000000002 /* iosAppTests */,
+			);
+			name = iosAppTests;
+			productName = iosAppTests;
+			productReference = 7E5700000000000000000001 /* iosAppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -183,6 +229,10 @@
 				TargetAttributes = {
 					1FA14F6345DD07B7C0EC35BB = {
 						CreatedOnToolsVersion = 16.2;
+					};
+					7E570000000000000000000B = {
+						CreatedOnToolsVersion = 26.4;
+						TestTargetID = 1FA14F6345DD07B7C0EC35BB;
 					};
 				};
 			};
@@ -205,12 +255,20 @@
 			projectRoot = "";
 			targets = (
 				1FA14F6345DD07B7C0EC35BB /* iosApp */,
+				7E570000000000000000000B /* iosAppTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		CD2E12376A30F221F8C22048 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7E5700000000000000000005 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -249,7 +307,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		7E5700000000000000000003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		7E5700000000000000000006 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 1FA14F6345DD07B7C0EC35BB /* iosApp */;
+			targetProxy = 7E5700000000000000000007 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		31F6F69A1A74383DA13004A5 /* Release */ = {
@@ -431,6 +504,36 @@
 			};
 			name = Debug;
 		};
+		7E5700000000000000000009 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "org.gce.racehub.RaceHubTests$(TEAM_ID)";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RaceHub.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RaceHub";
+			};
+			name = Debug;
+		};
+		7E570000000000000000000A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "org.gce.racehub.RaceHubTests$(TEAM_ID)";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RaceHub.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RaceHub";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -448,6 +551,15 @@
 			buildConfigurations = (
 				771D9D90CC8308C6CB6AC99C /* Debug */,
 				31F6F69A1A74383DA13004A5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		7E5700000000000000000008 /* Build configuration list for PBXNativeTarget "iosAppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7E5700000000000000000009 /* Debug */,
+				7E570000000000000000000A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
