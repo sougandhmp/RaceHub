@@ -1,5 +1,7 @@
 package org.gce.racehub.home
 
+import org.gce.racehub.forum.presentation.ForumViewModel
+import org.gce.racehub.race.presentation.RaceViewModel
 import org.gce.racehub.home.presentation.HomeIntent
 import org.gce.racehub.home.presentation.HomeTab
 import org.gce.racehub.home.presentation.HomeViewModel
@@ -62,6 +64,8 @@ private val HomeTab.icon: ImageVector
 
 @Composable
 fun HomeScreen(
+    raceViewModel: RaceViewModel,
+    forumViewModel: ForumViewModel,
     viewModel: HomeViewModel = koinViewModel(),
     onViewAllSchedule: () -> Unit,
     onViewAllStandings: () -> Unit,
@@ -90,12 +94,14 @@ fun HomeScreen(
         ) {
             when (state.selectedTab) {
                 HomeTab.Race -> RaceScreen(
+                    viewModel = raceViewModel,
                     onViewAllSchedule = onViewAllSchedule,
                     onViewAllStandings = onViewAllStandings,
                     onViewRaceDetail = onViewRaceDetail
                 )
 
                 HomeTab.Forum -> ForumScreen(
+                    viewModel = forumViewModel,
                     onCreateThread = onCreateThread,
                     onThreadClick = onThreadClick
                 )
@@ -188,6 +194,8 @@ fun HomeScreenPreview() {
         )
     }) {
         HomeScreen(
+            raceViewModel = koinViewModel(),
+            forumViewModel = koinViewModel(),
             onViewAllSchedule = {},
             onViewAllStandings = {}
         )

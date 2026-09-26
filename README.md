@@ -112,7 +112,7 @@ RaceHub follows **Clean Architecture**, with the **MVI** (Model-View-Intent) pat
 | SQLite driver   | `AndroidSqliteDriver`                         | `NativeSqliteDriver`                     |
 | Session storage | `EncryptedSharedPreferences`                  | Keychain                                 |
 | DI bootstrap    | `KoinInitializer.setApplication()` + `init()` | `KoinInitializer.shared.start(baseUrl:)` |
-| ViewModel owner | Activity (`koinViewModel()`)                  | `ViewModelOwner` via `SharedViewModels`  |
+| ViewModel owner | Navigation 3 back-stack entry (`koinViewModel()`) | `ViewModelOwner` via `SharedViewModels`  |
 
 ---
 
@@ -151,7 +151,8 @@ RaceHub/
 │       ├── profile/
 │       ├── theme/                  # AppColors, Dimens, ThemeManager
 │       ├── ui/                     # Shared UI helpers (error messages)
-│       └── App.kt                  # Theme + navigation root
+│       ├── navigation/Routes.kt    # Navigation 3 destinations (serializable NavKeys)
+│       └── App.kt                  # Theme + NavDisplay root
 │
 ├── iosApp/                         # iOS app: SwiftUI views only
 │   └── iosApp/
