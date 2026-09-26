@@ -5,6 +5,8 @@ import org.gce.racehub.auth.domain.repository.AuthRepository
 
 class SignUpUseCase(private val authRepository: AuthRepository) {
 
+    @Throws(Exception::class)
+
     suspend operator fun invoke(
         username: String,
         email: String,
