@@ -7,8 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A1C0DE000000000000000004 /* KMPNativeCoroutinesAsync in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000002 /* KMPNativeCoroutinesAsync */; };
-		A1C0DE000000000000000005 /* KMPNativeCoroutinesCore in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000003 /* KMPNativeCoroutinesCore */; };
 		8FD1DDF52FAB9DB8002B8F0A /* FirebaseAI in Frameworks */ = {isa = PBXBuildFile; productRef = 8FD1DDF42FAB9DB8002B8F0A /* FirebaseAI */; };
 		8FD1DDF72FAB9DB8002B8F0A /* FirebaseAILogic in Frameworks */ = {isa = PBXBuildFile; productRef = 8FD1DDF62FAB9DB8002B8F0A /* FirebaseAILogic */; };
 		8FD1DDF92FAB9DB8002B8F0A /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 8FD1DDF82FAB9DB8002B8F0A /* FirebaseAnalytics */; };
@@ -33,6 +31,8 @@
 		8FD1DE1F2FAB9DB8002B8F0A /* FirebaseRemoteConfig in Frameworks */ = {isa = PBXBuildFile; productRef = 8FD1DE1E2FAB9DB8002B8F0A /* FirebaseRemoteConfig */; };
 		8FD1DE212FAB9DB8002B8F0A /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 8FD1DE202FAB9DB8002B8F0A /* FirebaseStorage */; };
 		8FD1DE232FAB9DB8002B8F0A /* FirebaseStorageCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 8FD1DE222FAB9DB8002B8F0A /* FirebaseStorageCombine-Community */; };
+		A1C0DE000000000000000004 /* KMPNativeCoroutinesAsync in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000002 /* KMPNativeCoroutinesAsync */; };
+		A1C0DE000000000000000005 /* KMPNativeCoroutinesCore in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000003 /* KMPNativeCoroutinesCore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -455,14 +455,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		A1C0DE000000000000000001 /* XCRemoteSwiftPackageReference "KMP-NativeCoroutines" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/rickclephas/KMP-NativeCoroutines.git";
-			requirement = {
-				kind = exactVersion;
-				version = 1.0.6;
-			};
-		};
 		8FD1DDF32FAB9DB8002B8F0A /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
@@ -471,19 +463,17 @@
 				minimumVersion = 12.19.2;
 			};
 		};
+		A1C0DE000000000000000001 /* XCRemoteSwiftPackageReference "KMP-NativeCoroutines" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/rickclephas/KMP-NativeCoroutines.git";
+			requirement = {
+				kind = exactVersion;
+				version = 1.0.6;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		A1C0DE000000000000000002 /* KMPNativeCoroutinesAsync */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = A1C0DE000000000000000001 /* XCRemoteSwiftPackageReference "KMP-NativeCoroutines" */;
-			productName = KMPNativeCoroutinesAsync;
-		};
-		A1C0DE000000000000000003 /* KMPNativeCoroutinesCore */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = A1C0DE000000000000000001 /* XCRemoteSwiftPackageReference "KMP-NativeCoroutines" */;
-			productName = KMPNativeCoroutinesCore;
-		};
 		8FD1DDF42FAB9DB8002B8F0A /* FirebaseAI */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 8FD1DDF32FAB9DB8002B8F0A /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
@@ -603,6 +593,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 8FD1DDF32FAB9DB8002B8F0A /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = "FirebaseStorageCombine-Community";
+		};
+		A1C0DE000000000000000002 /* KMPNativeCoroutinesAsync */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000001 /* XCRemoteSwiftPackageReference "KMP-NativeCoroutines" */;
+			productName = KMPNativeCoroutinesAsync;
+		};
+		A1C0DE000000000000000003 /* KMPNativeCoroutinesCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000001 /* XCRemoteSwiftPackageReference "KMP-NativeCoroutines" */;
+			productName = KMPNativeCoroutinesCore;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
