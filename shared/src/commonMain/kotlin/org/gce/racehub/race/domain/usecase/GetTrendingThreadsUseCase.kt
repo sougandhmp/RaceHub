@@ -2,9 +2,9 @@ package org.gce.racehub.race.domain.usecase
 
 import org.gce.racehub.core.domain.DataResult
 import org.gce.racehub.race.domain.model.TrendingThread
-import org.gce.racehub.race.domain.repository.HomeRepository
+import org.gce.racehub.race.domain.repository.RaceRepository
 
-class GetTrendingThreadsUseCase(private val repository: HomeRepository) {
+class GetTrendingThreadsUseCase(private val repository: RaceRepository) {
     @Throws(Exception::class)
     suspend operator fun invoke(): DataResult<List<TrendingThread>> = repository.getTrendingThreads()
 }

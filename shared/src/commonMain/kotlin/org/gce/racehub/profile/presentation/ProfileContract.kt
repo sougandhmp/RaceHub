@@ -2,7 +2,7 @@ package org.gce.racehub.profile.presentation
 
 import org.gce.racehub.auth.domain.model.User
 import org.gce.racehub.core.domain.DataError
-import org.gce.racehub.race.domain.model.UserProfile
+import org.gce.racehub.profile.domain.model.UserProfile
 
 // MVI contract for the Profile tab.
 

@@ -1,10 +1,10 @@
-package org.gce.racehub.race.domain.usecase
+package org.gce.racehub.forum.domain.usecase
 
 import org.gce.racehub.core.domain.DataResult
-import org.gce.racehub.race.domain.model.ThreadComment
-import org.gce.racehub.race.domain.repository.HomeRepository
+import org.gce.racehub.forum.domain.model.ThreadComment
+import org.gce.racehub.forum.domain.repository.ForumRepository
 
-class AddCommentUseCase(private val repository: HomeRepository) {
+class AddCommentUseCase(private val repository: ForumRepository) {
 
     @Throws(Exception::class)
     suspend operator fun invoke(

@@ -8,7 +8,7 @@ import org.gce.racehub.forum.presentation.CreateThreadEffect
 import org.gce.racehub.forum.presentation.CreateThreadIntent
 import org.gce.racehub.forum.presentation.CreateThreadState
 import org.gce.racehub.forum.presentation.CreateThreadViewModel
-import org.gce.racehub.race.domain.model.ForumCategories
+import org.gce.racehub.forum.domain.model.ForumCategories
 import org.gce.racehub.ui.message
 import org.jetbrains.compose.resources.getString
 import racehub.composeapp.generated.resources.error_not_signed_in

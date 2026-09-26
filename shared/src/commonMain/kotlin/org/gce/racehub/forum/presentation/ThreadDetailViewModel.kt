@@ -14,9 +14,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.gce.racehub.auth.domain.session.UserSession
 import org.gce.racehub.core.domain.DataResult
-import org.gce.racehub.race.domain.model.ThreadComment
-import org.gce.racehub.race.domain.usecase.AddCommentUseCase
-import org.gce.racehub.race.domain.usecase.LikeThreadUseCase
+import org.gce.racehub.forum.domain.model.ThreadComment
+import org.gce.racehub.forum.domain.usecase.AddCommentUseCase
+import org.gce.racehub.forum.domain.usecase.LikeThreadUseCase
 
 /**
  * Shared MVI ViewModel for a thread's detail screen (Android and iOS).

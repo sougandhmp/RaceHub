@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 import org.gce.racehub.auth.domain.session.UserSession
 import org.gce.racehub.auth.domain.usecase.LogoutUseCase
 import org.gce.racehub.core.domain.DataResult
-import org.gce.racehub.race.domain.usecase.GetMyProfileUseCase
+import org.gce.racehub.profile.domain.usecase.GetMyProfileUseCase
 
 /**
  * Shared MVI ViewModel for the Profile tab (Android and iOS). Follows the

@@ -4,20 +4,20 @@ import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import io.ktor.client.call.NoTransformationFoundException
-import io.ktor.client.plugins.ResponseException
-import io.ktor.serialization.ContentConvertException
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.io.IOException
-import kotlinx.serialization.SerializationException
+import org.gce.racehub.core.data.GraphQLRequest
+import org.gce.racehub.core.data.GraphQLResponse
+import org.gce.racehub.core.data.safeCall
+import org.gce.racehub.core.data.toDataError
+import org.gce.racehub.core.data.toErrorMessage
 import org.gce.racehub.core.domain.DataError
 import org.gce.racehub.core.domain.DataResult
 import org.gce.racehub.db.LocalDataSource
 import org.gce.racehub.race.data.dto.*
 import org.gce.racehub.race.domain.model.*
-import org.gce.racehub.race.domain.repository.HomeRepository
+import org.gce.racehub.race.domain.repository.RaceRepository
 import org.gce.racehub.util.logError
 import org.gce.racehub.util.platformIoDispatcher
 import kotlin.concurrent.Volatile
@@ -27,7 +27,7 @@ import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
 /**
- * Network-based implementation of [HomeRepository].
+ * Network-based implementation of [RaceRepository].
  *
  * Fetches F1 racing data (races, standings, trending threads) from a GraphQL backend,
  * caches results in a local database, and syncs in the background.
@@ -37,15 +37,15 @@ import kotlin.time.TimeSource
  * - Secondary: Network (background refresh)
  * - Eventual consistency: Data updates asynchronously without blocking UI
  */
-internal class HomeRepositoryNetworkImpl(
+internal class RaceRepositoryNetworkImpl(
     private val httpClient: HttpClient,
     private val baseUrl: String,
     private val localDataSource: LocalDataSource,
     private val ioDispatcher: CoroutineDispatcher = platformIoDispatcher
-) : HomeRepository {
+) : RaceRepository {
 
     companion object {
-        private const val TAG = "HomeRepository"
+        private const val TAG = "RaceRepository"
         private const val SYNC_TIMEOUT_MS = 5_000L
 
         /** A successful dashboard sync is reused for this long before a background refresh. */
@@ -65,106 +65,6 @@ internal class HomeRepositoryNetworkImpl(
     private val dashboardSyncLock = Mutex()
     private var dashboardSyncInFlight: Deferred<DataError?>? = null
     @Volatile private var dashboardFreshUntil: TimeMark? = null
-
-    /**
-     * Runs a network call at the repository boundary: success becomes [DataResult.Success],
-     * any failure is logged and returned as a typed [DataResult.Failure]. Cancellation propagates.
-     */
-    private suspend fun <T> safeCall(what: String, block: suspend () -> T): DataResult<T> = try {
-        DataResult.Success(block())
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        logError(TAG, "Failed to $what", e)
-        DataResult.Failure(e.toDataError())
-    }
-
-    private fun ThreadSort.apiValue(): String = when (this) {
-        ThreadSort.Latest -> "latest"
-        ThreadSort.Popular -> "top"
-        ThreadSort.MostCommented -> "commented"
-    }
-
-    /** Maps data-layer exceptions onto the domain's [DataError]. */
-    private fun Exception.toDataError(): DataError = when (this) {
-        is IOException -> DataError.Network // includes timeouts and connection failures
-        // The server answered but not with a payload we can use: an error status
-        // (whose body can't be converted), malformed JSON, or GraphQL errors.
-        is ResponseException, is SerializationException, is ContentConvertException,
-        is NoTransformationFoundException, is IllegalStateException -> DataError.Server
-        else -> DataError.Unknown
-    }
-
-    private fun List<GraphQLError>?.toErrorMessage(fallback: String): String =
-        this?.joinToString { it.message }?.takeIf { it.isNotBlank() } ?: fallback
-
-    // GraphQL query to fetch the signed-in user's profile
-    private val profileQuery = $$"""
-        query GetMyProfile($userId: String) {
-            me(userId: $userId) {
-                username
-                email
-                avatar
-                postsCount
-                savedCount
-                recentThreads { title }
-                savedThreads { title }
-            }
-        }
-    """.trimIndent()
-
-    // GraphQL mutation to add a comment to a forum thread
-    private val addCommentMutation = $$"""
-        mutation AddComment($userId: ID!, $threadId: ID!, $content: String!) {
-            addComment(userId: $userId, threadId: $threadId, content: $content) {
-                id
-                content
-                createdAt
-            }
-        }
-    """.trimIndent()
-
-    // GraphQL mutation to toggle like on a forum thread
-    private val likeThreadMutation = $$"""
-        mutation UserInteractions($id: ID!) {
-            likeThread(id: $id) {
-                id
-                likes
-            }
-        }
-    """.trimIndent()
-
-    // GraphQL mutation to create a new forum thread
-    private val createThreadMutation = $$"""
-        mutation CreateThread($userId: ID!, $input: CreateThreadInput!) {
-            createThread(userId: $userId, input: $input) {
-                id
-                title
-                createdAt
-            }
-        }
-    """.trimIndent()
-
-    // GraphQL query to fetch full forum threads with author and comments
-    private val threadsQuery = $$"""
-        query GetThreads($sort: String, $category: String, $userId: ID) {
-            threads(sort: $sort, category: $category) {
-                id
-                title
-                category
-                author { username avatar }
-                excerpt
-                content
-                createdAt
-                likes
-                bookmarked(userId: $userId)
-                comments {
-                    content
-                    author { username }
-                }
-            }
-        }
-    """.trimIndent()
 
     // GraphQL query to fetch full race detail by slug
     private val raceDetailQuery = $$"""
@@ -434,143 +334,10 @@ internal class HomeRepositoryNetworkImpl(
         if (rows.isEmpty() && syncError != null) DataResult.Failure(syncError) else DataResult.Success(rows)
 
     /**
-     * Fetches forum threads directly from the network. Not cached locally
-     * because the schema (author, comments, bookmarks) doesn't fit the
-     * existing trending-threads SQLDelight table.
-     */
-    override suspend fun getThreads(
-        sort: ThreadSort?,
-        category: String?,
-        userId: String?
-    ): DataResult<List<Thread>> = safeCall("fetch threads") {
-        val response: GraphQLResponse<ThreadsData> = httpClient.post("$baseUrl/graphql") {
-            contentType(ContentType.Application.Json)
-            setBody(
-                GraphQLRequestWithVariables(
-                    query = threadsQuery,
-                    variables = ThreadsVariables(sort = sort?.apiValue(), category = category, userId = userId)
-                )
-            )
-        }.body()
-
-        val data = response.data
-            ?: error(response.errors.toErrorMessage("Empty GraphQL response"))
-
-        data.threads.map { dto ->
-            Thread(
-                id = dto.id,
-                title = dto.title,
-                category = dto.category,
-                author = ThreadAuthor(dto.author.username, dto.author.avatar),
-                excerpt = dto.excerpt,
-                content = dto.content,
-                createdAt = dto.createdAt,
-                likes = dto.likes,
-                bookmarked = dto.bookmarked,
-                comments = dto.comments.map { c ->
-                    ThreadComment(content = c.content, authorUsername = c.author.username)
-                }
-            )
-        }
-    }
-
-    /**
-     * Creates a new forum thread via GraphQL mutation.
-     */
-    override suspend fun createThread(
-        userId: String,
-        title: String,
-        category: String,
-        content: String
-    ): DataResult<Thread> = safeCall("create thread") {
-        val response: GraphQLResponse<CreateThreadData> = httpClient.post("$baseUrl/graphql") {
-            contentType(ContentType.Application.Json)
-            setBody(
-                GraphQLCreateThreadRequest(
-                    query = createThreadMutation,
-                    variables = CreateThreadVariables(
-                        userId = userId,
-                        input = CreateThreadInput(title, category, content)
-                    )
-                )
-            )
-        }.body()
-
-        val created = response.data?.createThread
-            ?: error(response.errors.toErrorMessage("Failed to create thread"))
-        Thread(
-            id = created.id,
-            title = created.title,
-            category = category,
-            author = ThreadAuthor(username = "", avatar = ""),
-            excerpt = null,
-            content = content,
-            createdAt = created.createdAt,
-            likes = 0,
-            bookmarked = false,
-            comments = emptyList()
-        )
-    }
-
-    /**
-     * Fetches the signed-in user's profile via GraphQL query.
-     * Sends the auth token as an `Authorization: Bearer` header.
-     */
-    override suspend fun getMyProfile(userId: String, token: String): DataResult<UserProfile> = safeCall("load profile") {
-        val response: GraphQLResponse<ProfileData> = httpClient.post("$baseUrl/graphql") {
-            contentType(ContentType.Application.Json)
-            header("Authorization", "Bearer $token")
-            setBody(
-                GraphQLProfileRequest(
-                    query = profileQuery,
-                    variables = ProfileVariables(userId = userId)
-                )
-            )
-        }.body()
-
-        val me = response.data?.me
-            ?: error(response.errors.toErrorMessage("Failed to load profile"))
-        UserProfile(
-            username = me.username,
-            email = me.email,
-            avatar = me.avatar,
-            postsCount = me.postsCount,
-            savedCount = me.savedCount,
-            recentThreadTitles = me.recentThreads.map { it.title },
-            savedThreadTitles = me.savedThreads.map { it.title }
-        )
-    }
-
-    /**
-     * Posts a comment via GraphQL mutation.
-     */
-    override suspend fun addComment(userId: String, threadId: String, content: String): DataResult<ThreadComment> = safeCall("add comment") {
-        val response: GraphQLResponse<AddCommentData> = httpClient.post("$baseUrl/graphql") {
-            contentType(ContentType.Application.Json)
-            setBody(
-                GraphQLAddCommentRequest(
-                    query = addCommentMutation,
-                    variables = AddCommentVariables(
-                        userId = userId,
-                        threadId = threadId,
-                        content = content
-                    )
-                )
-            )
-        }.body()
-
-        val added = response.data?.addComment
-            ?: error(response.errors.toErrorMessage("Failed to add comment"))
-        // The mutation does not return author info; leave the username blank so
-        // callers don't mistake the raw user id for a display name.
-        ThreadComment(content = added.content, authorUsername = "")
-    }
-
-    /**
      * Fetches full race detail for the given [slug] via GraphQL query.
      */
     override suspend fun getRaceDetail(slug: String): DataResult<RaceDetail> =
-        safeCall("load race detail for $slug") { fetchRaceDetail(slug) }
+        safeCall(TAG, "load race detail for $slug") { fetchRaceDetail(slug) }
 
     private suspend fun fetchRaceDetail(slug: String): RaceDetail {
         val response: GraphQLResponse<RaceDetailData> = httpClient.post("$baseUrl/graphql") {
@@ -591,27 +358,6 @@ internal class HomeRepositoryNetworkImpl(
             results = dto.results.map { RaceResult(position = it.position, driver = it.driver, team = it.team, points = it.points, time = it.time) },
             fastestLap = dto.fastestLap?.let { FastestLap(driver = it.driver, time = it.time) }
         )
-    }
-
-    /**
-     * Toggles the like on the thread identified by [id] via GraphQL mutation.
-     *
-     * @return The updated like count returned by the server.
-     */
-    override suspend fun likeThread(id: String): DataResult<Int> = safeCall("like thread") {
-        val response: GraphQLResponse<LikeThreadData> = httpClient.post("$baseUrl/graphql") {
-            contentType(ContentType.Application.Json)
-            setBody(
-                GraphQLLikeThreadRequest(
-                    query = likeThreadMutation,
-                    variables = LikeThreadVariables(id = id)
-                )
-            )
-        }.body()
-
-        val result = response.data?.likeThread
-            ?: error(response.errors.toErrorMessage("Failed to like thread"))
-        result.likes
     }
 
     /**

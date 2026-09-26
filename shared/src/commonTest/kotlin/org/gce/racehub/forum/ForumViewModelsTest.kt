@@ -11,7 +11,7 @@ import kotlinx.coroutines.test.setMain
 import org.gce.racehub.auth.domain.model.User
 import org.gce.racehub.auth.domain.session.UserSession
 import org.gce.racehub.core.domain.DataError
-import org.gce.racehub.fake.FakeHomeRepository
+import org.gce.racehub.fake.FakeForumRepository
 import org.gce.racehub.fake.FakeSessionStorage
 import org.gce.racehub.fake.fakeThread
 import org.gce.racehub.forum.presentation.CreateThreadEffect
@@ -24,12 +24,12 @@ import org.gce.racehub.forum.presentation.ForumViewModel
 import org.gce.racehub.forum.presentation.ThreadDetailEffect
 import org.gce.racehub.forum.presentation.ThreadDetailIntent
 import org.gce.racehub.forum.presentation.ThreadDetailViewModel
-import org.gce.racehub.race.domain.model.ThreadComment
-import org.gce.racehub.race.domain.model.ThreadSort
-import org.gce.racehub.race.domain.usecase.AddCommentUseCase
-import org.gce.racehub.race.domain.usecase.CreateThreadUseCase
-import org.gce.racehub.race.domain.usecase.GetThreadsUseCase
-import org.gce.racehub.race.domain.usecase.LikeThreadUseCase
+import org.gce.racehub.forum.domain.model.ThreadComment
+import org.gce.racehub.forum.domain.model.ThreadSort
+import org.gce.racehub.forum.domain.usecase.AddCommentUseCase
+import org.gce.racehub.forum.domain.usecase.CreateThreadUseCase
+import org.gce.racehub.forum.domain.usecase.GetThreadsUseCase
+import org.gce.racehub.forum.domain.usecase.LikeThreadUseCase
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -41,7 +41,7 @@ import kotlin.test.assertFalse
 class ForumViewModelsTest {
 
     private val dispatcher = StandardTestDispatcher()
-    private val repo = FakeHomeRepository()
+    private val repo = FakeForumRepository()
     private val signedIn = UserSession(FakeSessionStorage(User(id = "u1", email = "a@b.c", name = "Ann", username = "ann")))
     private val signedOut = UserSession(FakeSessionStorage())
 

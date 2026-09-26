@@ -32,7 +32,7 @@ import org.gce.racehub.race.presentation.RaceIntent
 import org.gce.racehub.race.presentation.RaceViewModel
 import org.gce.racehub.race.di.createRaceModule
 import org.gce.racehub.race.domain.model.Race
-import org.gce.racehub.race.domain.model.Thread
+import org.gce.racehub.forum.domain.model.Thread
 import org.gce.racehub.signup.SignUpScreen
 import org.gce.racehub.theme.DarkAppColors
 import org.gce.racehub.theme.LightAppColors

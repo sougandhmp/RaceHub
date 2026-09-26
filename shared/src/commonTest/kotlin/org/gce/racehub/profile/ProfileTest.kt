@@ -13,7 +13,7 @@ import org.gce.racehub.auth.domain.session.UserSession
 import org.gce.racehub.auth.domain.usecase.LogoutUseCase
 import org.gce.racehub.core.domain.DataError
 import org.gce.racehub.fake.FakeAuthRepository
-import org.gce.racehub.fake.FakeHomeRepository
+import org.gce.racehub.fake.FakeProfileRepository
 import org.gce.racehub.fake.FakeSessionStorage
 import org.gce.racehub.home.presentation.HomeIntent
 import org.gce.racehub.home.presentation.HomeTab
@@ -24,8 +24,8 @@ import org.gce.racehub.profile.presentation.ProfileMutation
 import org.gce.racehub.profile.presentation.ProfileReducer
 import org.gce.racehub.profile.presentation.ProfileState
 import org.gce.racehub.profile.presentation.ProfileViewModel
-import org.gce.racehub.race.domain.model.UserProfile
-import org.gce.racehub.race.domain.usecase.GetMyProfileUseCase
+import org.gce.racehub.profile.domain.model.UserProfile
+import org.gce.racehub.profile.domain.usecase.GetMyProfileUseCase
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -37,7 +37,7 @@ import kotlin.test.assertNull
 class ProfileTest {
 
     private val dispatcher = StandardTestDispatcher()
-    private val homeRepo = FakeHomeRepository()
+    private val homeRepo = FakeProfileRepository()
     private val authRepo = FakeAuthRepository()
     private val ann = User(id = "u1", email = "a@b.c", name = "Ann", token = "tok", postsCount = 2)
     private val profile = UserProfile("ann", "a@b.c", "A", postsCount = 5, savedCount = 1, listOf("Recent"), listOf("Saved"))

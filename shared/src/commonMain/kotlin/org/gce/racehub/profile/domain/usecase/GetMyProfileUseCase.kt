@@ -1,10 +1,10 @@
-package org.gce.racehub.race.domain.usecase
+package org.gce.racehub.profile.domain.usecase
 
 import org.gce.racehub.core.domain.DataResult
-import org.gce.racehub.race.domain.model.UserProfile
-import org.gce.racehub.race.domain.repository.HomeRepository
+import org.gce.racehub.profile.domain.model.UserProfile
+import org.gce.racehub.profile.domain.repository.ProfileRepository
 
-class GetMyProfileUseCase(private val repository: HomeRepository) {
+class GetMyProfileUseCase(private val repository: ProfileRepository) {
 
     @Throws(Exception::class)
     suspend operator fun invoke(userId: String, token: String): DataResult<UserProfile> {

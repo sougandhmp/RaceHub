@@ -2,7 +2,7 @@ package org.gce.racehub.race
 
 import kotlinx.coroutines.test.runTest
 import org.gce.racehub.core.domain.DataResult
-import org.gce.racehub.fake.FakeHomeRepository
+import org.gce.racehub.fake.FakeRaceRepository
 import org.gce.racehub.race.domain.model.ConstructorStanding
 import org.gce.racehub.race.domain.usecase.GetConstructorStandingsUseCase
 import kotlin.test.Test
@@ -10,7 +10,7 @@ import kotlin.test.assertEquals
 
 class GetConstructorStandingsUseCaseTest {
 
-    private val repository = FakeHomeRepository()
+    private val repository = FakeRaceRepository()
     private val useCase = GetConstructorStandingsUseCase(repository)
 
     @Test

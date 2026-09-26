@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.gce.racehub.auth.domain.session.UserSession
 import org.gce.racehub.core.domain.DataResult
-import org.gce.racehub.race.domain.usecase.CreateThreadUseCase
+import org.gce.racehub.forum.domain.usecase.CreateThreadUseCase
 
 /** Shared MVI ViewModel for the create-thread form (Android and iOS). */
 class CreateThreadViewModel(

@@ -1,4 +1,4 @@
-package org.gce.racehub.race.domain.model
+package org.gce.racehub.forum.domain.model
 
 data class ThreadAuthor(
     val username: String,

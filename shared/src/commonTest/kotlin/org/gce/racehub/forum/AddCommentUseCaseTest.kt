@@ -1,16 +1,16 @@
-package org.gce.racehub.race
+package org.gce.racehub.forum
 
 import kotlinx.coroutines.test.runTest
 import org.gce.racehub.core.domain.DataResult
-import org.gce.racehub.fake.FakeHomeRepository
-import org.gce.racehub.race.domain.usecase.AddCommentUseCase
+import org.gce.racehub.fake.FakeForumRepository
+import org.gce.racehub.forum.domain.usecase.AddCommentUseCase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class AddCommentUseCaseTest {
 
-    private val repository = FakeHomeRepository()
+    private val repository = FakeForumRepository()
     private val useCase = AddCommentUseCase(repository)
 
     @Test

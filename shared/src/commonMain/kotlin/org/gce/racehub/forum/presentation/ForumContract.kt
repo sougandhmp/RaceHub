@@ -1,8 +1,8 @@
 package org.gce.racehub.forum.presentation
 
 import org.gce.racehub.core.domain.DataError
-import org.gce.racehub.race.domain.model.Thread
-import org.gce.racehub.race.domain.model.ThreadSort
+import org.gce.racehub.forum.domain.model.Thread
+import org.gce.racehub.forum.domain.model.ThreadSort
 
 // MVI contract for the Forum tab:
 //   View ──ForumIntent──▶ ForumViewModel ──ForumMutation──▶ ForumReducer ──ForumState──▶ View

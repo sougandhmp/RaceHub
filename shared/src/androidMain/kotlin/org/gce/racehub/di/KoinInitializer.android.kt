@@ -1,5 +1,7 @@
 package org.gce.racehub.di
 
+import org.gce.racehub.forum.di.createForumModule
+import org.gce.racehub.profile.di.createProfileModule
 import android.app.Application
 import org.gce.racehub.auth.di.createProductionAuthModule
 import org.gce.racehub.race.di.createRaceModule
@@ -34,7 +36,7 @@ actual object KoinInitializer {
     actual fun init(baseUrl: String, vararg additionalModules: Module) {
         startKoin {
             androidApplication?.let { androidContext(it) }
-            modules(createProductionAuthModule(baseUrl), createRaceModule(baseUrl), platformModule, presentationModule, *additionalModules)
+            modules(createProductionAuthModule(baseUrl), createRaceModule(baseUrl), createForumModule(baseUrl), createProfileModule(baseUrl), platformModule, presentationModule, *additionalModules)
         }
     }
 
@@ -45,7 +47,7 @@ actual object KoinInitializer {
     actual fun initForTesting(vararg additionalModules: Module) {
         startKoin {
             androidApplication?.let { androidContext(it) }
-            modules(org.gce.racehub.auth.di.fakeAuthModule, createRaceModule(""), platformModule, presentationModule, *additionalModules)
+            modules(org.gce.racehub.auth.di.fakeAuthModule, createRaceModule(""), createForumModule(""), createProfileModule(""), platformModule, presentationModule, *additionalModules)
         }
     }
 }

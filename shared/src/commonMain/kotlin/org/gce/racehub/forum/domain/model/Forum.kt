@@ -1,4 +1,4 @@
-package org.gce.racehub.race.domain.model
+package org.gce.racehub.forum.domain.model
 
 /** How the forum orders threads. The data layer maps these to API values. */
 enum class ThreadSort { Latest, Popular, MostCommented }

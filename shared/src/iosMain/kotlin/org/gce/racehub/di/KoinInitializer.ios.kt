@@ -1,5 +1,7 @@
 package org.gce.racehub.di
 
+import org.gce.racehub.forum.di.createForumModule
+import org.gce.racehub.profile.di.createProfileModule
 import kotlin.experimental.ExperimentalObjCRefinement
 import kotlin.native.HiddenFromObjC
 import org.gce.racehub.auth.di.createProductionAuthModule
@@ -26,7 +28,7 @@ actual object KoinInitializer {
         startKoin {
             modules(
                 createProductionAuthModule(baseUrl),
-                createRaceModule(baseUrl),
+                createRaceModule(baseUrl), createForumModule(baseUrl), createProfileModule(baseUrl),
                 platformModule, presentationModule,
                 *additionalModules
             )
@@ -44,7 +46,7 @@ actual object KoinInitializer {
         startKoin {
             modules(
                 org.gce.racehub.auth.di.fakeAuthModule,
-                createRaceModule(""),
+                createRaceModule(""), createForumModule(""), createProfileModule(""),
                 platformModule, presentationModule,
                 *additionalModules
             )
