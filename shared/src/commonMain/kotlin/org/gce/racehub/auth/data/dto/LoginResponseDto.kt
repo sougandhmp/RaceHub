@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
  * User data included in the login response.
  */
 @Serializable
-data class UserResponseDto(
+internal data class UserResponseDto(
     @SerialName("id")
     val id: String,
 
@@ -42,7 +42,7 @@ data class UserResponseDto(
  * Data payload in a successful login response.
  */
 @Serializable
-data class LoginDataDto(
+internal data class LoginDataDto(
     @SerialName("token")
     val token: String,
 
@@ -56,7 +56,7 @@ data class LoginDataDto(
  * Received from POST /api/v1/auth/login
  */
 @Serializable
-data class LoginResponseDto(
+internal data class LoginResponseDto(
     @SerialName("success")
     val success: Boolean,
 

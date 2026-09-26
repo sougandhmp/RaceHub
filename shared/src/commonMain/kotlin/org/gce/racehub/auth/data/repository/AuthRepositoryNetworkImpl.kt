@@ -15,7 +15,7 @@ import org.gce.racehub.auth.domain.repository.AuthRepository
  *
  * @param authService The network service that handles API calls
  */
-class AuthRepositoryNetworkImpl(private val authService: AuthService) : AuthRepository {
+internal class AuthRepositoryNetworkImpl(private val authService: AuthService) : AuthRepository {
 
     /**
      * Authenticates a user by calling the login API endpoint.

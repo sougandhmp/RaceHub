@@ -5,7 +5,7 @@ import org.gce.racehub.race.domain.model.DriverStanding
 import org.gce.racehub.race.domain.model.ConstructorStanding
 import org.gce.racehub.race.domain.model.TrendingThread
 
-class LocalDataSource(driverFactory: DatabaseDriverFactory) {
+internal class LocalDataSource(driverFactory: DatabaseDriverFactory) {
     private val database = RaceHubDatabase(driverFactory.createDriver())
     private val dbQuery = database.raceHubDatabaseQueries
 

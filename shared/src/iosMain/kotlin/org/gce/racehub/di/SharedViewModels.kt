@@ -16,8 +16,7 @@ import org.gce.racehub.forum.presentation.ThreadDetailViewModel
 import org.gce.racehub.home.presentation.HomeViewModel
 import org.gce.racehub.profile.presentation.ProfileViewModel
 import org.gce.racehub.race.presentation.RaceViewModel
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.get
+import org.koin.mp.KoinPlatform
 
 /**
  * Owns the shared ViewModels of one SwiftUI screen. Swift must call [clear]
@@ -34,28 +33,28 @@ class ViewModelOwner : ViewModelStoreOwner {
  * Swift entry point for shared ViewModels. Each call returns the ViewModel held
  * by [owner], creating it through Koin on first use.
  */
-object SharedViewModels : KoinComponent {
+object SharedViewModels {
 
-    fun race(owner: ViewModelOwner): RaceViewModel = owner.provide { get<RaceViewModel>() }
+    fun race(owner: ViewModelOwner): RaceViewModel = owner.provide { KoinPlatform.getKoin().get<RaceViewModel>() }
 
-    fun forum(owner: ViewModelOwner): ForumViewModel = owner.provide { get<ForumViewModel>() }
+    fun forum(owner: ViewModelOwner): ForumViewModel = owner.provide { KoinPlatform.getKoin().get<ForumViewModel>() }
 
-    fun threadDetail(owner: ViewModelOwner): ThreadDetailViewModel = owner.provide { get<ThreadDetailViewModel>() }
+    fun threadDetail(owner: ViewModelOwner): ThreadDetailViewModel = owner.provide { KoinPlatform.getKoin().get<ThreadDetailViewModel>() }
 
-    fun createThread(owner: ViewModelOwner): CreateThreadViewModel = owner.provide { get<CreateThreadViewModel>() }
+    fun createThread(owner: ViewModelOwner): CreateThreadViewModel = owner.provide { KoinPlatform.getKoin().get<CreateThreadViewModel>() }
 
-    fun profile(owner: ViewModelOwner): ProfileViewModel = owner.provide { get<ProfileViewModel>() }
+    fun profile(owner: ViewModelOwner): ProfileViewModel = owner.provide { KoinPlatform.getKoin().get<ProfileViewModel>() }
 
-    fun home(owner: ViewModelOwner): HomeViewModel = owner.provide { get<HomeViewModel>() }
+    fun home(owner: ViewModelOwner): HomeViewModel = owner.provide { KoinPlatform.getKoin().get<HomeViewModel>() }
 
-    fun login(owner: ViewModelOwner): LoginViewModel = owner.provide { get<LoginViewModel>() }
+    fun login(owner: ViewModelOwner): LoginViewModel = owner.provide { KoinPlatform.getKoin().get<LoginViewModel>() }
 
-    fun signUp(owner: ViewModelOwner): SignUpViewModel = owner.provide { get<SignUpViewModel>() }
+    fun signUp(owner: ViewModelOwner): SignUpViewModel = owner.provide { KoinPlatform.getKoin().get<SignUpViewModel>() }
 
-    fun forgotPassword(owner: ViewModelOwner): ForgotPasswordViewModel = owner.provide { get<ForgotPasswordViewModel>() }
+    fun forgotPassword(owner: ViewModelOwner): ForgotPasswordViewModel = owner.provide { KoinPlatform.getKoin().get<ForgotPasswordViewModel>() }
 
     fun emailVerification(owner: ViewModelOwner): EmailVerificationViewModel =
-        owner.provide { get<EmailVerificationViewModel>() }
+        owner.provide { KoinPlatform.getKoin().get<EmailVerificationViewModel>() }
 
     private inline fun <reified VM : ViewModel> ViewModelOwner.provide(crossinline create: () -> VM): VM =
         ViewModelProvider.create(this, viewModelFactory { initializer { create() } })[VM::class]

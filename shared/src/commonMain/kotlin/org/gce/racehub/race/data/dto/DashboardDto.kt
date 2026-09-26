@@ -3,23 +3,23 @@ package org.gce.racehub.race.data.dto
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class GraphQLResponse<T>(
+internal data class GraphQLResponse<T>(
     val data: T? = null,
     val errors: List<GraphQLError>? = null
 )
 
 @Serializable
-data class GraphQLError(
+internal data class GraphQLError(
     val message: String
 )
 
 @Serializable
-data class DashboardData(
+internal data class DashboardData(
     val dashboard: DashboardContent
 )
 
 @Serializable
-data class DashboardContent(
+internal data class DashboardContent(
     val seasonYear: Int,
     val upcomingRace: UpcomingRaceDto? = null,
     val latestRace: LatestRaceDto? = null,
@@ -29,7 +29,7 @@ data class DashboardContent(
 )
 
 @Serializable
-data class UpcomingRaceDto(
+internal data class UpcomingRaceDto(
     val grandPrix: String,
     val city: String,
     val dateTime: String,
@@ -37,20 +37,20 @@ data class UpcomingRaceDto(
 )
 
 @Serializable
-data class LatestRaceDto(
+internal data class LatestRaceDto(
     val grandPrix: String,
     val results: List<RaceResultDto>? = null
 )
 
 @Serializable
-data class RaceResultDto(
+internal data class RaceResultDto(
     val position: Int,
     val driverName: String,
     val teamName: String
 )
 
 @Serializable
-data class DriverStandingDto(
+internal data class DriverStandingDto(
     val position: Int,
     val name: String,
     val team: String? = null,
@@ -59,7 +59,7 @@ data class DriverStandingDto(
 )
 
 @Serializable
-data class ConstructorStandingDto(
+internal data class ConstructorStandingDto(
     val position: Int,
     val name: String,
     val points: Int,
@@ -67,7 +67,7 @@ data class ConstructorStandingDto(
 )
 
 @Serializable
-data class TrendingThreadDto(
+internal data class TrendingThreadDto(
     val id: String,
     val title: String,
     val likes: Int,
@@ -75,30 +75,30 @@ data class TrendingThreadDto(
 )
 
 @Serializable
-data class GraphQLRequest(
+internal data class GraphQLRequest(
     val query: String
 )
 
 @Serializable
-data class GraphQLRequestWithVariables(
+internal data class GraphQLRequestWithVariables(
     val query: String,
     val variables: ThreadsVariables
 )
 
 @Serializable
-data class ThreadsVariables(
+internal data class ThreadsVariables(
     val sort: String? = null,
     val category: String? = null,
     val userId: String? = null
 )
 
 @Serializable
-data class ThreadsData(
+internal data class ThreadsData(
     val threads: List<ThreadDto>
 )
 
 @Serializable
-data class ThreadDto(
+internal data class ThreadDto(
     val id: String,
     val title: String,
     val category: String,
@@ -112,96 +112,96 @@ data class ThreadDto(
 )
 
 @Serializable
-data class ThreadAuthorDto(
+internal data class ThreadAuthorDto(
     val username: String,
     val avatar: String
 )
 
 @Serializable
-data class ThreadCommentDto(
+internal data class ThreadCommentDto(
     val content: String,
     val author: ThreadCommentAuthorDto
 )
 
 @Serializable
-data class ThreadCommentAuthorDto(
+internal data class ThreadCommentAuthorDto(
     val username: String
 )
 
 @Serializable
-data class GraphQLCreateThreadRequest(
+internal data class GraphQLCreateThreadRequest(
     val query: String,
     val variables: CreateThreadVariables
 )
 
 @Serializable
-data class CreateThreadVariables(
+internal data class CreateThreadVariables(
     val userId: String,
     val input: CreateThreadInput
 )
 
 @Serializable
-data class CreateThreadInput(
+internal data class CreateThreadInput(
     val title: String,
     val category: String,
     val content: String
 )
 
 @Serializable
-data class CreateThreadData(
+internal data class CreateThreadData(
     val createThread: CreatedThreadDto
 )
 
 @Serializable
-data class CreatedThreadDto(
+internal data class CreatedThreadDto(
     val id: String,
     val title: String,
     val createdAt: String
 )
 
 @Serializable
-data class GraphQLAddCommentRequest(
+internal data class GraphQLAddCommentRequest(
     val query: String,
     val variables: AddCommentVariables
 )
 
 @Serializable
-data class AddCommentVariables(
+internal data class AddCommentVariables(
     val userId: String,
     val threadId: String,
     val content: String
 )
 
 @Serializable
-data class AddCommentData(
+internal data class AddCommentData(
     val addComment: AddedCommentDto
 )
 
 @Serializable
-data class AddedCommentDto(
+internal data class AddedCommentDto(
     val id: String,
     val content: String,
     val createdAt: String
 )
 
 @Serializable
-data class GraphQLProfileRequest(
+internal data class GraphQLProfileRequest(
     val query: String,
     val variables: ProfileVariables
 )
 
 @Serializable
-data class ProfileVariables(
+internal data class ProfileVariables(
     val userId: String
 )
 
 @Serializable
-data class ProfileData(
+internal data class ProfileData(
     val me: ProfileDto
 )
 
 @Serializable
-data class ProfileDto(
+internal data class ProfileDto(
     val username: String,
     val email: String,
     val avatar: String,
@@ -212,39 +212,39 @@ data class ProfileDto(
 )
 
 @Serializable
-data class ProfileThreadDto(
+internal data class ProfileThreadDto(
     val title: String
 )
 
 @Serializable
-data class GraphQLLikeThreadRequest(
+internal data class GraphQLLikeThreadRequest(
     val query: String,
     val variables: LikeThreadVariables
 )
 
 @Serializable
-data class LikeThreadVariables(
+internal data class LikeThreadVariables(
     val id: String
 )
 
 @Serializable
-data class LikeThreadData(
+internal data class LikeThreadData(
     val likeThread: LikedThreadDto
 )
 
 @Serializable
-data class LikedThreadDto(
+internal data class LikedThreadDto(
     val id: String,
     val likes: Int
 )
 
 @Serializable
-data class RacesData(
+internal data class RacesData(
     val races: List<RaceScheduleDto>
 )
 
 @Serializable
-data class RaceScheduleDto(
+internal data class RaceScheduleDto(
     val slug: String,
     val grandPrix: String,
     val circuit: String,
@@ -257,23 +257,23 @@ data class RaceScheduleDto(
 )
 
 @Serializable
-data class GraphQLRaceDetailRequest(
+internal data class GraphQLRaceDetailRequest(
     val query: String,
     val variables: RaceDetailVariables
 )
 
 @Serializable
-data class RaceDetailVariables(
+internal data class RaceDetailVariables(
     val slug: String
 )
 
 @Serializable
-data class RaceDetailData(
+internal data class RaceDetailData(
     val race: RaceDetailDto
 )
 
 @Serializable
-data class RaceDetailDto(
+internal data class RaceDetailDto(
     val grandPrix: String,
     val circuit: String,
     val overview: String? = null,
@@ -284,7 +284,7 @@ data class RaceDetailDto(
 )
 
 @Serializable
-data class TrackFactsDto(
+internal data class TrackFactsDto(
     val laps: Int,
     val lapRecord: String? = null,
     val distanceKm: Double,
@@ -292,13 +292,13 @@ data class TrackFactsDto(
 )
 
 @Serializable
-data class SessionDto(
+internal data class SessionDto(
     val label: String,
     val dateTime: String
 )
 
 @Serializable
-data class RaceResultDetailDto(
+internal data class RaceResultDetailDto(
     val position: Int,
     val driver: String,
     val team: String,
@@ -307,7 +307,7 @@ data class RaceResultDetailDto(
 )
 
 @Serializable
-data class FastestLapDto(
+internal data class FastestLapDto(
     val driver: String,
     val time: String
 )

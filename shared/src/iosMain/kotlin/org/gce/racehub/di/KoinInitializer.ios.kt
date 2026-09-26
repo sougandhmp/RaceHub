@@ -1,5 +1,7 @@
 package org.gce.racehub.di
 
+import kotlin.experimental.ExperimentalObjCRefinement
+import kotlin.native.HiddenFromObjC
 import org.gce.racehub.auth.di.createProductionAuthModule
 import org.gce.racehub.race.di.createRaceModule
 import org.koin.core.context.startKoin
@@ -18,6 +20,8 @@ actual object KoinInitializer {
      * @param baseUrl The API base URL for authentication
      * @param additionalModules Additional Koin modules to include
      */
+    @OptIn(ExperimentalObjCRefinement::class)
+    @HiddenFromObjC
     actual fun init(baseUrl: String, vararg additionalModules: Module) {
         startKoin {
             modules(
@@ -34,6 +38,8 @@ actual object KoinInitializer {
      *
      * @param additionalModules Additional Koin modules to include
      */
+    @OptIn(ExperimentalObjCRefinement::class)
+    @HiddenFromObjC
     actual fun initForTesting(vararg additionalModules: Module) {
         startKoin {
             modules(

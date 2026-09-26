@@ -1,5 +1,7 @@
 package org.gce.racehub.auth.di
 
+import kotlin.experimental.ExperimentalObjCRefinement
+import kotlin.native.HiddenFromObjC
 import org.gce.racehub.auth.data.network.AuthService
 import org.gce.racehub.auth.data.network.HttpClientFactory
 import org.gce.racehub.auth.data.repository.AuthRepositoryImpl
@@ -31,7 +33,7 @@ import org.koin.dsl.module
  * @param useFakeRepository Whether to use fake repository for testing (default: false)
  * @return Koin module with authentication dependencies
  */
-fun createAuthModule(baseUrl: String, useFakeRepository: Boolean = false): Module = module {
+internal fun createAuthModule(baseUrl: String, useFakeRepository: Boolean = false): Module = module {
 
     // HTTP Client - platform-specific engine will be selected automatically
     single {
@@ -71,6 +73,8 @@ fun createAuthModule(baseUrl: String, useFakeRepository: Boolean = false): Modul
  * @param baseUrl The API base URL
  * @return Koin module configured for production
  */
+@OptIn(ExperimentalObjCRefinement::class)
+@HiddenFromObjC
 fun createProductionAuthModule(baseUrl: String): Module =
     createAuthModule(baseUrl, useFakeRepository = false)
 
@@ -80,12 +84,12 @@ fun createProductionAuthModule(baseUrl: String): Module =
  * @param baseUrl The API base URL (ignored when using fake repository)
  * @return Koin module configured for testing
  */
-fun createTestAuthModule(baseUrl: String = "https://test.example.com"): Module =
+internal fun createTestAuthModule(baseUrl: String = "https://test.example.com"): Module =
     createAuthModule(baseUrl, useFakeRepository = true)
 
 /**
  * Pre-configured module for development with fake data.
  * Useful for UI development and testing without network dependencies.
  */
-val fakeAuthModule = createTestAuthModule()
+internal val fakeAuthModule = createTestAuthModule()
 

@@ -3,4 +3,4 @@ package org.gce.racehub.util
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 
-actual val platformIoDispatcher: CoroutineDispatcher = Dispatchers.IO
+internal actual val platformIoDispatcher: CoroutineDispatcher = Dispatchers.IO
