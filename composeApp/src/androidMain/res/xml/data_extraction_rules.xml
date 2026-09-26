@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Backup rules for Android 12 (API 31) and later.
+  The session (racehub_session.xml) is EncryptedSharedPreferences. Its key lives in the
+  Android Keystore, which is never backed up, so a restored copy can't be decrypted on the
+  new device. Excluding it means a restored install simply asks the user to sign in again.
+  Keep the file name in sync with AndroidSessionStorage.PREFS_NAME.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="racehub_session.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="racehub_session.xml" />
+    </device-transfer>
+</data-extraction-rules>
