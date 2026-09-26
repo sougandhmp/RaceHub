@@ -1,5 +1,17 @@
 package org.gce.racehub.forum
 
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import org.gce.racehub.forum.presentation.ForumEffect
+import org.gce.racehub.forum.presentation.ForumIntent
+import org.gce.racehub.forum.presentation.ForumState
+import org.gce.racehub.forum.presentation.ForumViewModel
+import org.gce.racehub.race.domain.model.ForumCategories
+import org.gce.racehub.race.domain.model.ThreadSort
+import org.gce.racehub.ui.message
+import org.jetbrains.compose.resources.getString
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -57,18 +69,13 @@ import racehub.composeapp.generated.resources.forum_no_threads_title
 import racehub.composeapp.generated.resources.label_saved_star
 
 private val SORT_TABS = listOf(
-    "Latest" to "latest",
-    "Most popular" to "top",
-    "Most commented" to "commented"
+    "Latest" to ThreadSort.Latest,
+    "Most popular" to ThreadSort.Popular,
+    "Most commented" to ThreadSort.MostCommented
 )
 
-private val CATEGORY_TABS = listOf(
-    "All" to null,
-    "General Discussion" to "General Discussion",
-    "Race Weekends" to "Race Weekends",
-    "Teams & Drivers" to "Teams & Drivers",
-    "Technical / Cars" to "Technical / Cars"
-)
+private val CATEGORY_TABS: List<Pair<String, String?>> =
+    listOf("All" to null) + ForumCategories.all.map { it to it }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,7 +86,18 @@ fun ForumScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val colors = LocalAppColors.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
+    // One-off effects: shown once, never replayed on recomposition.
+    LaunchedEffect(viewModel) {
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                is ForumEffect.ShowLoadError -> snackbarHostState.showSnackbar(getString(effect.error.message()))
+            }
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
     PullToRefreshBox(
         isRefreshing = state.isLoading,
         onRefresh = { viewModel.onIntent(ForumIntent.Refresh) },
@@ -94,13 +112,15 @@ fun ForumScreen(
             onThreadClick = onThreadClick
         )
     }
+    SnackbarHost(snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
+    }
 }
 
 @Composable
 private fun ForumScreenContent(
     state: ForumState,
     colors: AppColorScheme,
-    onSortSelected: (String) -> Unit,
+    onSortSelected: (ThreadSort) -> Unit,
     onCategorySelected: (String?) -> Unit,
     onCreateThread: () -> Unit,
     onThreadClick: (Thread) -> Unit
@@ -175,9 +195,9 @@ private fun ForumScreenContent(
 
 @Composable
 private fun FilterRow(
-    selectedSort: String,
+    selectedSort: ThreadSort,
     selectedCategory: String?,
-    onSortSelected: (String) -> Unit,
+    onSortSelected: (ThreadSort) -> Unit,
     onCategorySelected: (String?) -> Unit,
     colors: AppColorScheme
 ) {

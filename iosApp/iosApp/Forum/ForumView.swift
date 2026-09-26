@@ -1,23 +1,19 @@
 import SwiftUI
 import Shared
 
-private let sortTabs: [(label: LocalizedStringKey, value: String)] = [
-    ("Latest", "latest"),
-    ("Most popular", "top"),
-    ("Most commented", "commented")
+private let sortTabs: [(label: LocalizedStringKey, value: ThreadSort)] = [
+    ("Latest", ThreadSort.latest),
+    ("Most popular", ThreadSort.popular),
+    ("Most commented", ThreadSort.mostcommented)
 ]
 
-private let categoryTabs: [(label: LocalizedStringKey, value: String?)] = [
-    ("All", nil),
-    ("General Discussion", "General Discussion"),
-    ("Race Weekends", "Race Weekends"),
-    ("Teams & Drivers", "Teams & Drivers"),
-    ("Technical / Cars", "Technical / Cars")
-]
+private let categoryTabs: [(label: LocalizedStringKey, value: String?)] =
+    [("All", nil)] + ForumCategories.shared.all.map { (LocalizedStringKey($0), Optional($0)) }
 
 struct ForumView: View {
 
-    @ObservedObject var viewModel: ForumViewModel
+    @ObservedObject var model: ForumModel
+    @State private var loadErrorMessage: String?
     let onCreateThread: () -> Void
     let onThreadTap: (Shared.Thread) -> Void
     @Environment(\.colorScheme) private var colorScheme
@@ -27,20 +23,20 @@ struct ForumView: View {
         ZStack(alignment: .bottomTrailing) {
             VStack(spacing: 0) {
                 FilterRow(
-                    selectedSort: viewModel.state.selectedSort,
-                    selectedCategory: viewModel.state.selectedCategory,
-                    onSortSelected: { viewModel.send(.selectSort($0)) },
-                    onCategorySelected: { viewModel.send(.selectCategory($0)) },
+                    selectedSort: model.state.selectedSort,
+                    selectedCategory: model.state.selectedCategory,
+                    onSortSelected: { model.send(ForumIntent.SelectSort(sort: $0)) },
+                    onCategorySelected: { model.send(ForumIntent.SelectCategory(category: $0)) },
                     colors: colors
                 )
 
-                if viewModel.state.isLoading && viewModel.state.threads.isEmpty {
+                if model.state.isLoading && model.state.threads.isEmpty {
                     Spacer()
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: AppColors.racingRed))
                         .frame(maxWidth: .infinity)
                     Spacer()
-                } else if viewModel.state.threads.isEmpty {
+                } else if model.state.threads.isEmpty {
                     Spacer()
                     VStack(spacing: 12) {
                         Text("No threads yet")
@@ -56,7 +52,7 @@ struct ForumView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: 12) {
-                            ForEach(viewModel.state.threads, id: \.id) { thread in
+                            ForEach(model.state.threads, id: \.id) { thread in
                                 ThreadCard(thread: thread, colors: colors)
                                     .contentShape(Rectangle())
                                     .onTapGesture { onThreadTap(thread) }
@@ -67,7 +63,7 @@ struct ForumView: View {
                         .padding(.bottom, 24)
                     }
                     .refreshable {
-                        await viewModel.refresh()
+                        model.send(ForumIntent.Refresh.shared)
                     }
                 }
             }
@@ -85,15 +81,29 @@ struct ForumView: View {
             .padding(.trailing, 20)
             .padding(.bottom, 20)
         }
+        // One-off effects from the shared ViewModel: shown once, never replayed.
+        .onReceive(model.effects) { effect in
+            if let loadError = effect as? ForumEffect.ShowLoadError {
+                loadErrorMessage = loadError.error.userMessage
+            }
+        }
+        .alert(
+            String(localized: "Couldn't load threads"),
+            isPresented: Binding(get: { loadErrorMessage != nil }, set: { if !$0 { loadErrorMessage = nil } })
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(loadErrorMessage ?? "")
+        }
     }
 }
 
 // MARK: - Filter Row
 
 private struct FilterRow: View {
-    let selectedSort: String
+    let selectedSort: ThreadSort
     let selectedCategory: String?
-    let onSortSelected: (String) -> Void
+    let onSortSelected: (ThreadSort) -> Void
     let onCategorySelected: (String?) -> Void
     let colors: AppColors
 
@@ -251,7 +261,7 @@ private func formatRelative(_ createdAt: String) -> String {
 
 #Preview {
     ForumView(
-        viewModel: ForumViewModel(),
+        model: .forum(),
         onCreateThread: {},
         onThreadTap: { _ in }
     )

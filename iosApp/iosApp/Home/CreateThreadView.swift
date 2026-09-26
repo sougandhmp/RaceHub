@@ -1,18 +1,13 @@
 import SwiftUI
+import Shared
 import Combine
-
-private let threadTags = [
-    "General Discussion",
-    "Race Weekends",
-    "Teams & Drivers",
-    "Technical / Cars"
-]
 
 struct CreateThreadView: View {
 
     let onThreadCreated: () -> Void
 
-    @StateObject private var viewModel = CreateThreadViewModel()
+    @StateObject private var model = CreateThreadModel.createThread()
+    @State private var errorMessage: String?
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
     private var colors: AppColors { AppColors.forScheme(colorScheme) }
@@ -32,8 +27,8 @@ struct CreateThreadView: View {
                         textField(
                             placeholder: "What's on your mind?",
                             text: Binding(
-                                get: { viewModel.state.title },
-                                set: { viewModel.send(.titleChanged($0)) }
+                                get: { model.state.title },
+                                set: { model.send(CreateThreadIntent.TitleChanged(title: $0)) }
                             )
                         )
 
@@ -43,7 +38,7 @@ struct CreateThreadView: View {
                         fieldLabel("CONTENT")
                         contentEditor
 
-                        if let message = viewModel.state.errorMessage {
+                        if let message = errorMessage {
                             Text(message)
                                 .font(.system(size: 13))
                                 .foregroundColor(AppColors.racingRed)
@@ -59,11 +54,15 @@ struct CreateThreadView: View {
             }
         }
         .navigationBarHidden(true)
-        .onReceive(viewModel.effectPublisher) { effect in
-            switch effect {
-            case .threadCreated:
+        // One-off effects from the shared ViewModel: shown once, never replayed.
+        .onReceive(model.effects) { effect in
+            if effect is CreateThreadEffect.ThreadCreated {
                 onThreadCreated()
                 dismiss()
+            } else if effect is CreateThreadEffect.NotSignedIn {
+                errorMessage = String(localized: "Sign in to post or comment.")
+            } else if let failed = effect as? CreateThreadEffect.SubmitFailed {
+                errorMessage = failed.error.userMessage
             }
         }
     }
@@ -75,7 +74,7 @@ struct CreateThreadView: View {
                     .foregroundColor(colors.mutedText)
                     .font(.system(size: 14))
             }
-            .disabled(viewModel.state.isSubmitting)
+            .disabled(model.state.isSubmitting)
 
             Spacer()
 
@@ -109,15 +108,15 @@ struct CreateThreadView: View {
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(colors.cardBorder, lineWidth: 1)
             )
-            .disabled(viewModel.state.isSubmitting)
+            .disabled(model.state.isSubmitting)
     }
 
     private var categoryPicker: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                ForEach(threadTags, id: \.self) { tag in
-                    let isSelected = viewModel.state.category == tag
-                    Button(action: { viewModel.send(.categoryChanged(tag)) }) {
+                ForEach(model.state.categories, id: \.self) { tag in
+                    let isSelected = model.state.category == tag
+                    Button(action: { model.send(CreateThreadIntent.CategoryChanged(category: tag)) }) {
                         Text(tag)
                             .font(.system(size: 14, weight: isSelected ? .bold : .medium))
                             .foregroundColor(isSelected ? .white : colors.primaryText)
@@ -135,7 +134,7 @@ struct CreateThreadView: View {
                                     )
                             )
                     }
-                    .disabled(viewModel.state.isSubmitting)
+                    .disabled(model.state.isSubmitting)
                 }
             }
         }
@@ -143,7 +142,7 @@ struct CreateThreadView: View {
 
     private var contentEditor: some View {
         ZStack(alignment: .topLeading) {
-            if viewModel.state.content.isEmpty {
+            if model.state.content.isEmpty {
                 Text("Share your thoughts…")
                     .foregroundColor(colors.mutedText)
                     .padding(.horizontal, 16)
@@ -151,8 +150,8 @@ struct CreateThreadView: View {
             }
 
             TextEditor(text: Binding(
-                get: { viewModel.state.content },
-                set: { viewModel.send(.contentChanged($0)) }
+                get: { model.state.content },
+                set: { model.send(CreateThreadIntent.ContentChanged(content: $0)) }
             ))
             .scrollContentBackground(.hidden)
             .foregroundColor(colors.primaryText)
@@ -166,27 +165,27 @@ struct CreateThreadView: View {
             RoundedRectangle(cornerRadius: 8)
                 .stroke(colors.cardBorder, lineWidth: 1)
         )
-        .disabled(viewModel.state.isSubmitting)
+        .disabled(model.state.isSubmitting)
     }
 
     private var submitButton: some View {
-        Button(action: { viewModel.send(.submit) }) {
+        Button(action: { model.send(CreateThreadIntent.Submit.shared) }) {
             ZStack {
-                if viewModel.state.isSubmitting {
+                if model.state.isSubmitting {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                 } else {
                     Text("Post Thread")
                         .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(viewModel.state.canSubmit ? .white : colors.mutedText)
+                        .foregroundColor(model.state.canSubmit ? .white : colors.mutedText)
                 }
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
-            .background(viewModel.state.canSubmit ? AppColors.racingRed : colors.card)
+            .background(model.state.canSubmit ? AppColors.racingRed : colors.card)
             .cornerRadius(12)
         }
-        .disabled(!viewModel.state.canSubmit)
+        .disabled(!model.state.canSubmit)
     }
 }
 

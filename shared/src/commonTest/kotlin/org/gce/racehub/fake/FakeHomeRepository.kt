@@ -9,6 +9,7 @@ import org.gce.racehub.race.domain.model.RaceDetail
 import org.gce.racehub.race.domain.model.Thread
 import org.gce.racehub.race.domain.model.ThreadAuthor
 import org.gce.racehub.race.domain.model.ThreadComment
+import org.gce.racehub.race.domain.model.ThreadSort
 import org.gce.racehub.race.domain.model.TrendingThread
 import org.gce.racehub.race.domain.model.UserProfile
 import org.gce.racehub.race.domain.repository.HomeRepository
@@ -24,6 +25,13 @@ class FakeHomeRepository : HomeRepository {
     var profileResult: UserProfile = UserProfile("user", "u@e.com", "", 0, 0, emptyList(), emptyList())
     var addCommentResult: ThreadComment = ThreadComment("comment", "user")
     var likeThreadResult: Int = 1
+    /** Returned as a Failure by the matching forum call when set. */
+    var threadsError: DataError? = null
+    var createThreadError: DataError? = null
+    var addCommentError: DataError? = null
+    var likeThreadError: DataError? = null
+    var threadsDelayMs: Map<ThreadSort?, Long> = emptyMap()
+    var lastThreadsArgs: Triple<ThreadSort?, String?, String?>? = null
 
     var lastAddCommentArgs: Triple<String, String, String>? = null
     var lastCreateThreadArgs: CreateThreadArgs? = null
@@ -50,23 +58,31 @@ class FakeHomeRepository : HomeRepository {
         raceDetailError?.let { return DataResult.Failure(it) }
         return DataResult.Success(raceDetailBySlug[slug] ?: raceDetailResult)
     }
-    override suspend fun getThreads(sort: String?, category: String?, userId: String?): List<Thread> = threadsResult
+    override suspend fun getThreads(sort: ThreadSort?, category: String?, userId: String?): DataResult<List<Thread>> {
+        lastThreadsArgs = Triple(sort, category, userId)
+        threadsDelayMs[sort]?.let { kotlinx.coroutines.delay(it) }
+        threadsError?.let { return DataResult.Failure(it) }
+        return DataResult.Success(threadsResult)
+    }
 
-    override suspend fun createThread(userId: String, title: String, category: String, content: String): Thread {
+    override suspend fun createThread(userId: String, title: String, category: String, content: String): DataResult<Thread> {
         lastCreateThreadArgs = CreateThreadArgs(userId, title, category, content)
-        return createThreadResult
+        createThreadError?.let { return DataResult.Failure(it) }
+        return DataResult.Success(createThreadResult)
     }
 
     override suspend fun getMyProfile(userId: String, token: String): UserProfile = profileResult
 
-    override suspend fun addComment(userId: String, threadId: String, content: String): ThreadComment {
+    override suspend fun addComment(userId: String, threadId: String, content: String): DataResult<ThreadComment> {
         lastAddCommentArgs = Triple(userId, threadId, content)
-        return addCommentResult
+        addCommentError?.let { return DataResult.Failure(it) }
+        return DataResult.Success(addCommentResult)
     }
 
-    override suspend fun likeThread(id: String): Int {
+    override suspend fun likeThread(id: String): DataResult<Int> {
         lastLikedThreadId = id
-        return likeThreadResult
+        likeThreadError?.let { return DataResult.Failure(it) }
+        return DataResult.Success(likeThreadResult)
     }
 
     override fun getRaceCount(): Int = raceSchedule.size

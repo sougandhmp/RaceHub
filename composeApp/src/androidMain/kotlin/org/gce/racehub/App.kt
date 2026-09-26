@@ -19,8 +19,8 @@ import org.gce.racehub.auth.domain.session.UserSession
 import org.gce.racehub.di.appModule
 import org.gce.racehub.emailverification.EmailVerificationScreen
 import org.gce.racehub.forgotpassword.ForgotPasswordScreen
-import org.gce.racehub.forum.ForumIntent
-import org.gce.racehub.forum.ForumViewModel
+import org.gce.racehub.forum.presentation.ForumIntent
+import org.gce.racehub.forum.presentation.ForumViewModel
 import org.gce.racehub.forum.ThreadDetailScreen
 import org.gce.racehub.home.CreateThreadScreen
 import org.gce.racehub.home.HomeScreen
@@ -90,13 +90,6 @@ fun App() {
             }
             BackHandler(enabled = backTarget != null) {
                 backTarget?.let { screen = it }
-            }
-
-            // RaceViewModel loads itself on creation; only the forum still needs a kick.
-            LaunchedEffect(Unit) {
-                if (userSession.currentUser.value != null) {
-                    forumViewModel.onIntent(ForumIntent.Refresh)
-                }
             }
 
             when (screen) {

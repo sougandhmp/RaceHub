@@ -1,12 +1,12 @@
 package org.gce.racehub.race
 
 import kotlinx.coroutines.test.runTest
+import org.gce.racehub.core.domain.DataResult
 import org.gce.racehub.fake.FakeHomeRepository
 import org.gce.racehub.race.domain.usecase.CreateThreadUseCase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertNotNull
 
 class CreateThreadUseCaseTest {
 
@@ -67,8 +67,6 @@ class CreateThreadUseCaseTest {
 
     @Test
     fun `successful call returns repository result`() = runTest {
-        val result = invoke()
-        assertNotNull(result)
-        assertEquals(repository.createThreadResult, result)
+        assertEquals(DataResult.Success(repository.createThreadResult), invoke())
     }
 }

@@ -1,5 +1,7 @@
 package org.gce.racehub.race.domain.usecase
 
+import org.gce.racehub.core.domain.DataResult
+import org.gce.racehub.race.domain.model.ForumCategories
 import org.gce.racehub.race.domain.model.Thread
 import org.gce.racehub.race.domain.repository.HomeRepository
 
@@ -17,11 +19,11 @@ class CreateThreadUseCase(private val repository: HomeRepository) {
         title: String,
         category: String,
         content: String
-    ): Thread {
+    ): DataResult<Thread> {
         require(userId.isNotBlank()) { "You must be signed in to post." }
         require(title.isNotBlank()) { "Title can't be empty." }
         require(content.isNotBlank()) { "Content can't be empty." }
-        val resolvedCategory = category.ifBlank { "General Discussion" }
+        val resolvedCategory = category.ifBlank { ForumCategories.DEFAULT }
 
         return repository.createThread(
             userId = userId,

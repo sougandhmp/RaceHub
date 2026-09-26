@@ -8,7 +8,7 @@ struct HomeView: View {
 
     @StateObject private var viewModel = HomeViewModel()
     @StateObject private var raceModel = RaceModel.race()
-    @StateObject private var forumViewModel = ForumViewModel()
+    @StateObject private var forumModel = ForumModel.forum()
     @State private var path = NavigationPath()
     @Environment(\.colorScheme) private var colorScheme
 
@@ -32,7 +32,7 @@ struct HomeView: View {
                         )
                     case .forum:
                         ForumView(
-                            viewModel: forumViewModel,
+                            model: forumModel,
                             onCreateThread: { path.append("createThread") },
                             onThreadTap: { thread in path.append(thread) }
                         )
@@ -62,7 +62,7 @@ struct HomeView: View {
                     )
                 } else if destination == "createThread" {
                     CreateThreadView(onThreadCreated: {
-                        forumViewModel.send(.refresh)
+                        forumModel.send(ForumIntent.Refresh.shared)
                     })
                 }
             }

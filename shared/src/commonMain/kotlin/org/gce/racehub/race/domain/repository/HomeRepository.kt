@@ -7,6 +7,7 @@ import org.gce.racehub.race.domain.model.Race
 import org.gce.racehub.race.domain.model.RaceDetail
 import org.gce.racehub.race.domain.model.Thread
 import org.gce.racehub.race.domain.model.ThreadComment
+import org.gce.racehub.race.domain.model.ThreadSort
 import org.gce.racehub.race.domain.model.TrendingThread
 import org.gce.racehub.race.domain.model.UserProfile
 
@@ -49,22 +50,21 @@ interface HomeRepository {
     /**
      * Returns full forum threads matching the provided filters.
      *
-     * @param sort Sort key (e.g., "latest", "top"). `null` lets the server decide.
+     * @param sort Thread order. `null` lets the server decide.
      * @param category Restricts to a single category. `null` returns all categories.
      * @param userId Caller's user id; used to populate per-thread `bookmarked` flag.
      */
     @Throws(Exception::class)
     suspend fun getThreads(
-        sort: String? = null,
+        sort: ThreadSort? = null,
         category: String? = null,
         userId: String? = null
-    ): List<Thread>
+    ): DataResult<List<Thread>>
 
     /**
      * Creates a new forum thread on behalf of [userId].
      *
      * @return The newly created thread (id, title, createdAt populated by the server).
-     * @throws Exception if the request fails.
      */
     @Throws(Exception::class)
     suspend fun createThread(
@@ -72,7 +72,7 @@ interface HomeRepository {
         title: String,
         category: String,
         content: String
-    ): Thread
+    ): DataResult<Thread>
 
     /**
      * Fetches the full profile for the signed-in user from the backend.
@@ -96,7 +96,7 @@ interface HomeRepository {
         userId: String,
         threadId: String,
         content: String
-    ): ThreadComment
+    ): DataResult<ThreadComment>
 
     /**
      * Toggles the like on the thread identified by [id].
@@ -105,7 +105,7 @@ interface HomeRepository {
      * @throws Exception if the request fails.
      */
     @Throws(Exception::class)
-    suspend fun likeThread(id: String): Int
+    suspend fun likeThread(id: String): DataResult<Int>
 
     // ── Swift-friendly index-based accessors ─────────────────────────────────
 

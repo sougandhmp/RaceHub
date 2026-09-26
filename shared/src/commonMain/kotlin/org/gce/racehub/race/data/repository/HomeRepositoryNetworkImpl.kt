@@ -48,6 +48,25 @@ class HomeRepositoryNetworkImpl(
      */
     private val syncScope = CoroutineScope(SupervisorJob() + ioDispatcher)
 
+    /**
+     * Runs a network call at the repository boundary: success becomes [DataResult.Success],
+     * any failure is logged and returned as a typed [DataResult.Failure]. Cancellation propagates.
+     */
+    private suspend fun <T> safeCall(what: String, block: suspend () -> T): DataResult<T> = try {
+        DataResult.Success(block())
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        logError(TAG, "Failed to $what", e)
+        DataResult.Failure(e.toDataError())
+    }
+
+    private fun ThreadSort.apiValue(): String = when (this) {
+        ThreadSort.Latest -> "latest"
+        ThreadSort.Popular -> "top"
+        ThreadSort.MostCommented -> "commented"
+    }
+
     /** Maps data-layer exceptions onto the domain's [DataError]. */
     private fun Exception.toDataError(): DataError = when (this) {
         is IOException -> DataError.Network // includes timeouts and connection failures
@@ -392,43 +411,38 @@ class HomeRepositoryNetworkImpl(
      * existing trending-threads SQLDelight table.
      */
     override suspend fun getThreads(
-        sort: String?,
+        sort: ThreadSort?,
         category: String?,
         userId: String?
-    ): List<Thread> {
-        return try {
-            val response: GraphQLResponse<ThreadsData> = httpClient.post("$baseUrl/graphql") {
-                contentType(ContentType.Application.Json)
-                setBody(
-                    GraphQLRequestWithVariables(
-                        query = threadsQuery,
-                        variables = ThreadsVariables(sort = sort, category = category, userId = userId)
-                    )
+    ): DataResult<List<Thread>> = safeCall("fetch threads") {
+        val response: GraphQLResponse<ThreadsData> = httpClient.post("$baseUrl/graphql") {
+            contentType(ContentType.Application.Json)
+            setBody(
+                GraphQLRequestWithVariables(
+                    query = threadsQuery,
+                    variables = ThreadsVariables(sort = sort?.apiValue(), category = category, userId = userId)
                 )
-            }.body()
+            )
+        }.body()
 
-            val data = response.data
-                ?: error(response.errors.toErrorMessage("Empty GraphQL response"))
+        val data = response.data
+            ?: error(response.errors.toErrorMessage("Empty GraphQL response"))
 
-            data.threads.map { dto ->
-                Thread(
-                    id = dto.id,
-                    title = dto.title,
-                    category = dto.category,
-                    author = ThreadAuthor(dto.author.username, dto.author.avatar),
-                    excerpt = dto.excerpt,
-                    content = dto.content,
-                    createdAt = dto.createdAt,
-                    likes = dto.likes,
-                    bookmarked = dto.bookmarked,
-                    comments = dto.comments.map { c ->
-                        ThreadComment(content = c.content, authorUsername = c.author.username)
-                    }
-                )
-            }
-        } catch (e: Exception) {
-            logError(TAG, "Failed to fetch threads", e)
-            emptyList()
+        data.threads.map { dto ->
+            Thread(
+                id = dto.id,
+                title = dto.title,
+                category = dto.category,
+                author = ThreadAuthor(dto.author.username, dto.author.avatar),
+                excerpt = dto.excerpt,
+                content = dto.content,
+                createdAt = dto.createdAt,
+                likes = dto.likes,
+                bookmarked = dto.bookmarked,
+                comments = dto.comments.map { c ->
+                    ThreadComment(content = c.content, authorUsername = c.author.username)
+                }
+            )
         }
     }
 
@@ -440,7 +454,7 @@ class HomeRepositoryNetworkImpl(
         title: String,
         category: String,
         content: String
-    ): Thread {
+    ): DataResult<Thread> = safeCall("create thread") {
         val response: GraphQLResponse<CreateThreadData> = httpClient.post("$baseUrl/graphql") {
             contentType(ContentType.Application.Json)
             setBody(
@@ -456,7 +470,7 @@ class HomeRepositoryNetworkImpl(
 
         val created = response.data?.createThread
             ?: error(response.errors.toErrorMessage("Failed to create thread"))
-        return Thread(
+        Thread(
             id = created.id,
             title = created.title,
             category = category,
@@ -502,7 +516,7 @@ class HomeRepositoryNetworkImpl(
     /**
      * Posts a comment via GraphQL mutation.
      */
-    override suspend fun addComment(userId: String, threadId: String, content: String): ThreadComment {
+    override suspend fun addComment(userId: String, threadId: String, content: String): DataResult<ThreadComment> = safeCall("add comment") {
         val response: GraphQLResponse<AddCommentData> = httpClient.post("$baseUrl/graphql") {
             contentType(ContentType.Application.Json)
             setBody(
@@ -521,20 +535,14 @@ class HomeRepositoryNetworkImpl(
             ?: error(response.errors.toErrorMessage("Failed to add comment"))
         // The mutation does not return author info; leave the username blank so
         // callers don't mistake the raw user id for a display name.
-        return ThreadComment(content = added.content, authorUsername = "")
+        ThreadComment(content = added.content, authorUsername = "")
     }
 
     /**
      * Fetches full race detail for the given [slug] via GraphQL query.
      */
-    override suspend fun getRaceDetail(slug: String): DataResult<RaceDetail> = try {
-        DataResult.Success(fetchRaceDetail(slug))
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        logError(TAG, "Failed to load race detail for $slug", e)
-        DataResult.Failure(e.toDataError())
-    }
+    override suspend fun getRaceDetail(slug: String): DataResult<RaceDetail> =
+        safeCall("load race detail for $slug") { fetchRaceDetail(slug) }
 
     private suspend fun fetchRaceDetail(slug: String): RaceDetail {
         val response: GraphQLResponse<RaceDetailData> = httpClient.post("$baseUrl/graphql") {
@@ -562,7 +570,7 @@ class HomeRepositoryNetworkImpl(
      *
      * @return The updated like count returned by the server.
      */
-    override suspend fun likeThread(id: String): Int {
+    override suspend fun likeThread(id: String): DataResult<Int> = safeCall("like thread") {
         val response: GraphQLResponse<LikeThreadData> = httpClient.post("$baseUrl/graphql") {
             contentType(ContentType.Application.Json)
             setBody(
@@ -575,7 +583,7 @@ class HomeRepositoryNetworkImpl(
 
         val result = response.data?.likeThread
             ?: error(response.errors.toErrorMessage("Failed to like thread"))
-        return result.likes
+        result.likes
     }
 
     /**

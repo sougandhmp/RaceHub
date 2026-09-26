@@ -125,3 +125,11 @@
 "Can't reach the server. Check your connection and pull to refresh." = "Can't reach the server. Check your connection and pull to refresh.";
 "The server had a problem loading races. Pull to try again." = "The server had a problem loading races. Pull to try again.";
 "Something went wrong loading races. Pull to try again." = "Something went wrong loading races. Pull to try again.";
+
+/* Forum and generic errors */
+"Couldn't load threads" = "Couldn't load threads";
+"Can't reach the server. Check your connection and try again." = "Can't reach the server. Check your connection and try again.";
+"The server had a problem. Please try again." = "The server had a problem. Please try again.";
+"Something went wrong. Please try again." = "Something went wrong. Please try again.";
+"Sign in to post or comment." = "Sign in to post or comment.";
+"Couldn't update the like. Please try again." = "Couldn't update the like. Please try again.";
