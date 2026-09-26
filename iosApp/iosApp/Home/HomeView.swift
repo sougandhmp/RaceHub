@@ -7,7 +7,7 @@ struct HomeView: View {
     let onSignedOut: () -> Void
 
     @StateObject private var viewModel = HomeViewModel()
-    @StateObject private var raceViewModel = RaceViewModel()
+    @StateObject private var raceModel = RaceModel.race()
     @StateObject private var forumViewModel = ForumViewModel()
     @State private var path = NavigationPath()
     @Environment(\.colorScheme) private var colorScheme
@@ -25,7 +25,7 @@ struct HomeView: View {
                     switch viewModel.state.selectedTab {
                     case .race:
                         RaceView(
-                            viewModel: raceViewModel,
+                            model: raceModel,
                             onViewAllSchedule: { path.append("schedule") },
                             onViewAllStandings: { path.append("standings") },
                             onViewRaceDetail: { race in path.append(race) }
@@ -53,12 +53,12 @@ struct HomeView: View {
             .navigationDestination(for: String.self) { destination in
                 if destination == "schedule" {
                     ScheduleView(
-                        schedule: raceViewModel.state.raceSchedule
+                        schedule: raceModel.state.raceSchedule
                     )
                 } else if destination == "standings" {
                     StandingsView(
-                        drivers: raceViewModel.state.driverStandings,
-                        constructors: raceViewModel.state.constructorStandings
+                        drivers: raceModel.state.driverStandings,
+                        constructors: raceModel.state.constructorStandings
                     )
                 } else if destination == "createThread" {
                     CreateThreadView(onThreadCreated: {
@@ -70,7 +70,7 @@ struct HomeView: View {
             // "selected" value: the destination closure can run with a stale
             // snapshot of that state and render nothing.
             .navigationDestination(for: Race.self) { race in
-                RaceDetailView(race: race)
+                RaceDetailView(race: race, model: raceModel)
             }
             .navigationDestination(for: Shared.Thread.self) { thread in
                 ThreadDetailView(thread: thread)

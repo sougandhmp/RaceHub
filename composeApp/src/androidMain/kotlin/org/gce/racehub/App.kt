@@ -28,8 +28,8 @@ import org.gce.racehub.home.ScheduleScreen
 import org.gce.racehub.home.StandingsScreen
 import org.gce.racehub.login.LoginScreen
 import org.gce.racehub.race.RaceDetailScreen
-import org.gce.racehub.race.RaceIntent
-import org.gce.racehub.race.RaceViewModel
+import org.gce.racehub.race.presentation.RaceIntent
+import org.gce.racehub.race.presentation.RaceViewModel
 import org.gce.racehub.race.di.createRaceModule
 import org.gce.racehub.race.domain.model.Race
 import org.gce.racehub.race.domain.model.Thread
@@ -92,9 +92,9 @@ fun App() {
                 backTarget?.let { screen = it }
             }
 
+            // RaceViewModel loads itself on creation; only the forum still needs a kick.
             LaunchedEffect(Unit) {
                 if (userSession.currentUser.value != null) {
-                    raceViewModel.onIntent(RaceIntent.Refresh)
                     forumViewModel.onIntent(ForumIntent.Refresh)
                 }
             }
@@ -197,6 +197,7 @@ fun App() {
                         RaceDetailScreen(
                             race = race,
                             raceDetail = raceState.selectedRaceDetail,
+                            sessions = raceState.selectedRaceSessions,
                             onBack = { screen = raceDetailOrigin }
                         )
                     }

@@ -7,6 +7,8 @@ plugins {
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.sqldelight)
     alias(libs.plugins.kover)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.kmpNativeCoroutines)
 }
 
 kotlin {
@@ -19,8 +21,9 @@ kotlin {
     val xcf = XCFramework("Shared")
     listOf(
         iosArm64(),
-        iosSimulatorArm64(),
-        iosX64()
+        iosSimulatorArm64()
+        // No iosX64: Kotlin deprecated the x64 Apple targets and AndroidX
+        // lifecycle-viewmodel 2.11 no longer publishes them (Intel-Mac simulator only).
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
             baseName = "Shared"
@@ -33,6 +36,11 @@ kotlin {
         freeCompilerArgs.add("-Xexpect-actual-classes")
     }
 
+    // KMP-NativeCoroutines generates @ObjCName-annotated Swift accessors.
+    sourceSets.all {
+        languageSettings.optIn("kotlin.experimental.ExperimentalObjCName")
+    }
+
     sourceSets {
         commonMain.dependencies {
             implementation(libs.ktor.client.core)
@@ -41,7 +49,10 @@ kotlin {
             implementation(libs.ktor.client.logging)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.datetime)
             implementation(libs.koin.core)
+            implementation(libs.koinViewmodelCore)
+            implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.sqldelight.runtime)
             implementation(libs.sqldelight.coroutines)
         }

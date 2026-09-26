@@ -4,6 +4,7 @@ import Shared
 struct RaceDetailView: View {
 
     let race: Race
+    @ObservedObject var model: RaceModel
     @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) private var colorScheme
     private var colors: AppColors { AppColors.forScheme(colorScheme) }
@@ -29,6 +30,7 @@ struct RaceDetailView: View {
             }
         }
         .navigationBarHidden(true)
+        .onAppear { model.send(RaceIntent.SelectRace(slug: race.id)) }
     }
 
     // MARK: - Header
@@ -145,7 +147,7 @@ struct RaceDetailView: View {
             SectionLabel(title: "WEEKEND SCHEDULE", colors: colors)
 
             VStack(spacing: 0) {
-                let chips = buildSessionChips(from: race.dateTime)
+                let chips = sessions
                 ForEach(Array(chips.enumerated()), id: \.element.label) { index, chip in
                     let isRace = chip.label == "RACE"
                     let isLast = index == chips.count - 1
@@ -222,6 +224,14 @@ struct RaceDetailView: View {
     }
 
     // MARK: - Helpers
+
+    /// Real sessions once the shared ViewModel has loaded this race's detail; estimated until then.
+    private var sessions: [SessionChipData] {
+        let shared = model.state.selectedRace?.id == race.id
+            ? model.state.selectedRaceSessions
+            : RaceDatesKt.weekendSessions(race: race, detail: nil)
+        return shared.map(SessionChipData.init)
+    }
 
     private var statusColor: Color {
         switch race.status.lowercased() {
@@ -363,6 +373,6 @@ private struct InfoDivider: View {
             round: 3,
             status: "UPCOMING",
             weather: "Sunny"
-        ))
+        ), model: .race())
     }
 }

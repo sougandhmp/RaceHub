@@ -37,6 +37,8 @@ import androidx.compose.ui.unit.sp
 import org.gce.racehub.race.domain.model.FastestLap
 import org.gce.racehub.race.domain.model.Race
 import org.gce.racehub.race.domain.model.RaceDetail
+import org.gce.racehub.race.presentation.WeekendSession
+import org.gce.racehub.race.presentation.weekendSessions
 import org.gce.racehub.race.domain.model.RaceResult
 import org.gce.racehub.race.domain.model.RaceSession
 import org.gce.racehub.race.domain.model.TrackFacts
@@ -74,6 +76,7 @@ import racehub.composeapp.generated.resources.title_race_detail
 fun RaceDetailScreen(
     race: Race,
     raceDetail: RaceDetail? = null,
+    sessions: List<WeekendSession> = weekendSessions(race, raceDetail),
     onBack: () -> Unit = {}
 ) {
     val colors = LocalAppColors.current
@@ -102,10 +105,6 @@ fun RaceDetailScreen(
                 item { TrackFactsSection(facts = trackFacts, colors = colors) }
             }
             item {
-                val sessions = if (raceDetail?.sessions?.isNotEmpty() == true)
-                    sessionsFromDetail(raceDetail.sessions)
-                else
-                    sessionsFromRace(race)
                 ScheduleSection(sessions = sessions, colors = colors)
             }
             if (raceDetail?.results?.isNotEmpty() == true) {
@@ -286,7 +285,7 @@ private fun TrackFactsSection(facts: TrackFacts, colors: AppColorScheme) {
 // ── Weekend Schedule ──────────────────────────────────────────────────────────
 
 @Composable
-private fun ScheduleSection(sessions: List<RaceSessionChip>, colors: AppColorScheme) {
+private fun ScheduleSection(sessions: List<WeekendSession>, colors: AppColorScheme) {
     Column {
         SectionHeading(title = stringResource(Res.string.heading_weekend_schedule), colors = colors)
         Spacer(modifier = Modifier.height(10.dp))
@@ -299,7 +298,7 @@ private fun ScheduleSection(sessions: List<RaceSessionChip>, colors: AppColorSch
         ) {
             sessions.forEachIndexed { index, chip ->
                 val isRace = chip.label == "RACE"
-                val labelText = stripLabel(chip.label)
+                val labelText = chip.shortLabel
 
                 Row(
                     modifier = Modifier
@@ -325,7 +324,7 @@ private fun ScheduleSection(sessions: List<RaceSessionChip>, colors: AppColorSch
                         )
                     }
                     Text(
-                        text = chip.fullDate,
+                        text = chip.date,
                         color = colors.primaryText,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
