@@ -22,7 +22,7 @@ import org.gce.racehub.auth.domain.usecase.VerifyOtpUseCase
  * Shared MVI ViewModel for email verification (Android and iOS). Send
  * [EmailVerificationIntent.Open] with the address when the screen appears.
  */
-class EmailVerificationViewModel(
+class EmailVerificationViewModel internal constructor(
     private val verifyOtp: VerifyOtpUseCase,
     private val resendOtp: ResendOtpUseCase
 ) : ViewModel() {

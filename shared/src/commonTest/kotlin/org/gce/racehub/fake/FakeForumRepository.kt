@@ -8,7 +8,7 @@ import org.gce.racehub.forum.domain.model.ThreadComment
 import org.gce.racehub.forum.domain.model.ThreadSort
 import org.gce.racehub.forum.domain.repository.ForumRepository
 
-class FakeForumRepository : ForumRepository {
+internal class FakeForumRepository : ForumRepository {
     var threadsResult: List<Thread> = emptyList()
     var createThreadResult: Thread = fakeThread()
     var addCommentResult: ThreadComment = ThreadComment("comment", "user")

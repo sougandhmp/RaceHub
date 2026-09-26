@@ -5,7 +5,7 @@ import org.gce.racehub.forum.domain.model.Thread
 import org.gce.racehub.forum.domain.model.ThreadSort
 import org.gce.racehub.forum.domain.repository.ForumRepository
 
-class GetThreadsUseCase(private val repository: ForumRepository) {
+internal class GetThreadsUseCase(private val repository: ForumRepository) {
     @Throws(Exception::class)
     suspend operator fun invoke(
         sort: ThreadSort = ThreadSort.Latest,

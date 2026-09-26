@@ -5,7 +5,7 @@ import org.gce.racehub.core.domain.DataResult
 import org.gce.racehub.profile.domain.model.UserProfile
 import org.gce.racehub.profile.domain.repository.ProfileRepository
 
-class FakeProfileRepository : ProfileRepository {
+internal class FakeProfileRepository : ProfileRepository {
     var profileResult: UserProfile = UserProfile("user", "u@e.com", "", 0, 0, emptyList(), emptyList())
     var profileError: DataError? = null
 

@@ -21,7 +21,7 @@ import org.gce.racehub.forum.domain.usecase.GetThreadsUseCase
  * Shared MVI ViewModel for the Forum tab (Android and iOS). Loads once on
  * creation; filter changes and [ForumIntent.Refresh] reload.
  */
-class ForumViewModel(
+class ForumViewModel internal constructor(
     private val getThreads: GetThreadsUseCase,
     private val userSession: UserSession
 ) : ViewModel() {

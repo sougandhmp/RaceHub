@@ -22,7 +22,7 @@ import org.gce.racehub.auth.domain.usecase.SignUpUseCase
  * Shared MVI ViewModel for the sign-up form (Android and iOS). Creating the
  * account does not sign the user in: they must verify their email first.
  */
-class SignUpViewModel(
+class SignUpViewModel internal constructor(
     private val signUp: SignUpUseCase,
     private val sendOtp: SendOtpUseCase
 ) : ViewModel() {

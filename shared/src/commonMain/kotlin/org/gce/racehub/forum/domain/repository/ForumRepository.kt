@@ -9,7 +9,7 @@ import org.gce.racehub.forum.domain.model.ThreadSort
  * Contract for the forum. Implementations are the error boundary: failures
  * come back as [DataResult.Failure], never as exceptions.
  */
-interface ForumRepository {
+internal interface ForumRepository {
 
     /**
      * Threads matching the filters, not cached.

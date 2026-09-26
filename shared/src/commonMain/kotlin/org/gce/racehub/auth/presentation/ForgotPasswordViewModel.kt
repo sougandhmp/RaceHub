@@ -18,7 +18,7 @@ import org.gce.racehub.auth.domain.usecase.ConfirmPasswordResetUseCase
 import org.gce.racehub.auth.domain.usecase.RequestPasswordResetUseCase
 
 /** Shared MVI ViewModel for the password-reset flow (Android and iOS). */
-class ForgotPasswordViewModel(
+class ForgotPasswordViewModel internal constructor(
     private val requestPasswordReset: RequestPasswordResetUseCase,
     private val confirmPasswordReset: ConfirmPasswordResetUseCase
 ) : ViewModel() {

@@ -9,7 +9,7 @@ import org.gce.racehub.core.domain.session.UserSession
  * best effort — offline, or with an expired token, the user is still signed
  * out and the token simply lapses server-side.
  */
-class LogoutUseCase(
+internal class LogoutUseCase(
     private val authRepository: AuthRepository,
     private val userSession: UserSession
 ) {

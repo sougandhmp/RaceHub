@@ -13,7 +13,7 @@ import org.gce.racehub.auth.domain.model.PasswordResetResult
  *
  * Shared between Android and iOS via the KMP `shared` module.
  */
-interface AuthRepository {
+internal interface AuthRepository {
 
     /**
      * Attempts to authenticate an existing user.

@@ -13,7 +13,7 @@ import org.gce.racehub.auth.domain.repository.AuthRepository
  *
  * Shared between Android and iOS via the KMP `shared` module.
  */
-class LoginUseCase(private val authRepository: AuthRepository) {
+internal class LoginUseCase(private val authRepository: AuthRepository) {
 
     /**
      * Validates [email] and [password], then calls [AuthRepository.login].
