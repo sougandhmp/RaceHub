@@ -118,6 +118,9 @@ kover {
 android {
     namespace = "org.gce.racehub.shared"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
+    // JVM unit tests run without the Android framework. Let calls such as android.util.Log
+    // (used by logError when a repository call fails) return defaults instead of throwing.
+    testOptions.unitTests.isReturnDefaultValues = true
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

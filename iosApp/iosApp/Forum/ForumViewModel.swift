@@ -13,7 +13,7 @@ final class ForumViewModel: ObservableObject {
         effectSubject.eraseToAnyPublisher()
     }
 
-    private let repository: HomeRepository = RaceDependencyProvider.companion.shared.homeRepository
+    private let getThreads: GetThreadsUseCase = RaceDependencyProvider.companion.shared.createGetThreadsUseCase()
 
     init() {
         loadThreads()
@@ -47,13 +47,17 @@ final class ForumViewModel: ObservableObject {
         state.errorMessage = nil
 
         do {
-            let threads = try await repository.getThreads(
+            let result = try await getThreads.invoke(
                 sort: state.selectedSort,
                 category: state.selectedCategory,
                 userId: nil
             )
             state.isLoading = false
-            state.threads = threads
+            // On failure, keep the threads already on screen and show why.
+            if let threads = result.data as? [Shared.Thread] {
+                state.threads = threads
+            }
+            state.errorMessage = result.error?.message
         } catch {
             state.isLoading = false
             state.errorMessage = error.localizedDescription

@@ -7,6 +7,7 @@ class LogoutUseCase(
     private val authRepository: AuthRepository,
     private val userSession: UserSession
 ) {
+    @Throws(Exception::class)
     suspend operator fun invoke(): Boolean {
         val token = userSession.currentUser.value?.token
         if (token.isNullOrBlank()) {

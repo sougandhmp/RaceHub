@@ -1,11 +1,14 @@
 package org.gce.racehub.race.domain.model
 
+import kotlinx.serialization.Serializable
+
 /**
  * Represents a single race event on the Formula 1 calendar.
  *
  * Shared between Android and iOS via the KMP `shared` module. All fields
  * are plain primitives or [String] so they bridge cleanly to Swift/Obj-C.
  */
+@Serializable
 data class Race(
 
     /** Unique identifier (slug) for this race event. */
