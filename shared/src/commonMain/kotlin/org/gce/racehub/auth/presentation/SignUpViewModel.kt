@@ -41,19 +41,16 @@ class SignUpViewModel internal constructor(
 
     fun onIntent(intent: SignUpIntent) {
         when (intent) {
-            is SignUpIntent.UsernameChanged -> edit { it.copy(username = intent.username) }
-            is SignUpIntent.EmailChanged -> edit { it.copy(email = intent.email) }
-            is SignUpIntent.PasswordChanged -> edit { it.copy(password = intent.password) }
-            is SignUpIntent.ConfirmPasswordChanged -> edit { it.copy(confirmPassword = intent.confirmPassword) }
-            is SignUpIntent.CountryChanged -> edit { it.copy(country = intent.country) }
-            SignUpIntent.TogglePasswordVisibility -> edit { it.copy(isPasswordVisible = !it.isPasswordVisible) }
-            SignUpIntent.ToggleConfirmPasswordVisibility ->
-                edit { it.copy(isConfirmPasswordVisible = !it.isConfirmPasswordVisible) }
+            is SignUpIntent.UsernameChanged -> mutate(SignUpMutation.UsernameChanged(intent.username))
+            is SignUpIntent.EmailChanged -> mutate(SignUpMutation.EmailChanged(intent.email))
+            is SignUpIntent.PasswordChanged -> mutate(SignUpMutation.PasswordChanged(intent.password))
+            is SignUpIntent.ConfirmPasswordChanged -> mutate(SignUpMutation.ConfirmPasswordChanged(intent.confirmPassword))
+            is SignUpIntent.CountryChanged -> mutate(SignUpMutation.CountryChanged(intent.country))
+            SignUpIntent.TogglePasswordVisibility -> mutate(SignUpMutation.PasswordVisibilityToggled)
+            SignUpIntent.ToggleConfirmPasswordVisibility -> mutate(SignUpMutation.ConfirmPasswordVisibilityToggled)
             SignUpIntent.Submit -> submit()
         }
     }
-
-    private fun edit(transform: (SignUpState) -> SignUpState) = mutate(SignUpMutation.FieldsChanged(transform))
 
     private fun mutate(mutation: SignUpMutation) = _state.update { SignUpReducer.reduce(it, mutation) }
 

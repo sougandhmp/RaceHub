@@ -35,7 +35,11 @@ sealed class ForgotPasswordEffect {
 }
 
 internal sealed interface ForgotPasswordMutation {
-    data class FieldsChanged(val transform: (ForgotPasswordState) -> ForgotPasswordState) : ForgotPasswordMutation
+    data class EmailChanged(val email: String) : ForgotPasswordMutation
+    data class OtpChanged(val otp: String) : ForgotPasswordMutation
+    data class NewPasswordChanged(val password: String) : ForgotPasswordMutation
+    data class ConfirmPasswordChanged(val password: String) : ForgotPasswordMutation
+    data object PasswordVisibilityToggled : ForgotPasswordMutation
     data object Submitted : ForgotPasswordMutation
     data class Failed(val failure: AuthFailure) : ForgotPasswordMutation
     data object CodeSent : ForgotPasswordMutation
