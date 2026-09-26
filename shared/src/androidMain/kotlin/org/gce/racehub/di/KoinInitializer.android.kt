@@ -34,7 +34,7 @@ actual object KoinInitializer {
     actual fun init(baseUrl: String, vararg additionalModules: Module) {
         startKoin {
             androidApplication?.let { androidContext(it) }
-            modules(createProductionAuthModule(baseUrl), createRaceModule(baseUrl), platformModule, *additionalModules)
+            modules(createProductionAuthModule(baseUrl), createRaceModule(baseUrl), platformModule, presentationModule, *additionalModules)
         }
     }
 
@@ -45,7 +45,7 @@ actual object KoinInitializer {
     actual fun initForTesting(vararg additionalModules: Module) {
         startKoin {
             androidApplication?.let { androidContext(it) }
-            modules(org.gce.racehub.auth.di.fakeAuthModule, createRaceModule(""), platformModule, *additionalModules)
+            modules(org.gce.racehub.auth.di.fakeAuthModule, createRaceModule(""), platformModule, presentationModule, *additionalModules)
         }
     }
 }

@@ -27,11 +27,25 @@ class FakeHomeRepository : HomeRepository {
     var lastCreateThreadArgs: CreateThreadArgs? = null
     var lastLikedThreadId: String? = null
 
-    override suspend fun getRaceSchedule(): List<Race> = raceSchedule
+    /** Thrown by [getRaceSchedule] when set. */
+    var raceScheduleError: Exception? = null
+    var raceScheduleCalls = 0
+    /** Per-slug detail and artificial latency, overriding [raceDetailResult]. */
+    var raceDetailBySlug: Map<String, RaceDetail> = emptyMap()
+    var raceDetailDelayMs: Map<String, Long> = emptyMap()
+
+    override suspend fun getRaceSchedule(): List<Race> {
+        raceScheduleCalls++
+        raceScheduleError?.let { throw it }
+        return raceSchedule
+    }
     override suspend fun getDriverStandings(): List<DriverStanding> = driverStandings
     override suspend fun getConstructorStandings(): List<ConstructorStanding> = constructorStandings
     override suspend fun getTrendingThreads(): List<TrendingThread> = trendingThreads
-    override suspend fun getRaceDetail(slug: String): RaceDetail = raceDetailResult
+    override suspend fun getRaceDetail(slug: String): RaceDetail {
+        raceDetailDelayMs[slug]?.let { kotlinx.coroutines.delay(it) }
+        return raceDetailBySlug[slug] ?: raceDetailResult
+    }
     override suspend fun getThreads(sort: String?, category: String?, userId: String?): List<Thread> = threadsResult
 
     override suspend fun createThread(userId: String, title: String, category: String, content: String): Thread {
