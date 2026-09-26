@@ -14,7 +14,6 @@ internal class LogoutUseCase(
     private val userSession: UserSession
 ) {
     /** @return true if the server confirmed the token was revoked (informational only). */
-    @Throws(Exception::class)
     suspend operator fun invoke(): Boolean {
         val token = userSession.currentUser.value?.token
         userSession.clear()

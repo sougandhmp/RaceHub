@@ -18,6 +18,5 @@ internal class GetDriverStandingsUseCase(private val repository: RaceRepository)
      * @return The [DriverStanding] list sorted by championship position
      *         (position 1 at index 0).
      */
-    @Throws(Exception::class)
     suspend operator fun invoke(): DataResult<List<DriverStanding>> = repository.getDriverStandings()
 }

@@ -18,22 +18,17 @@ internal interface RaceRepository {
     // there is nothing to show.
 
     /** The full race calendar for the current season. */
-    @Throws(Exception::class)
     suspend fun getRaceSchedule(): DataResult<List<Race>>
 
     /** The current Drivers' Championship standings table. */
-    @Throws(Exception::class)
     suspend fun getDriverStandings(): DataResult<List<DriverStanding>>
 
     /** The current Constructors' Championship standings table. */
-    @Throws(Exception::class)
     suspend fun getConstructorStandings(): DataResult<List<ConstructorStanding>>
 
     /** The trending threads from the forum. */
-    @Throws(Exception::class)
     suspend fun getTrendingThreads(): DataResult<List<TrendingThread>>
 
     /** Full detail for the race identified by [slug]. Not cached. */
-    @Throws(Exception::class)
     suspend fun getRaceDetail(slug: String): DataResult<RaceDetail>
 }

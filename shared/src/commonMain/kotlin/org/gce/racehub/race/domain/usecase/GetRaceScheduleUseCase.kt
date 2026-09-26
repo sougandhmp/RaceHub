@@ -16,7 +16,6 @@ import org.gce.racehub.race.domain.repository.RaceRepository
 internal class GetRaceScheduleUseCase(private val repository: RaceRepository) {
 
     /** The season's races ordered by round, or why they could not be loaded. */
-    @Throws(Exception::class)
     suspend operator fun invoke(): DataResult<List<Race>> =
         repository.getRaceSchedule().map { races -> races.sortedBy { it.round } }
 }

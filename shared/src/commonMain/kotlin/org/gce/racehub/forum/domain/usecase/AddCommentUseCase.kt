@@ -6,7 +6,6 @@ import org.gce.racehub.forum.domain.repository.ForumRepository
 
 internal class AddCommentUseCase(private val repository: ForumRepository) {
 
-    @Throws(Exception::class)
     suspend operator fun invoke(
         userId: String,
         threadId: String,
