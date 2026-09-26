@@ -8,6 +8,11 @@ plugins {
     alias(libs.plugins.kotlinSerialization)
 }
 
+/** The API base URL for [buildType], from `racehub.apiBaseUrl.<buildType>` in gradle.properties. */
+fun apiBaseUrl(buildType: String): String =
+    providers.gradleProperty("racehub.apiBaseUrl.$buildType").orNull
+        ?: error("Set racehub.apiBaseUrl.$buildType in gradle.properties")
+
 kotlin {
     androidTarget {
         compilerOptions {
@@ -70,9 +75,17 @@ android {
         }
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     buildTypes {
+        getByName("debug") {
+            buildConfigField("String", "API_BASE_URL", "\"${apiBaseUrl("debug")}\"")
+        }
         getByName("release") {
             isMinifyEnabled = false
+            buildConfigField("String", "API_BASE_URL", "\"${apiBaseUrl("release")}\"")
         }
     }
 

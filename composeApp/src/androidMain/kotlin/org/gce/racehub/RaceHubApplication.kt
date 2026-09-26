@@ -20,6 +20,6 @@ class RaceHubApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         KoinInitializer.setApplication(this)
-        KoinInitializer.init(baseUrl = "http://140.245.233.203:30018", appModule)
+        KoinInitializer.init(baseUrl = BuildConfig.API_BASE_URL, logNetwork = BuildConfig.DEBUG, appModule)
     }
 }

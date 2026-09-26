@@ -23,21 +23,22 @@ internal object HttpClientFactory {
     private const val REQUEST_TIMEOUT_MS = 15_000L
 
     /**
-     * Creates the Ktor client used against the RaceHub API: JSON, timeouts and
-     * header-redacted logging on the platform engine.
+     * Creates the Ktor client used against the RaceHub API: JSON and timeouts on
+     * the platform engine, plus header-redacted logging when [logNetwork] is set.
      */
-    fun create(): HttpClient = create(getHttpClientEngine())
+    fun create(logNetwork: Boolean): HttpClient = create(getHttpClientEngine(), logNetwork)
 
     /** Same configuration on a given [engine]; tests pass a `MockEngine`. */
-    fun create(engine: HttpClientEngine): HttpClient {
+    fun create(engine: HttpClientEngine, logNetwork: Boolean = false): HttpClient {
         return HttpClient(engine) {
-            install(Logging) {
+            // Release builds log nothing: even URLs can identify users and threads.
+            if (logNetwork) install(Logging) {
                 logger = object : Logger {
                     override fun log(message: String) {
                         println("🚀 NETWORK LOG | $message")
                     }
                 }
-                    // SECURITY: never log request/response bodies or headers — they carry
+                // SECURITY: never log request/response bodies or headers — they carry
                 // login passwords, password-reset OTPs and Authorization bearer tokens.
                 // INFO logs only method, URL, status and timing.
                 level = LogLevel.INFO
