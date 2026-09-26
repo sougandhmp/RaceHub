@@ -1,6 +1,7 @@
 package org.gce.racehub.race
 
 import kotlinx.coroutines.test.runTest
+import org.gce.racehub.core.domain.DataResult
 import org.gce.racehub.fake.FakeHomeRepository
 import org.gce.racehub.race.domain.model.ConstructorStanding
 import org.gce.racehub.race.domain.usecase.GetConstructorStandingsUseCase
@@ -14,7 +15,7 @@ class GetConstructorStandingsUseCaseTest {
 
     @Test
     fun `returns empty list when repository has no standings`() = runTest {
-        assertEquals(emptyList(), useCase())
+        assertEquals(DataResult.Success(emptyList()), useCase())
     }
 
     @Test
@@ -24,6 +25,6 @@ class GetConstructorStandingsUseCaseTest {
             ConstructorStanding(2, "Ferrari", 584, 5)
         )
         repository.constructorStandings = standings
-        assertEquals(standings, useCase())
+        assertEquals(DataResult.Success(standings), useCase())
     }
 }

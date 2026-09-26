@@ -1,6 +1,7 @@
 package org.gce.racehub.race
 
 import kotlinx.coroutines.test.runTest
+import org.gce.racehub.core.domain.DataResult
 import org.gce.racehub.fake.FakeHomeRepository
 import org.gce.racehub.race.domain.model.TrendingThread
 import org.gce.racehub.race.domain.usecase.GetTrendingThreadsUseCase
@@ -14,7 +15,7 @@ class GetTrendingThreadsUseCaseTest {
 
     @Test
     fun `returns empty list when repository has no threads`() = runTest {
-        assertEquals(emptyList(), useCase())
+        assertEquals(DataResult.Success(emptyList()), useCase())
     }
 
     @Test
@@ -24,6 +25,6 @@ class GetTrendingThreadsUseCaseTest {
             TrendingThread("t2", "Race predictions", 85, "2025-05-02")
         )
         repository.trendingThreads = threads
-        assertEquals(threads, useCase())
+        assertEquals(DataResult.Success(threads), useCase())
     }
 }

@@ -1,5 +1,6 @@
 package org.gce.racehub.race.domain.repository
 
+import org.gce.racehub.core.domain.DataResult
 import org.gce.racehub.race.domain.model.ConstructorStanding
 import org.gce.racehub.race.domain.model.DriverStanding
 import org.gce.racehub.race.domain.model.Race
@@ -21,28 +22,29 @@ import org.gce.racehub.race.domain.model.UserProfile
  */
 interface HomeRepository {
 
-    /** Returns the full race calendar for the current season. */
-    @Throws(Exception::class)
-    suspend fun getRaceSchedule(): List<Race>
+    // ── Race reads: offline-first, errors as values ─────────────────────────
+    // Each returns cached rows when a refresh fails, and a Failure only when
+    // there is nothing to show.
 
-    /** Returns the current Drivers' Championship standings table. */
+    /** The full race calendar for the current season. */
     @Throws(Exception::class)
-    suspend fun getDriverStandings(): List<DriverStanding>
+    suspend fun getRaceSchedule(): DataResult<List<Race>>
 
-    /** Returns the current Constructors' Championship standings table. */
+    /** The current Drivers' Championship standings table. */
     @Throws(Exception::class)
-    suspend fun getConstructorStandings(): List<ConstructorStanding>
+    suspend fun getDriverStandings(): DataResult<List<DriverStanding>>
 
-    /** Returns the trending threads from the forum. */
+    /** The current Constructors' Championship standings table. */
     @Throws(Exception::class)
-    suspend fun getTrendingThreads(): List<TrendingThread>
+    suspend fun getConstructorStandings(): DataResult<List<ConstructorStanding>>
 
-    /**
-     * Returns full detail for the race identified by [slug].
-     * @throws Exception if the request fails.
-     */
+    /** The trending threads from the forum. */
     @Throws(Exception::class)
-    suspend fun getRaceDetail(slug: String): RaceDetail
+    suspend fun getTrendingThreads(): DataResult<List<TrendingThread>>
+
+    /** Full detail for the race identified by [slug]. Not cached. */
+    @Throws(Exception::class)
+    suspend fun getRaceDetail(slug: String): DataResult<RaceDetail>
 
     /**
      * Returns full forum threads matching the provided filters.

@@ -4,7 +4,12 @@ import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
+import io.ktor.client.plugins.ResponseException
 import kotlinx.coroutines.*
+import kotlinx.io.IOException
+import kotlinx.serialization.SerializationException
+import org.gce.racehub.core.domain.DataError
+import org.gce.racehub.core.domain.DataResult
 import org.gce.racehub.db.LocalDataSource
 import org.gce.racehub.race.data.dto.*
 import org.gce.racehub.race.domain.model.*
@@ -42,6 +47,13 @@ class HomeRepositoryNetworkImpl(
      * while the network sync completes off the caller's critical path.
      */
     private val syncScope = CoroutineScope(SupervisorJob() + ioDispatcher)
+
+    /** Maps data-layer exceptions onto the domain's [DataError]. */
+    private fun Exception.toDataError(): DataError = when (this) {
+        is IOException -> DataError.Network // includes timeouts and connection failures
+        is ResponseException, is SerializationException, is IllegalStateException -> DataError.Server
+        else -> DataError.Unknown
+    }
 
     private fun List<GraphQLError>?.toErrorMessage(fallback: String): String =
         this?.joinToString { it.message }?.takeIf { it.isNotBlank() } ?: fallback
@@ -202,9 +214,10 @@ class HomeRepositoryNetworkImpl(
 
     /**
      * Fetches the full race schedule from the network and saves it locally.
+     * @return null on success, otherwise why the sync failed.
      */
-    private suspend fun syncRaceSchedule() {
-        try {
+    private suspend fun syncRaceSchedule(): DataError? {
+        return try {
             val response: GraphQLResponse<RacesData> = httpClient.post("$baseUrl/graphql") {
                 contentType(ContentType.Application.Json)
                 setBody(GraphQLRequest(racesQuery))
@@ -213,7 +226,7 @@ class HomeRepositoryNetworkImpl(
             val races = response.data?.races
             if (races == null) {
                 logError(TAG, "Failed to sync races: ${response.errors.toErrorMessage("no data")}")
-                return
+                return DataError.Server
             }
 
             localDataSource.saveRaces(races.map { dto ->
@@ -229,17 +242,22 @@ class HomeRepositoryNetworkImpl(
                     weather = dto.weather
                 )
             })
+            null
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             logError(TAG, "Failed to sync races", e)
+            e.toDataError()
         }
     }
 
     /**
      * Syncs all dashboard data from the network to the local database.
-     * Runs silently without blocking; errors are logged but not thrown.
+     * Errors are logged and returned, never thrown.
+     * @return null on success, otherwise why the sync failed.
      */
-    private suspend fun syncDashboard() {
-        try {
+    private suspend fun syncDashboard(): DataError? {
+        return try {
             val response: GraphQLResponse<DashboardData> = httpClient.post("$baseUrl/graphql") {
                 contentType(ContentType.Application.Json)
                 setBody(GraphQLRequest(dashboardQuery))
@@ -248,11 +266,15 @@ class HomeRepositoryNetworkImpl(
             val dashboard = response.data?.dashboard
             if (dashboard == null) {
                 logError(TAG, "Failed to sync dashboard: ${response.errors.toErrorMessage("no data")}")
-                return
+                return DataError.Server
             }
             saveDashboardData(dashboard)
+            null
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             logError(TAG, "Failed to sync dashboard", e)
+            e.toDataError()
         }
     }
 
@@ -317,57 +339,52 @@ class HomeRepositoryNetworkImpl(
      * background refresh would leave the screen showing a stale snapshot until the
      * next manual reload.
      */
-    override suspend fun getRaceSchedule(): List<Race> = withContext(ioDispatcher) {
-        if (localDataSource.getAllRaces().isEmpty()) {
+    override suspend fun getRaceSchedule(): DataResult<List<Race>> = withContext(ioDispatcher) {
+        val syncError = if (localDataSource.getAllRaces().isEmpty()) {
             // Cold cache: block until the first sync populates the DB.
             syncRaceSchedule()
         } else {
-            // Warm cache: refresh now, capped by the timeout, then return fresh rows.
+            // Warm cache: refresh now, capped by the timeout; a slow network just serves the cache.
             withTimeoutOrNull(SYNC_TIMEOUT_MS.milliseconds) { syncRaceSchedule() }
         }
-        localDataSource.getAllRaces()
+        cachedOrFailure(localDataSource.getAllRaces(), syncError)
     }
 
     /**
      * Returns driver standings, refreshing from the network if empty.
      * Subsequent calls trigger background syncs without blocking.
      */
-    override suspend fun getDriverStandings(): List<DriverStanding> = withContext(ioDispatcher) {
-        if (localDataSource.getAllDriverStandings().isEmpty()) {
-            syncDashboard()
-        } else {
-            backgroundSync()
-        }
-        localDataSource.getAllDriverStandings()
-    }
+    override suspend fun getDriverStandings(): DataResult<List<DriverStanding>> =
+        dashboardRead { localDataSource.getAllDriverStandings() }
 
     /**
      * Returns constructor standings, refreshing from the network if empty.
      * Subsequent calls trigger background syncs without blocking.
      */
-    override suspend fun getConstructorStandings(): List<ConstructorStanding> = withContext(ioDispatcher) {
-        if (localDataSource.getAllConstructorStandings().isEmpty()) {
-            syncDashboard()
-        } else {
-            backgroundSync()
-        }
-        // Re-read after a cold-cache sync so freshly-saved rows are returned.
-        localDataSource.getAllConstructorStandings()
-    }
+    override suspend fun getConstructorStandings(): DataResult<List<ConstructorStanding>> =
+        dashboardRead { localDataSource.getAllConstructorStandings() }
 
     /**
      * Returns trending threads, refreshing from the network if empty.
      * Subsequent calls trigger background syncs without blocking.
      */
-    override suspend fun getTrendingThreads(): List<TrendingThread> = withContext(ioDispatcher) {
-        if (localDataSource.getAllTrendingThreads().isEmpty()) {
-            syncDashboard()
-        } else {
-            backgroundSync()
+    override suspend fun getTrendingThreads(): DataResult<List<TrendingThread>> =
+        dashboardRead { localDataSource.getAllTrendingThreads() }
+
+    /**
+     * Reads dashboard-backed rows: on a cold cache waits for a dashboard sync,
+     * otherwise returns the cache and refreshes in the background.
+     */
+    private suspend fun <T> dashboardRead(read: () -> List<T>): DataResult<List<T>> =
+        withContext(ioDispatcher) {
+            val syncError = if (read().isEmpty()) syncDashboard() else null.also { backgroundSync() }
+            // Re-read after a cold-cache sync so freshly-saved rows are returned.
+            cachedOrFailure(read(), syncError)
         }
-        // Re-read after a cold-cache sync so freshly-saved rows are returned.
-        localDataSource.getAllTrendingThreads()
-    }
+
+    /** Cached rows win over a sync error; only an empty cache surfaces the failure. */
+    private fun <T> cachedOrFailure(rows: List<T>, syncError: DataError?): DataResult<List<T>> =
+        if (rows.isEmpty() && syncError != null) DataResult.Failure(syncError) else DataResult.Success(rows)
 
     /**
      * Fetches forum threads directly from the network. Not cached locally
@@ -510,7 +527,16 @@ class HomeRepositoryNetworkImpl(
     /**
      * Fetches full race detail for the given [slug] via GraphQL query.
      */
-    override suspend fun getRaceDetail(slug: String): RaceDetail {
+    override suspend fun getRaceDetail(slug: String): DataResult<RaceDetail> = try {
+        DataResult.Success(fetchRaceDetail(slug))
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        logError(TAG, "Failed to load race detail for $slug", e)
+        DataResult.Failure(e.toDataError())
+    }
+
+    private suspend fun fetchRaceDetail(slug: String): RaceDetail {
         val response: GraphQLResponse<RaceDetailData> = httpClient.post("$baseUrl/graphql") {
             contentType(ContentType.Application.Json)
             setBody(GraphQLRaceDetailRequest(query = raceDetailQuery, variables = RaceDetailVariables(slug)))

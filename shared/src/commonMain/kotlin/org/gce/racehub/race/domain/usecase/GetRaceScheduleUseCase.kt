@@ -1,5 +1,7 @@
 package org.gce.racehub.race.domain.usecase
 
+import org.gce.racehub.core.domain.DataResult
+import org.gce.racehub.core.domain.map
 import org.gce.racehub.race.domain.model.Race
 import org.gce.racehub.race.domain.repository.HomeRepository
 
@@ -13,10 +15,8 @@ import org.gce.racehub.race.domain.repository.HomeRepository
  */
 class GetRaceScheduleUseCase(private val repository: HomeRepository) {
 
-    /**
-     * @return The ordered list of [Race] events for the current season,
-     *         completed events first, then upcoming in chronological order.
-     */
+    /** The season's races ordered by round, or why they could not be loaded. */
     @Throws(Exception::class)
-    suspend operator fun invoke(): List<Race> = repository.getRaceSchedule()
+    suspend operator fun invoke(): DataResult<List<Race>> =
+        repository.getRaceSchedule().map { races -> races.sortedBy { it.round } }
 }

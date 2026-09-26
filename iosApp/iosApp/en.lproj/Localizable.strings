@@ -119,3 +119,9 @@
 "System" = "System";
 "Dark" = "Dark";
 "Light" = "Light";
+
+/* Race tab load errors */
+"Couldn't load races" = "Couldn't load races";
+"Can't reach the server. Check your connection and pull to refresh." = "Can't reach the server. Check your connection and pull to refresh.";
+"The server had a problem loading races. Pull to try again." = "The server had a problem loading races. Pull to try again.";
+"Something went wrong loading races. Pull to try again." = "Something went wrong loading races. Pull to try again.";

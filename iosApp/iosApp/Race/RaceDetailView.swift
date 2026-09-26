@@ -229,7 +229,7 @@ struct RaceDetailView: View {
     private var sessions: [SessionChipData] {
         let shared = model.state.selectedRace?.id == race.id
             ? model.state.selectedRaceSessions
-            : RaceDatesKt.weekendSessions(race: race, detail: nil)
+            : RaceFormattingKt.weekendSessions(race: race, detail: nil)
         return shared.map(SessionChipData.init)
     }
 

@@ -1,6 +1,7 @@
 package org.gce.racehub.race
 
 import kotlinx.coroutines.test.runTest
+import org.gce.racehub.core.domain.DataResult
 import org.gce.racehub.fake.FakeHomeRepository
 import org.gce.racehub.race.domain.model.FastestLap
 import org.gce.racehub.race.domain.model.RaceDetail
@@ -28,7 +29,7 @@ class GetRaceDetailUseCaseTest {
             fastestLap = FastestLap("Max Verstappen", "1:32.608")
         )
         repository.raceDetailResult = detail
-        assertEquals(detail, useCase("bahrain-2025"))
+        assertEquals(DataResult.Success(detail), useCase("bahrain-2025"))
     }
 
     @Test

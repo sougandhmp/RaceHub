@@ -1,6 +1,6 @@
 package org.gce.racehub.race
 
-import org.gce.racehub.race.presentation.parseRaceInstant
+import org.gce.racehub.race.domain.model.parseRaceInstant
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

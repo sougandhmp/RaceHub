@@ -1,5 +1,7 @@
 package org.gce.racehub.fake
 
+import org.gce.racehub.core.domain.DataError
+import org.gce.racehub.core.domain.DataResult
 import org.gce.racehub.race.domain.model.ConstructorStanding
 import org.gce.racehub.race.domain.model.DriverStanding
 import org.gce.racehub.race.domain.model.Race
@@ -27,24 +29,26 @@ class FakeHomeRepository : HomeRepository {
     var lastCreateThreadArgs: CreateThreadArgs? = null
     var lastLikedThreadId: String? = null
 
-    /** Thrown by [getRaceSchedule] when set. */
-    var raceScheduleError: Exception? = null
+    /** Returned as a Failure by [getRaceSchedule] / [getRaceDetail] when set. */
+    var raceScheduleError: DataError? = null
+    var raceDetailError: DataError? = null
     var raceScheduleCalls = 0
     /** Per-slug detail and artificial latency, overriding [raceDetailResult]. */
     var raceDetailBySlug: Map<String, RaceDetail> = emptyMap()
     var raceDetailDelayMs: Map<String, Long> = emptyMap()
 
-    override suspend fun getRaceSchedule(): List<Race> {
+    override suspend fun getRaceSchedule(): DataResult<List<Race>> {
         raceScheduleCalls++
-        raceScheduleError?.let { throw it }
-        return raceSchedule
+        raceScheduleError?.let { return DataResult.Failure(it) }
+        return DataResult.Success(raceSchedule)
     }
-    override suspend fun getDriverStandings(): List<DriverStanding> = driverStandings
-    override suspend fun getConstructorStandings(): List<ConstructorStanding> = constructorStandings
-    override suspend fun getTrendingThreads(): List<TrendingThread> = trendingThreads
-    override suspend fun getRaceDetail(slug: String): RaceDetail {
+    override suspend fun getDriverStandings(): DataResult<List<DriverStanding>> = DataResult.Success(driverStandings)
+    override suspend fun getConstructorStandings(): DataResult<List<ConstructorStanding>> = DataResult.Success(constructorStandings)
+    override suspend fun getTrendingThreads(): DataResult<List<TrendingThread>> = DataResult.Success(trendingThreads)
+    override suspend fun getRaceDetail(slug: String): DataResult<RaceDetail> {
         raceDetailDelayMs[slug]?.let { kotlinx.coroutines.delay(it) }
-        return raceDetailBySlug[slug] ?: raceDetailResult
+        raceDetailError?.let { return DataResult.Failure(it) }
+        return DataResult.Success(raceDetailBySlug[slug] ?: raceDetailResult)
     }
     override suspend fun getThreads(sort: String?, category: String?, userId: String?): List<Thread> = threadsResult
 
