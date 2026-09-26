@@ -6,6 +6,9 @@ import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import org.gce.racehub.forum.presentation.CreateThreadViewModel
+import org.gce.racehub.forum.presentation.ForumViewModel
+import org.gce.racehub.forum.presentation.ThreadDetailViewModel
 import org.gce.racehub.race.presentation.RaceViewModel
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
@@ -28,6 +31,12 @@ class ViewModelOwner : ViewModelStoreOwner {
 object SharedViewModels : KoinComponent {
 
     fun race(owner: ViewModelOwner): RaceViewModel = owner.provide { get<RaceViewModel>() }
+
+    fun forum(owner: ViewModelOwner): ForumViewModel = owner.provide { get<ForumViewModel>() }
+
+    fun threadDetail(owner: ViewModelOwner): ThreadDetailViewModel = owner.provide { get<ThreadDetailViewModel>() }
+
+    fun createThread(owner: ViewModelOwner): CreateThreadViewModel = owner.provide { get<CreateThreadViewModel>() }
 
     private inline fun <reified VM : ViewModel> ViewModelOwner.provide(crossinline create: () -> VM): VM =
         ViewModelProvider.create(this, viewModelFactory { initializer { create() } })[VM::class]

@@ -1,5 +1,6 @@
 package org.gce.racehub.race.domain.usecase
 
+import org.gce.racehub.core.domain.DataResult
 import org.gce.racehub.race.domain.model.ThreadComment
 import org.gce.racehub.race.domain.repository.HomeRepository
 
@@ -10,7 +11,7 @@ class AddCommentUseCase(private val repository: HomeRepository) {
         userId: String,
         threadId: String,
         content: String
-    ): ThreadComment {
+    ): DataResult<ThreadComment> {
         require(userId.isNotBlank()) { "You must be signed in to comment." }
         require(threadId.isNotBlank()) { "Invalid thread." }
         require(content.isNotBlank()) { "Comment can't be empty." }

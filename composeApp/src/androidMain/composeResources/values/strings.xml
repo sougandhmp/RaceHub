@@ -152,4 +152,9 @@
     <string name="race_error_network">Can\'t reach the server. Check your connection and pull to refresh.</string>
     <string name="race_error_server">The server had a problem loading races. Pull to try again.</string>
     <string name="race_error_unknown">Something went wrong loading races. Pull to try again.</string>
+    <string name="error_network">Can\'t reach the server. Check your connection and try again.</string>
+    <string name="error_server">The server had a problem. Please try again.</string>
+    <string name="error_unknown">Something went wrong. Please try again.</string>
+    <string name="error_not_signed_in">Sign in to post or comment.</string>
+    <string name="error_like_failed">Couldn\'t update the like. Please try again.</string>
 </resources>

@@ -1,6 +1,7 @@
 package org.gce.racehub.race
 
 import kotlinx.coroutines.test.runTest
+import org.gce.racehub.core.domain.DataResult
 import org.gce.racehub.fake.FakeHomeRepository
 import org.gce.racehub.race.domain.usecase.AddCommentUseCase
 import kotlin.test.Test
@@ -49,6 +50,6 @@ class AddCommentUseCaseTest {
     @Test
     fun `successful call returns repository result`() = runTest {
         val result = useCase(userId = "u1", threadId = "t1", content = "Great post!")
-        assertEquals(repository.addCommentResult, result)
+        assertEquals(DataResult.Success(repository.addCommentResult), result)
     }
 }

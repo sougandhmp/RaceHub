@@ -90,3 +90,57 @@ extension SharedViewModelHost where VM == RaceViewModel, State == RaceState, Eff
         viewModel.onIntent(intent: intent)
     }
 }
+
+typealias ForumModel = SharedViewModelHost<ForumViewModel, ForumState, ForumEffect>
+
+extension SharedViewModelHost where VM == ForumViewModel, State == ForumState, Effect == ForumEffect {
+    /// The shared Forum tab ViewModel, created through Koin.
+    static func forum() -> ForumModel {
+        ForumModel(
+            create: { SharedViewModels.shared.forum(owner: $0) },
+            value: { $0.state },
+            flow: { $0.stateFlow },
+            effects: { $0.effects }
+        )
+    }
+
+    func send(_ intent: ForumIntent) {
+        viewModel.onIntent(intent: intent)
+    }
+}
+
+typealias ThreadDetailModel = SharedViewModelHost<ThreadDetailViewModel, ThreadDetailState, ThreadDetailEffect>
+
+extension SharedViewModelHost where VM == ThreadDetailViewModel, State == ThreadDetailState, Effect == ThreadDetailEffect {
+    /// A shared thread-detail ViewModel; send `ThreadDetailIntent.Open` when the thread appears.
+    static func threadDetail() -> ThreadDetailModel {
+        ThreadDetailModel(
+            create: { SharedViewModels.shared.threadDetail(owner: $0) },
+            value: { $0.state },
+            flow: { $0.stateFlow },
+            effects: { $0.effects }
+        )
+    }
+
+    func send(_ intent: ThreadDetailIntent) {
+        viewModel.onIntent(intent: intent)
+    }
+}
+
+typealias CreateThreadModel = SharedViewModelHost<CreateThreadViewModel, CreateThreadState, CreateThreadEffect>
+
+extension SharedViewModelHost where VM == CreateThreadViewModel, State == CreateThreadState, Effect == CreateThreadEffect {
+    /// A shared create-thread form ViewModel.
+    static func createThread() -> CreateThreadModel {
+        CreateThreadModel(
+            create: { SharedViewModels.shared.createThread(owner: $0) },
+            value: { $0.state },
+            flow: { $0.stateFlow },
+            effects: { $0.effects }
+        )
+    }
+
+    func send(_ intent: CreateThreadIntent) {
+        viewModel.onIntent(intent: intent)
+    }
+}
