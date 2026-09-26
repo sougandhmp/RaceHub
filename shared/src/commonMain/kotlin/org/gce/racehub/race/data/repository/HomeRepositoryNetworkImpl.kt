@@ -4,7 +4,9 @@ import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
+import io.ktor.client.call.NoTransformationFoundException
 import io.ktor.client.plugins.ResponseException
+import io.ktor.serialization.ContentConvertException
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -86,7 +88,10 @@ internal class HomeRepositoryNetworkImpl(
     /** Maps data-layer exceptions onto the domain's [DataError]. */
     private fun Exception.toDataError(): DataError = when (this) {
         is IOException -> DataError.Network // includes timeouts and connection failures
-        is ResponseException, is SerializationException, is IllegalStateException -> DataError.Server
+        // The server answered but not with a payload we can use: an error status
+        // (whose body can't be converted), malformed JSON, or GraphQL errors.
+        is ResponseException, is SerializationException, is ContentConvertException,
+        is NoTransformationFoundException, is IllegalStateException -> DataError.Server
         else -> DataError.Unknown
     }
 
