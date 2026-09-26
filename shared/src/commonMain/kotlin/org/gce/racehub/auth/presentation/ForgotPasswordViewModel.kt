@@ -37,18 +37,16 @@ class ForgotPasswordViewModel internal constructor(
 
     fun onIntent(intent: ForgotPasswordIntent) {
         when (intent) {
-            is ForgotPasswordIntent.EmailChanged -> edit { it.copy(email = intent.email) }
-            is ForgotPasswordIntent.OtpChanged -> edit { it.copy(otp = intent.otp) }
-            is ForgotPasswordIntent.NewPasswordChanged -> edit { it.copy(newPassword = intent.password) }
-            is ForgotPasswordIntent.ConfirmPasswordChanged -> edit { it.copy(confirmPassword = intent.password) }
-            ForgotPasswordIntent.TogglePasswordVisibility -> edit { it.copy(isPasswordVisible = !it.isPasswordVisible) }
+            is ForgotPasswordIntent.EmailChanged -> mutate(ForgotPasswordMutation.EmailChanged(intent.email))
+            is ForgotPasswordIntent.OtpChanged -> mutate(ForgotPasswordMutation.OtpChanged(intent.otp))
+            is ForgotPasswordIntent.NewPasswordChanged -> mutate(ForgotPasswordMutation.NewPasswordChanged(intent.password))
+            is ForgotPasswordIntent.ConfirmPasswordChanged ->
+                mutate(ForgotPasswordMutation.ConfirmPasswordChanged(intent.password))
+            ForgotPasswordIntent.TogglePasswordVisibility -> mutate(ForgotPasswordMutation.PasswordVisibilityToggled)
             ForgotPasswordIntent.RequestReset -> requestReset()
             ForgotPasswordIntent.ConfirmReset -> confirmReset()
         }
     }
-
-    private fun edit(transform: (ForgotPasswordState) -> ForgotPasswordState) =
-        mutate(ForgotPasswordMutation.FieldsChanged(transform))
 
     private fun mutate(mutation: ForgotPasswordMutation) = _state.update { ForgotPasswordReducer.reduce(it, mutation) }
 

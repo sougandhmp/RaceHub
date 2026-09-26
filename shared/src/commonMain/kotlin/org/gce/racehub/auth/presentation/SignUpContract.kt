@@ -36,7 +36,13 @@ sealed class SignUpEffect {
 }
 
 internal sealed interface SignUpMutation {
-    data class FieldsChanged(val transform: (SignUpState) -> SignUpState) : SignUpMutation
+    data class UsernameChanged(val username: String) : SignUpMutation
+    data class EmailChanged(val email: String) : SignUpMutation
+    data class PasswordChanged(val password: String) : SignUpMutation
+    data class ConfirmPasswordChanged(val confirmPassword: String) : SignUpMutation
+    data class CountryChanged(val country: String) : SignUpMutation
+    data object PasswordVisibilityToggled : SignUpMutation
+    data object ConfirmPasswordVisibilityToggled : SignUpMutation
     data object Submitted : SignUpMutation
     data class Failed(val failure: AuthFailure) : SignUpMutation
     data object Succeeded : SignUpMutation
