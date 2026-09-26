@@ -70,17 +70,18 @@ class ThreadDetailViewModel(
         _state.update { it.copy(isLiked = optimisticLiked, likes = optimisticLikes, isLiking = true) }
 
         viewModelScope.launch {
-            try {
-                val updatedLikes = likeThreadUseCase(threadId)
+            val result = likeThreadUseCase(threadId)
+            val updatedLikes = result.data
+            if (updatedLikes != null) {
                 _state.update { it.copy(likes = updatedLikes, isLiking = false) }
-            } catch (_: Exception) {
-                // Revert optimistic update on failure
+            } else {
+                // Revert the optimistic update
                 _state.update {
                     it.copy(
                         isLiked = current.isLiked,
                         likes = current.likes,
                         isLiking = false,
-                        errorMessage = "Failed to update like."
+                        errorMessage = result.error?.message
                     )
                 }
             }
@@ -102,8 +103,8 @@ class ThreadDetailViewModel(
 
         viewModelScope.launch {
             _state.update { it.copy(isSubmitting = true, errorMessage = null) }
-            try {
-                addCommentUseCase(userId = userId, threadId = threadId, content = text)
+            val result = addCommentUseCase(userId = userId, threadId = threadId, content = text)
+            if (result.isSuccess) {
                 _state.update {
                     it.copy(
                         isSubmitting = false,
@@ -114,8 +115,8 @@ class ThreadDetailViewModel(
                         )
                     )
                 }
-            } catch (_: Exception) {
-                _state.update { it.copy(isSubmitting = false, errorMessage = "Failed to post comment.") }
+            } else {
+                _state.update { it.copy(isSubmitting = false, errorMessage = result.error?.message) }
             }
         }
     }

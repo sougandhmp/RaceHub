@@ -54,11 +54,15 @@ final class ProfileViewModel: ObservableObject {
         state.errorMessage = nil
 
         do {
-            let profile = try await getMyProfileUseCase.invoke(
+            let result = try await getMyProfileUseCase.invoke(
                 userId: user.id,
                 token: token
             )
             state.isLoadingProfile = false
+            guard let profile = result.data else {
+                state.errorMessage = result.error?.message
+                return
+            }
             state.postsCount = Int(profile.postsCount)
             state.savedCount = Int(profile.savedCount)
             state.recentThreadTitles = profile.recentThreadTitles

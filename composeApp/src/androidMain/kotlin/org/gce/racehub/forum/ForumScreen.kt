@@ -47,6 +47,7 @@ import org.gce.racehub.race.domain.model.ThreadComment
 import org.gce.racehub.theme.AppColorScheme
 import org.gce.racehub.theme.DarkAppColors
 import org.gce.racehub.theme.Dimens
+import org.gce.racehub.theme.ErrorBanner
 import org.gce.racehub.theme.LocalAppColors
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -93,6 +94,14 @@ fun ForumScreen(
             onCreateThread = onCreateThread,
             onThreadClick = onThreadClick
         )
+        state.errorMessage?.let { message ->
+            ErrorBanner(
+                message = message,
+                onRetry = { viewModel.onIntent(ForumIntent.Refresh) },
+                onDismiss = { viewModel.onIntent(ForumIntent.DismissError) },
+                modifier = Modifier.align(Alignment.TopCenter)
+            )
+        }
     }
 }
 
