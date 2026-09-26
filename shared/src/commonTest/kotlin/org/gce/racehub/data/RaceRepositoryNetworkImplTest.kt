@@ -9,24 +9,22 @@ import org.gce.racehub.core.domain.DataError
 import org.gce.racehub.core.domain.DataResult
 import org.gce.racehub.db.LocalDataSource
 import org.gce.racehub.db.inMemoryDriver
-import org.gce.racehub.race.data.repository.HomeRepositoryNetworkImpl
-import org.gce.racehub.race.domain.model.ThreadSort
+import org.gce.racehub.race.data.repository.RaceRepositoryNetworkImpl
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
-import kotlin.test.assertTrue
 
 /**
  * The repository is the error boundary and owns the cache-vs-network rules,
  * so it is tested against a fake API (MockEngine) and a real in-memory database.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class HomeRepositoryNetworkImplTest {
+class RaceRepositoryNetworkImplTest {
 
     private val dispatcher = StandardTestDispatcher()
     private val api = FakeApi(dispatcher)
     private val local = LocalDataSource(inMemoryDriver())
-    private val repo = HomeRepositoryNetworkImpl(api.client, "https://api.test", local, dispatcher)
+    private val repo = RaceRepositoryNetworkImpl(api.client, "https://api.test", local, dispatcher)
 
     private fun test(block: suspend TestScope.() -> Unit) = runTest(dispatcher) { block() }
 
@@ -118,7 +116,7 @@ class HomeRepositoryNetworkImplTest {
         assertEquals(DataResult.Failure(DataError.Network), repo.getDriverStandings())
     }
 
-    // ── Race detail and forum ───────────────────────────────────────────────
+    // ── Race detail ─────────────────────────────────────────────────────────
 
     @Test
     fun `race detail maps sessions and track facts`() = test {
@@ -136,24 +134,5 @@ class HomeRepositoryNetworkImplTest {
     fun `race detail GraphQL error is a Server failure`() = test {
         api.responses["GetRaceDetail"] = """{"data":null,"errors":[{"message":"not found"}]}"""
         assertEquals(DataResult.Failure(DataError.Server), repo.getRaceDetail("nope"))
-    }
-
-    @Test
-    fun `threads are fetched with the API sort value and mapped`() = test {
-        api.responses["GetThreads"] = """
-            {"data":{"threads":[{"id":"t1","title":"Hello","category":"General Discussion",
-              "author":{"username":"ann","avatar":"A"},"content":"Body","createdAt":"2026-05-06","likes":2,
-              "comments":[{"content":"Nice","author":{"username":"bob"}}]}]}}
-        """.trimIndent()
-        val threads = (repo.getThreads(ThreadSort.Popular, null, "u1") as DataResult.Success).data
-        assertEquals("ann", threads.single().author.username)
-        assertEquals("bob", threads.single().comments.single().authorUsername)
-        assertTrue(api.requests.contains("GetThreads"))
-    }
-
-    @Test
-    fun `like offline is a Network failure`() = test {
-        api.failures["UserInteractions"] = FakeApi.Failure.Offline
-        assertEquals(DataResult.Failure(DataError.Network), repo.likeThread("t1"))
     }
 }

@@ -161,11 +161,12 @@ RaceHub/
 ├── shared/                         # Kotlin Multiplatform module
 │   └── src/
 │       ├── commonMain/kotlin/org/gce/racehub/
-│       │   ├── core/domain/               # DataResult, DataError
+│       │   ├── core/{domain,data}/        # DataResult/DataError; GraphQL types, safeCall
 │       │   ├── auth/{domain,data,di,presentation}/  # Login, sign-up, OTP, password reset, session
 │       │   ├── race/{domain,data,di,presentation}/  # Races, standings, weekend schedule
-│       │   ├── forum/presentation/        # Forum feed, thread detail, create thread
-│       │   ├── profile/presentation/  home/presentation/
+│       │   ├── forum/{domain,data,di,presentation}/    # Threads, comments, likes
+│       │   ├── profile/{domain,data,di,presentation}/  # Signed-in user's profile
+│       │   ├── home/presentation/         # Tab shell
 │       │   ├── di/                        # Koin init + presentationModule
 │       │   ├── db/                        # SQLDelight local data source
 │       │   └── util/                      # Dispatchers, Logger

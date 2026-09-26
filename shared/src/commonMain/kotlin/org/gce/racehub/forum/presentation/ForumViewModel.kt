@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.gce.racehub.auth.domain.session.UserSession
 import org.gce.racehub.core.domain.DataResult
-import org.gce.racehub.race.domain.usecase.GetThreadsUseCase
+import org.gce.racehub.forum.domain.usecase.GetThreadsUseCase
 
 /**
  * Shared MVI ViewModel for the Forum tab (Android and iOS). Loads once on

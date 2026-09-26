@@ -8,8 +8,8 @@ import org.gce.racehub.forum.presentation.ForumEffect
 import org.gce.racehub.forum.presentation.ForumIntent
 import org.gce.racehub.forum.presentation.ForumState
 import org.gce.racehub.forum.presentation.ForumViewModel
-import org.gce.racehub.race.domain.model.ForumCategories
-import org.gce.racehub.race.domain.model.ThreadSort
+import org.gce.racehub.forum.domain.model.ForumCategories
+import org.gce.racehub.forum.domain.model.ThreadSort
 import org.gce.racehub.ui.message
 import org.jetbrains.compose.resources.getString
 import androidx.compose.foundation.background
@@ -53,9 +53,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.gce.racehub.race.domain.model.Thread
-import org.gce.racehub.race.domain.model.ThreadAuthor
-import org.gce.racehub.race.domain.model.ThreadComment
+import org.gce.racehub.forum.domain.model.Thread
+import org.gce.racehub.forum.domain.model.ThreadAuthor
+import org.gce.racehub.forum.domain.model.ThreadComment
 import org.gce.racehub.theme.AppColorScheme
 import org.gce.racehub.theme.DarkAppColors
 import org.gce.racehub.theme.Dimens

@@ -10,9 +10,9 @@ import org.gce.racehub.forum.presentation.ForumState
 import org.gce.racehub.forum.presentation.ThreadDetailMutation
 import org.gce.racehub.forum.presentation.ThreadDetailReducer
 import org.gce.racehub.forum.presentation.ThreadDetailState
-import org.gce.racehub.race.domain.model.ForumCategories
-import org.gce.racehub.race.domain.model.ThreadComment
-import org.gce.racehub.race.domain.model.ThreadSort
+import org.gce.racehub.forum.domain.model.ForumCategories
+import org.gce.racehub.forum.domain.model.ThreadComment
+import org.gce.racehub.forum.domain.model.ThreadSort
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

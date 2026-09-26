@@ -1,17 +1,17 @@
-package org.gce.racehub.race
+package org.gce.racehub.profile
 
 import kotlinx.coroutines.test.runTest
 import org.gce.racehub.core.domain.DataResult
-import org.gce.racehub.fake.FakeHomeRepository
-import org.gce.racehub.race.domain.model.UserProfile
-import org.gce.racehub.race.domain.usecase.GetMyProfileUseCase
+import org.gce.racehub.fake.FakeProfileRepository
+import org.gce.racehub.profile.domain.model.UserProfile
+import org.gce.racehub.profile.domain.usecase.GetMyProfileUseCase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class GetMyProfileUseCaseTest {
 
-    private val repository = FakeHomeRepository()
+    private val repository = FakeProfileRepository()
     private val useCase = GetMyProfileUseCase(repository)
 
     @Test

@@ -1,17 +1,17 @@
-package org.gce.racehub.race
+package org.gce.racehub.forum
 
 import kotlinx.coroutines.test.runTest
-import org.gce.racehub.race.domain.model.ThreadSort
+import org.gce.racehub.forum.domain.model.ThreadSort
 import org.gce.racehub.core.domain.DataResult
-import org.gce.racehub.fake.FakeHomeRepository
+import org.gce.racehub.fake.FakeForumRepository
 import org.gce.racehub.fake.fakeThread
-import org.gce.racehub.race.domain.usecase.GetThreadsUseCase
+import org.gce.racehub.forum.domain.usecase.GetThreadsUseCase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class GetThreadsUseCaseTest {
 
-    private val repository = FakeHomeRepository()
+    private val repository = FakeForumRepository()
     private val useCase = GetThreadsUseCase(repository)
 
     @Test

@@ -64,9 +64,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.gce.racehub.race.domain.model.Thread
-import org.gce.racehub.race.domain.model.ThreadAuthor
-import org.gce.racehub.race.domain.model.ThreadComment
+import org.gce.racehub.forum.domain.model.Thread
+import org.gce.racehub.forum.domain.model.ThreadAuthor
+import org.gce.racehub.forum.domain.model.ThreadComment
 import org.gce.racehub.theme.AppColorScheme
 import org.gce.racehub.theme.DarkAppColors
 import org.gce.racehub.theme.Dimens

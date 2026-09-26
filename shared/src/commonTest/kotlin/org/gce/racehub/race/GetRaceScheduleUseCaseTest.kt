@@ -3,7 +3,7 @@ package org.gce.racehub.race
 import kotlinx.coroutines.test.runTest
 import org.gce.racehub.core.domain.DataError
 import org.gce.racehub.core.domain.DataResult
-import org.gce.racehub.fake.FakeHomeRepository
+import org.gce.racehub.fake.FakeRaceRepository
 import org.gce.racehub.race.domain.model.Race
 import org.gce.racehub.race.domain.usecase.GetRaceScheduleUseCase
 import kotlin.test.Test
@@ -11,7 +11,7 @@ import kotlin.test.assertEquals
 
 class GetRaceScheduleUseCaseTest {
 
-    private val repository = FakeHomeRepository()
+    private val repository = FakeRaceRepository()
     private val useCase = GetRaceScheduleUseCase(repository)
 
     private fun race(id: String, status: String, round: Int = 1) = Race(

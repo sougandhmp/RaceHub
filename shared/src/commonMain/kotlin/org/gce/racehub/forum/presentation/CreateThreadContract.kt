@@ -1,7 +1,7 @@
 package org.gce.racehub.forum.presentation
 
 import org.gce.racehub.core.domain.DataError
-import org.gce.racehub.race.domain.model.ForumCategories
+import org.gce.racehub.forum.domain.model.ForumCategories
 
 // MVI contract for the create-thread form.
 

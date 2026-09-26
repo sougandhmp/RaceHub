@@ -1,4 +1,4 @@
-package org.gce.racehub.race.domain.model
+package org.gce.racehub.profile.domain.model
 
 data class UserProfile(
     val username: String,

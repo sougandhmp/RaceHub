@@ -10,7 +10,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.TimeZone
 import org.gce.racehub.core.domain.DataError
-import org.gce.racehub.fake.FakeHomeRepository
+import org.gce.racehub.fake.FakeRaceRepository
 import org.gce.racehub.race.domain.model.Race
 import org.gce.racehub.race.domain.model.RaceDetail
 import org.gce.racehub.race.domain.model.RaceSession
@@ -33,7 +33,7 @@ import kotlin.test.assertFalse
 class RaceViewModelTest {
 
     private val dispatcher = StandardTestDispatcher()
-    private val repo = FakeHomeRepository()
+    private val repo = FakeRaceRepository()
 
     private fun race(round: Int, status: String) = Race(
         id = "race-$round", name = "Race $round", circuit = "C$round", country = "X", city = "Y",

@@ -1,9 +1,9 @@
-package org.gce.racehub.race.domain.usecase
+package org.gce.racehub.forum.domain.usecase
 
 import org.gce.racehub.core.domain.DataResult
-import org.gce.racehub.race.domain.repository.HomeRepository
+import org.gce.racehub.forum.domain.repository.ForumRepository
 
-class LikeThreadUseCase(private val repository: HomeRepository) {
+class LikeThreadUseCase(private val repository: ForumRepository) {
     @Throws(Exception::class)
     suspend operator fun invoke(threadId: String): DataResult<Int> {
         require(threadId.isNotBlank()) { "Invalid thread." }

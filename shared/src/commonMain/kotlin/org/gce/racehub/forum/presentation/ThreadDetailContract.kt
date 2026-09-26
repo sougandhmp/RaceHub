@@ -1,7 +1,7 @@
 package org.gce.racehub.forum.presentation
 
 import org.gce.racehub.core.domain.DataError
-import org.gce.racehub.race.domain.model.ThreadComment
+import org.gce.racehub.forum.domain.model.ThreadComment
 
 // MVI contract for a thread's detail screen (likes and comments).
 
