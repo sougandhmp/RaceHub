@@ -6,6 +6,8 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.client.plugins.ResponseException
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.io.IOException
 import kotlinx.serialization.SerializationException
 import org.gce.racehub.core.domain.DataError
@@ -16,7 +18,11 @@ import org.gce.racehub.race.domain.model.*
 import org.gce.racehub.race.domain.repository.HomeRepository
 import org.gce.racehub.util.logError
 import org.gce.racehub.util.platformIoDispatcher
+import kotlin.concurrent.Volatile
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 /**
  * Network-based implementation of [HomeRepository].
@@ -39,6 +45,9 @@ class HomeRepositoryNetworkImpl(
     companion object {
         private const val TAG = "HomeRepository"
         private const val SYNC_TIMEOUT_MS = 5_000L
+
+        /** A successful dashboard sync is reused for this long before a background refresh. */
+        internal val DASHBOARD_FRESH_FOR = 30.seconds
     }
 
     /**
@@ -47,6 +56,13 @@ class HomeRepositoryNetworkImpl(
      * while the network sync completes off the caller's critical path.
      */
     private val syncScope = CoroutineScope(SupervisorJob() + ioDispatcher)
+
+    // One dashboard request serves drivers, constructors and trending threads, so
+    // those three reads share it: a running sync is joined, and a recent
+    // successful one is reused instead of firing again.
+    private val dashboardSyncLock = Mutex()
+    private var dashboardSyncInFlight: Deferred<DataError?>? = null
+    @Volatile private var dashboardFreshUntil: TimeMark? = null
 
     /**
      * Runs a network call at the repository boundary: success becomes [DataResult.Success],
@@ -288,6 +304,7 @@ class HomeRepositoryNetworkImpl(
                 return DataError.Server
             }
             saveDashboardData(dashboard)
+            dashboardFreshUntil = TimeSource.Monotonic.markNow() + DASHBOARD_FRESH_FOR
             null
         } catch (e: CancellationException) {
             throw e
@@ -396,7 +413,13 @@ class HomeRepositoryNetworkImpl(
      */
     private suspend fun <T> dashboardRead(read: () -> List<T>): DataResult<List<T>> =
         withContext(ioDispatcher) {
-            val syncError = if (read().isEmpty()) syncDashboard() else null.also { backgroundSync() }
+            val syncError = if (read().isEmpty()) {
+                dashboardSync().await()
+            } else {
+                // Warm cache: return it now; refresh in the background unless recently synced.
+                if (dashboardFreshUntil?.hasNotPassedNow() != true) dashboardSync()
+                null
+            }
             // Re-read after a cold-cache sync so freshly-saved rows are returned.
             cachedOrFailure(read(), syncError)
         }
@@ -587,15 +610,12 @@ class HomeRepositoryNetworkImpl(
     }
 
     /**
-     * Triggers a background sync without blocking the caller. Launched on
-     * [syncScope] so it outlives the suspend call that requested it — the
-     * caller returns cached data immediately and the refresh lands for next time.
+     * Starts a dashboard sync on [syncScope], or returns the one already running.
+     * Runs on [syncScope] so a caller that doesn't await it (background refresh)
+     * can return immediately while the sync still lands in the cache.
      */
-    private fun backgroundSync() {
-        syncScope.launch {
-            withTimeoutOrNull(SYNC_TIMEOUT_MS.milliseconds) {
-                syncDashboard()
-            }
-        }
+    private suspend fun dashboardSync(): Deferred<DataError?> = dashboardSyncLock.withLock {
+        dashboardSyncInFlight?.takeIf { it.isActive }
+            ?: syncScope.async { syncDashboard() }.also { dashboardSyncInFlight = it }
     }
 }

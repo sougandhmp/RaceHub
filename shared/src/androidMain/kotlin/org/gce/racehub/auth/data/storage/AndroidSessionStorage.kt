@@ -4,6 +4,7 @@
 
 package org.gce.racehub.auth.data.storage
 
+import org.gce.racehub.auth.domain.session.SessionStorage
 import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey

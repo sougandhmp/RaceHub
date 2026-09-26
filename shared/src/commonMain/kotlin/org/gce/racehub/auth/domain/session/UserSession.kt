@@ -3,7 +3,6 @@ package org.gce.racehub.auth.domain.session
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import org.gce.racehub.auth.data.storage.SessionStorage
 import org.gce.racehub.auth.domain.model.User
 
 /**
