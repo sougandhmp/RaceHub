@@ -1,28 +1,22 @@
 package org.gce.racehub.race.domain.usecase
 
+import org.gce.racehub.core.DataError
+import org.gce.racehub.core.DataResult
 import org.gce.racehub.race.domain.model.Thread
-import org.gce.racehub.race.domain.repository.HomeRepository
+import org.gce.racehub.race.domain.repository.ForumRepository
 
-class CreateThreadUseCase(private val repository: HomeRepository) {
-
-    /**
-     * Validates the input and posts the new thread.
-     *
-     * @throws IllegalArgumentException when input validation fails.
-     * @throws Exception for transport / server errors raised by the repository.
-     */
+class CreateThreadUseCase(private val repository: ForumRepository) {
     @Throws(Exception::class)
     suspend operator fun invoke(
         userId: String,
         title: String,
         category: String,
         content: String
-    ): Thread {
-        require(userId.isNotBlank()) { "You must be signed in to post." }
-        require(title.isNotBlank()) { "Title can't be empty." }
-        require(content.isNotBlank()) { "Content can't be empty." }
+    ): DataResult<Thread> {
+        if (userId.isBlank()) return DataResult.failure(DataError.InvalidInput("You must be signed in to post."))
+        if (title.isBlank()) return DataResult.failure(DataError.InvalidInput("Title can't be empty."))
+        if (content.isBlank()) return DataResult.failure(DataError.InvalidInput("Content can't be empty."))
         val resolvedCategory = category.ifBlank { "General Discussion" }
-
         return repository.createThread(
             userId = userId,
             title = title.trim(),

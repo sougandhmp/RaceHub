@@ -1,16 +1,22 @@
 package org.gce.racehub.race
 
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
-import org.gce.racehub.fake.FakeHomeRepository
-import org.gce.racehub.race.domain.usecase.CreateThreadUseCase
+import org.gce.racehub.core.DataError
+import org.gce.racehub.core.DataResult
+import org.gce.racehub.fake.*
+import org.gce.racehub.race.domain.model.*
+import org.gce.racehub.race.domain.usecase.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
-import kotlin.test.assertNotNull
+import kotlin.test.assertFalse
+import kotlin.test.assertIs
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class CreateThreadUseCaseTest {
 
-    private val repository = FakeHomeRepository()
+    private val repository = FakeForumRepository()
     private val useCase = CreateThreadUseCase(repository)
 
     private suspend fun invoke(
@@ -21,18 +27,19 @@ class CreateThreadUseCaseTest {
     ) = useCase(userId, title, category, content)
 
     @Test
-    fun `blank userId throws IllegalArgumentException`() = runTest {
-        assertFailsWith<IllegalArgumentException> { invoke(userId = "") }
+    fun `blank userId is rejected without calling the repository`() = runTest {
+        assertIs<DataError.InvalidInput>(invoke(userId = "").error)
+        assertNull(repository.lastCreateThreadArgs)
     }
 
     @Test
-    fun `blank title throws IllegalArgumentException`() = runTest {
-        assertFailsWith<IllegalArgumentException> { invoke(title = "") }
+    fun `blank title is rejected`() = runTest {
+        assertIs<DataError.InvalidInput>(invoke(title = "").error)
     }
 
     @Test
-    fun `blank content throws IllegalArgumentException`() = runTest {
-        assertFailsWith<IllegalArgumentException> { invoke(content = "") }
+    fun `blank content is rejected`() = runTest {
+        assertIs<DataError.InvalidInput>(invoke(content = "").error)
     }
 
     @Test
@@ -68,7 +75,13 @@ class CreateThreadUseCaseTest {
     @Test
     fun `successful call returns repository result`() = runTest {
         val result = invoke()
-        assertNotNull(result)
-        assertEquals(repository.createThreadResult, result)
+        assertTrue(result.isSuccess)
+        assertEquals(fakeThread(), result.data)
+    }
+
+    @Test
+    fun `passes a repository failure through`() = runTest {
+        repository.createThreadResult = DataResult.failure(DataError.Server("Title already used"))
+        assertEquals("Title already used", invoke().error?.message)
     }
 }

@@ -52,7 +52,7 @@ The app is built with **Kotlin Multiplatform (KMP)**. All business logic, networ
 - **Standings** with a Drivers / Constructors toggle, team colour accents, and points.
 - **Full calendar** for the season with each race's status, date, weather, and circuit map.
 - **Race detail** with location, circuit, local start time, weather, a large circuit map, and track facts (laps, corners, distance, lap record).
-- **Offline cache.** Races, standings, and trending threads are saved in a local SQLDelight database. If the network is down, the app shows the last data it cached.
+- **Offline cache.** Races, standings, and trending threads are saved in a local SQLDelight database, which is the single source of truth. The Race tab shows the cache straight away and updates itself when a refresh saves new data. If the network is down, the app keeps showing the last data it cached, with an error banner and a **Try again** button.
 
 ### Forum
 - Thread feed with **Latest**, **Most popular**, and **Most commented** filters.
@@ -93,7 +93,23 @@ RaceHub follows **Clean Architecture**, with the **MVI** (Model-View-Intent) pat
 
 **How MVI works here.** Every screen has an immutable `State`, a sealed set of `Intent`s (user actions), and one-off `Effect`s (navigation, toasts). The ViewModel takes intents, calls use cases from `shared`, and emits a new state. Both platforms use the same contract shape, so a feature looks the same whether you open the Kotlin or the Swift version.
 
-**Error handling.** Repositories are the error boundary. Network and parsing failures are caught there and turned into domain results (for example `AuthResult` or `EmailVerificationResult`), so the UI never sees raw exceptions.
+**Error handling.** Repositories are the error boundary. Network, parsing and validation failures are caught there and turned into domain results, so the UI never sees raw exceptions:
+
+- Auth returns `AuthResult`, `EmailVerificationResult` and `PasswordResetResult`.
+- Race, forum and profile return `DataResult<T>` (in `core/`), which carries either `data` or a `DataError`: `NoConnection`, `Timeout`, `Server`, `InvalidInput` or `Unknown`. Each error has a user-facing `message`.
+- `safeCall` does the conversion and always rethrows `CancellationException`, so leaving a screen still cancels its requests.
+
+Like the auth results, `DataResult` is a plain class rather than a sealed class, so Swift reads `isSuccess`, `data` and `error` without casts.
+
+**Caching and refresh.** `RaceRepository` exposes `observe…()` Flows from SQLDelight (used by Android), `getCached…()` snapshots (used by Swift) and `refresh…()` calls. Refreshes go through `SingleFlight`: if several callers ask for the dashboard at the same time, they share one request. `RefreshRaceDataUseCase` refreshes the calendar and the dashboard in parallel.
+
+**Navigation (Android).** The app uses **Navigation 3**. Routes are `@Serializable` `NavKey`s in `navigation/Routes.kt`, and `App.kt` builds the `NavDisplay`:
+
+- The back stack is saved with `rememberNavBackStack`, so it survives rotation, dark-mode switches and process death.
+- `rememberViewModelStoreNavEntryDecorator` gives each entry its own `ViewModelStore`. A `koinViewModel()` inside an entry lives as long as that screen, and arguments come from the key, for example `koinViewModel<RaceDetailViewModel> { parametersOf(key.race.id) }`.
+- Signing in or out replaces the whole back stack, so Back never crosses the auth boundary.
+
+On iOS, SwiftUI's `NavigationStack` path does the same job.
 
 **Platform-specific code** goes through `expect`/`actual`:
 
@@ -138,7 +154,8 @@ RaceHub/
 │       ├── profile/
 │       ├── theme/                  # AppColors, Dimens, ThemeManager
 │       ├── di/AppModule.kt         # Android ViewModels
-│       └── App.kt                  # Theme + navigation root
+│       ├── navigation/Routes.kt    # Navigation 3 keys (@Serializable NavKey)
+│       └── App.kt                  # Theme + NavDisplay (Navigation 3)
 │
 ├── iosApp/                         # iOS app (SwiftUI), mirrors composeApp features
 │   └── iosApp/{Login,SignUp,ForgotPassword,Home,Race,Forum,Profile,Theme}/
@@ -203,7 +220,7 @@ The Kover report leaves out network clients, generated SQLDelight code, DI wirin
 ## Adding a feature
 
 1. **Domain**: add the model, a repository method, and a use case in `shared/src/commonMain/.../domain`.
-2. **Data**: implement the repository method (DTO, mapper, network call, cache) in `.../data`.
+2. **Data**: implement the repository method (DTO, mapper, network call, cache) in `.../data`. Wrap network calls in `safeCall` and return a `DataResult`.
 3. **DI**: register the use case in the feature's Koin module. For iOS, also expose it through the matching `*DependencyProvider`.
 4. **UI**: on each platform, create `State`, `Intent`, `Effect`, a ViewModel, and the screen.
 5. **Tests**: add a use case test in `shared/src/commonTest`, using the fakes in `fake/`.

@@ -1,6 +1,7 @@
 package org.gce.racehub.auth.data.network
 
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
@@ -38,6 +39,12 @@ object HttpClientFactory {
                 level = LogLevel.INFO
                 // Defense-in-depth: redact the auth token if the level is ever raised.
                 sanitizeHeader { header -> header == HttpHeaders.Authorization }
+            }
+            // Without timeouts a stalled server leaves screens loading forever. Timeouts surface
+            // as HttpRequestTimeoutException, which safeCall reports as DataError.Timeout.
+            install(HttpTimeout) {
+                connectTimeoutMillis = 10_000
+                requestTimeoutMillis = 15_000
             }
             install(ContentNegotiation) {
                 json(Json {

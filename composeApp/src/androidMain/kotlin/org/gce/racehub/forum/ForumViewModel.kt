@@ -45,17 +45,18 @@ class ForumViewModel(
     private fun loadThreads() {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
-            try {
-                val threads = getThreadsUseCase(
-                    sort = _state.value.selectedSort,
-                    category = _state.value.selectedCategory,
-                    userId = userSession.userId
+            val result = getThreadsUseCase(
+                sort = _state.value.selectedSort,
+                category = _state.value.selectedCategory,
+                userId = userSession.userId
+            )
+            // On failure, keep the threads already on screen and show why the refresh failed.
+            _state.update {
+                it.copy(
+                    isLoading = false,
+                    threads = result.data ?: it.threads,
+                    errorMessage = result.error?.message
                 )
-                _state.update { it.copy(isLoading = false, threads = threads) }
-            } catch (_: Exception) {
-                _state.update {
-                    it.copy(isLoading = false, errorMessage = "Failed to load threads. Pull to refresh.")
-                }
             }
         }
     }
