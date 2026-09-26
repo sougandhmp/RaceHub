@@ -54,7 +54,7 @@ import platform.Security.kSecValueData
  * background after first unlock but never migrate to another device.
  */
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
-class IosSessionStorage : SessionStorage {
+internal class IosSessionStorage : SessionStorage {
 
     override fun saveUser(user: User) {
         set(KEY_ID, user.id)

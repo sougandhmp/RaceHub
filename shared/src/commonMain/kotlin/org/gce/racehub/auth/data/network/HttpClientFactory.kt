@@ -16,7 +16,7 @@ import kotlinx.serialization.json.Json
  * Provides platform-agnostic HTTP client configuration, with
  * platform-specific engine selection handled via expect/actual.
  */
-object HttpClientFactory {
+internal object HttpClientFactory {
 
     /**
      * Creates a Ktor HTTP client configured for JSON serialization
@@ -66,4 +66,4 @@ object HttpClientFactory {
  *
  * Implemented separately for Android (OkHttp) and iOS (Darwin).
  */
-expect fun getHttpClientEngine(): io.ktor.client.engine.HttpClientEngine
+internal expect fun getHttpClientEngine(): io.ktor.client.engine.HttpClientEngine

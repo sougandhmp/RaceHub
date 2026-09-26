@@ -11,7 +11,7 @@ import androidx.security.crypto.MasterKey
 import org.gce.racehub.auth.domain.model.User
 import androidx.core.content.edit
 
-class AndroidSessionStorage(context: Context) : SessionStorage {
+internal class AndroidSessionStorage(context: Context) : SessionStorage {
 
     // The session holds the auth bearer token, so persist it encrypted at rest
     // (AES-256) rather than in plaintext SharedPreferences.

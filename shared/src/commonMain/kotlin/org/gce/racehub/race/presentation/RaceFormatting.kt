@@ -39,7 +39,7 @@ fun weekendSessions(race: Race?, detail: RaceDetail?): List<WeekendSession> =
     formatSessions(weekendSchedule(race, detail), TimeZone.currentSystemDefault())
 
 /** Formats domain [sessions] for display in [timeZone]. */
-fun formatSessions(sessions: List<ScheduledSession>, timeZone: TimeZone): List<WeekendSession> =
+internal fun formatSessions(sessions: List<ScheduledSession>, timeZone: TimeZone): List<WeekendSession> =
     sessions.map { session ->
         val local = session.start?.toLocalDateTime(timeZone)
         WeekendSession(

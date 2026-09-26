@@ -8,4 +8,4 @@ import kotlinx.coroutines.CoroutineDispatcher
  * `Dispatchers.IO` only exists on the JVM, so it is provided via expect/actual:
  * Android maps to `Dispatchers.IO`, iOS/Native falls back to `Dispatchers.Default`.
  */
-expect val platformIoDispatcher: CoroutineDispatcher
+internal expect val platformIoDispatcher: CoroutineDispatcher

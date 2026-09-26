@@ -1,5 +1,7 @@
 package org.gce.racehub.race.di
 
+import kotlin.experimental.ExperimentalObjCRefinement
+import kotlin.native.HiddenFromObjC
 import org.gce.racehub.db.LocalDataSource
 import org.gce.racehub.race.data.repository.HomeRepositoryNetworkImpl
 import org.gce.racehub.race.domain.repository.HomeRepository
@@ -15,6 +17,8 @@ import org.gce.racehub.race.domain.usecase.GetThreadsUseCase
 import org.gce.racehub.race.domain.usecase.GetTrendingThreadsUseCase
 import org.koin.dsl.module
 
+@OptIn(ExperimentalObjCRefinement::class)
+@HiddenFromObjC
 fun createRaceModule(baseUrl: String) = module {
     single { LocalDataSource(get()) }
     single<HomeRepository> {

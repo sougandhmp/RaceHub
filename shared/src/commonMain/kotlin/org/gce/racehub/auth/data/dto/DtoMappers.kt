@@ -8,7 +8,7 @@ import org.gce.racehub.auth.domain.model.User
  * @param token The authentication token returned by the server
  * @return A [User] instance with all fields populated
  */
-fun UserResponseDto.toDomainModel(token: String): User {
+internal fun UserResponseDto.toDomainModel(token: String): User {
     return User(
         id = this.id,
         email = this.email,
@@ -32,7 +32,7 @@ fun UserResponseDto.toDomainModel(token: String): User {
  *
  * @return A [User] instance, or null if the response data is unavailable
  */
-fun LoginResponseDto.toDomainModel(): User? {
+internal fun LoginResponseDto.toDomainModel(): User? {
     return data?.let { loginData ->
         loginData.user.toDomainModel(loginData.token)
     }

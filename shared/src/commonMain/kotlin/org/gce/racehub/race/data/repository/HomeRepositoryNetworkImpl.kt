@@ -35,7 +35,7 @@ import kotlin.time.TimeSource
  * - Secondary: Network (background refresh)
  * - Eventual consistency: Data updates asynchronously without blocking UI
  */
-class HomeRepositoryNetworkImpl(
+internal class HomeRepositoryNetworkImpl(
     private val httpClient: HttpClient,
     private val baseUrl: String,
     private val localDataSource: LocalDataSource,

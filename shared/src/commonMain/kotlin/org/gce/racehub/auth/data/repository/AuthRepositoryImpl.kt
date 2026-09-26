@@ -14,7 +14,7 @@ import org.gce.racehub.auth.domain.repository.AuthRepository
  * this class needs to change because the rest of the code depends on the
  * [AuthRepository] interface, not this concrete class.
  */
-class AuthRepositoryImpl : AuthRepository {
+internal class AuthRepositoryImpl : AuthRepository {
 
     override suspend fun login(email: String, password: String): AuthResult {
         return when {

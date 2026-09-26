@@ -26,7 +26,7 @@ import org.gce.racehub.auth.data.dto.SignUpRequestDto
  * Errors during network communication are thrown as exceptions and should
  * be handled by the calling [AuthRepository] implementation.
  */
-class AuthService(private val httpClient: HttpClient, private val baseUrl: String) {
+internal class AuthService(private val httpClient: HttpClient, private val baseUrl: String) {
 
     /**
      * Calls the login endpoint with email and password credentials.

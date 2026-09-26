@@ -9,7 +9,7 @@ import kotlinx.serialization.Serializable
  * Sent to POST /api/v1/auth/login
  */
 @Serializable
-data class LoginRequestDto(
+internal data class LoginRequestDto(
     @SerialName("email")
     val email: String,
 
