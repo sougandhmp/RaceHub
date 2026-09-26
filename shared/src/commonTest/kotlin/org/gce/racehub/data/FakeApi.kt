@@ -13,7 +13,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.io.IOException
-import org.gce.racehub.auth.data.network.HttpClientFactory
+import org.gce.racehub.core.data.network.HttpClientFactory
 
 /**
  * A scriptable fake of the RaceHub API on Ktor's MockEngine, wired through the

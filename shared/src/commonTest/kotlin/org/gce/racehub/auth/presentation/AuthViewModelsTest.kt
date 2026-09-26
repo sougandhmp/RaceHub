@@ -13,8 +13,8 @@ import org.gce.racehub.auth.domain.model.AuthFailure
 import org.gce.racehub.auth.domain.model.AuthResult
 import org.gce.racehub.auth.domain.model.EmailVerificationResult
 import org.gce.racehub.auth.domain.model.PasswordResetResult
-import org.gce.racehub.auth.domain.model.User
-import org.gce.racehub.auth.domain.session.UserSession
+import org.gce.racehub.core.domain.model.User
+import org.gce.racehub.core.domain.session.UserSession
 import org.gce.racehub.auth.domain.usecase.ConfirmPasswordResetUseCase
 import org.gce.racehub.auth.domain.usecase.LoginUseCase
 import org.gce.racehub.auth.domain.usecase.RequestPasswordResetUseCase

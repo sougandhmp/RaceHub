@@ -1,6 +1,6 @@
 package org.gce.racehub.di
 
-import org.gce.racehub.auth.domain.session.UserSession
+import org.gce.racehub.core.domain.session.UserSession
 import org.koin.mp.KoinPlatform
 
 /** Swift entry point for the app-level session check made at launch. */

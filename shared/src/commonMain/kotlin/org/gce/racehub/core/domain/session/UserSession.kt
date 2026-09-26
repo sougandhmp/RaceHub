@@ -1,9 +1,9 @@
-package org.gce.racehub.auth.domain.session
+package org.gce.racehub.core.domain.session
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import org.gce.racehub.auth.domain.model.User
+import org.gce.racehub.core.domain.model.User
 
 /**
  * Process-wide holder for the currently authenticated [User].

@@ -1,6 +1,6 @@
-package org.gce.racehub.auth.data.storage
+package org.gce.racehub.core.data.storage
 
-import org.gce.racehub.auth.domain.session.SessionStorage
+import org.gce.racehub.core.domain.session.SessionStorage
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.COpaquePointerVar
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -12,7 +12,7 @@ import kotlinx.cinterop.ptr
 import kotlinx.cinterop.reinterpret
 import kotlinx.cinterop.usePinned
 import kotlinx.cinterop.value
-import org.gce.racehub.auth.domain.model.User
+import org.gce.racehub.core.domain.model.User
 import platform.CoreFoundation.CFDictionaryCreateMutable
 import platform.CoreFoundation.CFDictionarySetValue
 import platform.CoreFoundation.CFRelease

@@ -30,7 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.gce.racehub.auth.di.createProductionAuthModule
-import org.gce.racehub.auth.domain.session.UserSession
+import org.gce.racehub.core.domain.session.UserSession
 import org.gce.racehub.di.appModule
 import org.gce.racehub.emailverification.EmailVerificationScreen
 import org.gce.racehub.forgotpassword.ForgotPasswordScreen

@@ -1,6 +1,6 @@
 package org.gce.racehub.profile.presentation
 
-import org.gce.racehub.auth.domain.model.User
+import org.gce.racehub.core.domain.model.User
 import org.gce.racehub.core.domain.DataError
 import org.gce.racehub.profile.domain.model.UserProfile
 

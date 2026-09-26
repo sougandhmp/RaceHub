@@ -1,4 +1,4 @@
-package org.gce.racehub.auth.data.network
+package org.gce.racehub.core.data.network
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine

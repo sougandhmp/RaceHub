@@ -8,8 +8,8 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import org.gce.racehub.auth.domain.model.User
-import org.gce.racehub.auth.domain.session.UserSession
+import org.gce.racehub.core.domain.model.User
+import org.gce.racehub.core.domain.session.UserSession
 import org.gce.racehub.auth.domain.usecase.LogoutUseCase
 import org.gce.racehub.core.domain.DataError
 import org.gce.racehub.fake.FakeAuthRepository
