@@ -1,6 +1,6 @@
 package org.gce.racehub.di
 
-import org.gce.racehub.core.di.coreModule
+import org.gce.racehub.core.di.createCoreModule
 import org.gce.racehub.forum.di.createForumModule
 import org.gce.racehub.profile.di.createProfileModule
 import android.app.Application
@@ -34,10 +34,10 @@ actual object KoinInitializer {
     }
 
     /** Starts the Koin container with the production auth module. */
-    actual fun init(baseUrl: String, vararg additionalModules: Module) {
+    actual fun init(baseUrl: String, logNetwork: Boolean, vararg additionalModules: Module) {
         startKoin {
             androidApplication?.let { androidContext(it) }
-            modules(coreModule, createProductionAuthModule(baseUrl), createRaceModule(baseUrl), createForumModule(baseUrl), createProfileModule(baseUrl), platformModule, presentationModule, *additionalModules)
+            modules(createCoreModule(logNetwork), createProductionAuthModule(baseUrl), createRaceModule(baseUrl), createForumModule(baseUrl), createProfileModule(baseUrl), platformModule, presentationModule, *additionalModules)
         }
     }
 

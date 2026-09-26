@@ -48,6 +48,7 @@ class AuthFlowTest {
         // lacks; later modules override earlier ones, so swap in an empty one.
         KoinInitializer.init(
             baseUrl = "http://127.0.0.1:9",
+            logNetwork = false,
             appModule,
             module { single<SessionStorage> { InMemorySessionStorage() } }
         )

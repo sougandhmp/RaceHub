@@ -15,10 +15,11 @@ expect object KoinInitializer {
     /**
      * Initializes Koin with production configuration.
      *
-     * @param baseUrl The API base URL for authentication
+     * @param baseUrl The API base URL, set per build configuration by each app
+     * @param logNetwork Log requests to the console; pass true only for debug builds
      * @param additionalModules Additional Koin modules to include
      */
     @OptIn(ExperimentalObjCRefinement::class)
     @HiddenFromObjC
-    fun init(baseUrl: String, vararg additionalModules: Module)
+    fun init(baseUrl: String, logNetwork: Boolean, vararg additionalModules: Module)
 }

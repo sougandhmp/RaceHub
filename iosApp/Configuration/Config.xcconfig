@@ -6,6 +6,11 @@ PRODUCT_BUNDLE_IDENTIFIER=org.gce.racehub.RaceHub$(TEAM_ID)
 CURRENT_PROJECT_VERSION=1
 MARKETING_VERSION=1.0
 
+// API base URL per configuration, exposed to Swift through Info.plist (APIBaseURL).
+// "/$()/" keeps xcconfig from reading "//" as the start of a comment.
+API_BASE_URL[config=Debug]=http:/$()/140.245.233.203:30018
+API_BASE_URL[config=Release]=http:/$()/140.245.233.203:30018
+
 // The shared KMP framework uses SQLDelight's native driver, which pulls in
 // sqliter and calls into the system sqlite3 C library. Static frameworks do
 // not propagate that linker dependency, so the consuming app must link it.
