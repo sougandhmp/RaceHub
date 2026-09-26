@@ -1,6 +1,7 @@
 package org.gce.racehub.race
 
 import kotlinx.coroutines.test.runTest
+import org.gce.racehub.core.domain.DataResult
 import org.gce.racehub.fake.FakeHomeRepository
 import org.gce.racehub.race.domain.model.UserProfile
 import org.gce.racehub.race.domain.usecase.GetMyProfileUseCase
@@ -32,6 +33,6 @@ class GetMyProfileUseCaseTest {
         val profile = UserProfile("alice", "a@b.com", "A", 5, 3, listOf("Thread 1"), listOf("Saved 1"))
         repository.profileResult = profile
         val result = useCase(userId = "u1", token = "tok")
-        assertEquals(profile, result)
+        assertEquals(DataResult.Success(profile), result)
     }
 }

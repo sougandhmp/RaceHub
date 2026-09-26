@@ -144,3 +144,39 @@ extension SharedViewModelHost where VM == CreateThreadViewModel, State == Create
         viewModel.onIntent(intent: intent)
     }
 }
+
+typealias ProfileModel = SharedViewModelHost<ProfileViewModel, ProfileState, ProfileEffect>
+
+extension SharedViewModelHost where VM == ProfileViewModel, State == ProfileState, Effect == ProfileEffect {
+    /// The shared Profile tab ViewModel, created through Koin.
+    static func profile() -> ProfileModel {
+        ProfileModel(
+            create: { SharedViewModels.shared.profile(owner: $0) },
+            value: { $0.state },
+            flow: { $0.stateFlow },
+            effects: { $0.effects }
+        )
+    }
+
+    func send(_ intent: ProfileIntent) {
+        viewModel.onIntent(intent: intent)
+    }
+}
+
+/// The home shell has no effects, hence `Never`.
+typealias HomeModel = SharedViewModelHost<HomeViewModel, HomeState, Never>
+
+extension SharedViewModelHost where VM == HomeViewModel, State == HomeState, Effect == Never {
+    /// The shared home-shell ViewModel (selected tab), created through Koin.
+    static func home() -> HomeModel {
+        HomeModel(
+            create: { SharedViewModels.shared.home(owner: $0) },
+            value: { $0.state },
+            flow: { $0.stateFlow }
+        )
+    }
+
+    func send(_ intent: HomeIntent) {
+        viewModel.onIntent(intent: intent)
+    }
+}

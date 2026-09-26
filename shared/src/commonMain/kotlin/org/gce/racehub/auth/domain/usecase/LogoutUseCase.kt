@@ -3,22 +3,22 @@ package org.gce.racehub.auth.domain.usecase
 import org.gce.racehub.auth.domain.repository.AuthRepository
 import org.gce.racehub.auth.domain.session.UserSession
 
+/**
+ * Signs the user out. Signing out always succeeds on the device: the local
+ * session is cleared unconditionally, and revoking the token on the server is
+ * best effort — offline, or with an expired token, the user is still signed
+ * out and the token simply lapses server-side.
+ */
 class LogoutUseCase(
     private val authRepository: AuthRepository,
     private val userSession: UserSession
 ) {
+    /** @return true if the server confirmed the token was revoked (informational only). */
     @Throws(Exception::class)
     suspend operator fun invoke(): Boolean {
         val token = userSession.currentUser.value?.token
-        if (token.isNullOrBlank()) {
-            // No server token — clear local session without a network call
-            userSession.clear()
-            return true
-        }
-        val success = authRepository.logout(token)
-        if (success) {
-            userSession.clear()
-        }
-        return success
+        userSession.clear()
+        if (token.isNullOrBlank()) return true
+        return authRepository.logout(token)
     }
 }

@@ -30,6 +30,7 @@ class FakeHomeRepository : HomeRepository {
     var createThreadError: DataError? = null
     var addCommentError: DataError? = null
     var likeThreadError: DataError? = null
+    var profileError: DataError? = null
     var threadsDelayMs: Map<ThreadSort?, Long> = emptyMap()
     var lastThreadsArgs: Triple<ThreadSort?, String?, String?>? = null
 
@@ -71,7 +72,10 @@ class FakeHomeRepository : HomeRepository {
         return DataResult.Success(createThreadResult)
     }
 
-    override suspend fun getMyProfile(userId: String, token: String): UserProfile = profileResult
+    override suspend fun getMyProfile(userId: String, token: String): DataResult<UserProfile> {
+        profileError?.let { return DataResult.Failure(it) }
+        return DataResult.Success(profileResult)
+    }
 
     override suspend fun addComment(userId: String, threadId: String, content: String): DataResult<ThreadComment> {
         lastAddCommentArgs = Triple(userId, threadId, content)

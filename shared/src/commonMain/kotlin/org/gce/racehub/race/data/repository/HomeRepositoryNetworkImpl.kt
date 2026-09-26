@@ -488,7 +488,7 @@ class HomeRepositoryNetworkImpl(
      * Fetches the signed-in user's profile via GraphQL query.
      * Sends the auth token as an `Authorization: Bearer` header.
      */
-    override suspend fun getMyProfile(userId: String, token: String): UserProfile {
+    override suspend fun getMyProfile(userId: String, token: String): DataResult<UserProfile> = safeCall("load profile") {
         val response: GraphQLResponse<ProfileData> = httpClient.post("$baseUrl/graphql") {
             contentType(ContentType.Application.Json)
             header("Authorization", "Bearer $token")
@@ -502,7 +502,7 @@ class HomeRepositoryNetworkImpl(
 
         val me = response.data?.me
             ?: error(response.errors.toErrorMessage("Failed to load profile"))
-        return UserProfile(
+        UserProfile(
             username = me.username,
             email = me.email,
             avatar = me.avatar,
