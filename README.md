@@ -209,7 +209,7 @@ Open `iosApp/iosApp.xcodeproj` in Xcode and run the `iosApp` scheme. A build pha
 
 ## Testing
 
-The shared module has unit tests for the use cases, the domain rules, every reducer and every shared ViewModel (intent handling, async ordering, effects), plus the DTO mappers and `UserSession`. The tests use fake repositories, so they don't need a network or a device.
+The shared module has unit tests for the use cases, the domain rules, every reducer and every shared ViewModel (intent handling, async ordering, effects), plus the DTO mappers and `UserSession`; those use fake repositories. The repositories themselves are tested against a fake API (Ktor `MockEngine`, `data/FakeApi.kt`) and a real in-memory SQLDelight database, covering error mapping and the cache-vs-network rules. Nothing needs a network or a device.
 
 ```shell
 ./gradlew :shared:testDebugUnitTest          # run shared tests on the JVM
@@ -218,7 +218,7 @@ The shared module has unit tests for the use cases, the domain rules, every redu
 ./gradlew :shared:koverHtmlReport            # coverage report → shared/build/reports/kover/html
 ```
 
-The Kover report leaves out network clients, generated SQLDelight code, DI wiring, and DTOs, so the coverage number reflects the domain and presentation logic.
+The Kover report leaves out HTTP client construction, generated SQLDelight code, DI wiring, and DTOs, so the coverage number reflects the domain, data and presentation logic.
 
 ---
 

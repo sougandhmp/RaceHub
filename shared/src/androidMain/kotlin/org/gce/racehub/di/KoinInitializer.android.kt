@@ -40,14 +40,4 @@ actual object KoinInitializer {
         }
     }
 
-    /**
-     * Starts the Koin container with the fake in-memory auth module.
-     * Useful for Espresso tests or local dev builds without a backend.
-     */
-    actual fun initForTesting(vararg additionalModules: Module) {
-        startKoin {
-            androidApplication?.let { androidContext(it) }
-            modules(org.gce.racehub.auth.di.fakeAuthModule, createRaceModule(""), createForumModule(""), createProfileModule(""), platformModule, presentationModule, *additionalModules)
-        }
-    }
 }

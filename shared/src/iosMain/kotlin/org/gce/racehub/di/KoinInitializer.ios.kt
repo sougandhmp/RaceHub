@@ -35,24 +35,6 @@ actual object KoinInitializer {
         }
     }
 
-    /**
-     * Initializes Koin with test configuration (fake repository).
-     *
-     * @param additionalModules Additional Koin modules to include
-     */
-    @OptIn(ExperimentalObjCRefinement::class)
-    @HiddenFromObjC
-    actual fun initForTesting(vararg additionalModules: Module) {
-        startKoin {
-            modules(
-                org.gce.racehub.auth.di.fakeAuthModule,
-                createRaceModule(""), createForumModule(""), createProfileModule(""),
-                platformModule, presentationModule,
-                *additionalModules
-            )
-        }
-    }
-
     // Swift-friendly overload: `vararg` doesn't bridge cleanly from Swift,
     // so iOS callers use this instead of `init(baseUrl:additionalModules:)`.
     fun start(baseUrl: String) {

@@ -118,7 +118,7 @@ private struct RequestStepView: View {
     var body: some View {
         AuthTextField(
             label: "Email",
-            placeholder: "driver@racehub.com",
+            placeholder: "you@racehub.com",
             text: Binding(
                 get: { state.email },
                 set: { onIntent(ForgotPasswordIntent.EmailChanged(email: $0)) }

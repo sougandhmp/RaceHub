@@ -50,7 +50,7 @@ struct LoginView: View {
                             .font(.caption)
                             .foregroundColor(Color(hex: t.authMuted))
 
-                        TextField("driver@racehub.com", text: Binding(
+                        TextField("you@racehub.com", text: Binding(
                             get: { model.state.email },
                             set: { model.send(LoginIntent.EmailChanged(email: $0)) }
                         ))
@@ -170,12 +170,6 @@ struct LoginView: View {
                                 .foregroundColor(AppColors.racingRed)
                         }
                     }
-
-                    Spacer(minLength: 32)
-
-                    Text("Use driver@racehub.com / race123")
-                        .font(.caption2)
-                        .foregroundColor(Color(hex: t.authMuted).opacity(0.5))
 
                     Spacer(minLength: 32)
                 }

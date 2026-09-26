@@ -21,13 +21,4 @@ expect object KoinInitializer {
     @OptIn(ExperimentalObjCRefinement::class)
     @HiddenFromObjC
     fun init(baseUrl: String, vararg additionalModules: Module)
-
-    /**
-     * Initializes Koin with test configuration (fake repository).
-     *
-     * @param additionalModules Additional Koin modules to include
-     */
-    @OptIn(ExperimentalObjCRefinement::class)
-    @HiddenFromObjC
-    fun initForTesting(vararg additionalModules: Module)
 }
