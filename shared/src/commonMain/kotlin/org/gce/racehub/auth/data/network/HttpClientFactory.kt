@@ -1,6 +1,7 @@
 package org.gce.racehub.auth.data.network
 
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
@@ -24,6 +25,9 @@ object HttpClientFactory {
      * @param baseUrl The API base URL (e.g., "https://api.example.com")
      * @return A configured [HttpClient] instance
      */
+    private const val CONNECT_TIMEOUT_MS = 10_000L
+    private const val REQUEST_TIMEOUT_MS = 15_000L
+
     fun create(baseUrl: String): HttpClient {
         return HttpClient(getHttpClientEngine()) {
             install(Logging) {
@@ -38,6 +42,13 @@ object HttpClientFactory {
                 level = LogLevel.INFO
                 // Defense-in-depth: redact the auth token if the level is ever raised.
                 sanitizeHeader { header -> header == HttpHeaders.Authorization }
+            }
+            // Without this a stalled request hangs forever. Timeouts surface as
+            // HttpRequestTimeoutException (an IOException), i.e. DataError.Network.
+            install(HttpTimeout) {
+                connectTimeoutMillis = CONNECT_TIMEOUT_MS
+                requestTimeoutMillis = REQUEST_TIMEOUT_MS
+                socketTimeoutMillis = REQUEST_TIMEOUT_MS
             }
             install(ContentNegotiation) {
                 json(Json {

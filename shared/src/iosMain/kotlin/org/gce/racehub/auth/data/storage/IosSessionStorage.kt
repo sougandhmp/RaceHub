@@ -1,5 +1,6 @@
 package org.gce.racehub.auth.data.storage
 
+import org.gce.racehub.auth.domain.session.SessionStorage
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.COpaquePointerVar
 import kotlinx.cinterop.ExperimentalForeignApi
